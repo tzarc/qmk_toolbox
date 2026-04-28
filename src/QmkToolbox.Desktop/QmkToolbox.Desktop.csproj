@@ -24,6 +24,13 @@
   <ItemGroup>
     <Content Include="Resources/output.ico" />
   </ItemGroup>
+  <!-- Firmware-support data files: MCU list and EEPROM reset images. Platform-independent. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../resources/firmware-support/mcu-list.txt" Link="Resources/mcu-list.txt" />
+    <EmbeddedResource Include="../../resources/firmware-support/reset.eep" Link="Resources/reset.eep" />
+    <EmbeddedResource Include="../../resources/firmware-support/reset_left.eep" Link="Resources/reset_left.eep" />
+    <EmbeddedResource Include="../../resources/firmware-support/reset_right.eep" Link="Resources/reset_right.eep" />
+  </ItemGroup>
   <!-- Embed platform-specific flash tool binaries from the committed resources tree.
        The RuntimeIdentifier is set during `dotnet publish -r <rid>`.
        Guard with ItemGroup condition so the glob is never evaluated without a RID. -->

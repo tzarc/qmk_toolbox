@@ -1,16 +1,19 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Core.Services;
+namespace QmkToolbox.Desktop.Services;
 
 /// <summary>
 /// Extracts bundled tool binaries and data files to a local app-data folder and
-/// resolves platform-appropriate tool paths. The consuming project passes the assembly
-/// that owns the embedded resources together with its resource-name prefix.
+/// resolves platform-appropriate tool paths.
 /// </summary>
-public class FlashToolProvider(Assembly assembly, string resourcePrefix) : IFlashToolProvider
+public class FlashToolProvider : IFlashToolProvider
 {
+    private static readonly Assembly ResourceAssembly = typeof(FlashToolProvider).Assembly;
+    private const string ResourcePrefix = "QmkToolbox.Desktop.Resources";
+
     public string GetResourceFolder() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "QMK", "Toolbox", "Resources");
@@ -46,20 +49,20 @@ public class FlashToolProvider(Assembly assembly, string resourcePrefix) : IFlas
     /// Returns true when the installed manifest's COMMIT_DATE matches the
     /// embedded one, meaning the resource folder is already current.
     /// </summary>
-    private bool IsUpToDate(string folder)
+    private static bool IsUpToDate(string folder)
     {
-        string? manifestResourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.StartsWith(resourcePrefix + ".", StringComparison.Ordinal)
+        string? manifestResourceName = ResourceAssembly.GetManifestResourceNames()
+            .FirstOrDefault(n => n.StartsWith(ResourcePrefix + ".", StringComparison.Ordinal)
                               && n.Contains("_release_", StringComparison.Ordinal));
         if (manifestResourceName == null)
             return false;
 
-        string manifestFile = manifestResourceName[(resourcePrefix.Length + 1)..];
+        string manifestFile = manifestResourceName[(ResourcePrefix.Length + 1)..];
         string installedManifest = Path.Combine(folder, manifestFile);
         if (!File.Exists(installedManifest))
             return false;
 
-        string? embeddedDate = ReadCommitDate(() => assembly.GetManifestResourceStream(manifestResourceName));
+        string? embeddedDate = ReadCommitDate(() => ResourceAssembly.GetManifestResourceStream(manifestResourceName));
         string? installedDate = ReadCommitDate(() => File.OpenRead(installedManifest));
 
         return embeddedDate != null && embeddedDate == installedDate;
@@ -71,11 +74,12 @@ public class FlashToolProvider(Assembly assembly, string resourcePrefix) : IFlas
         if (stream == null)
             return null;
         using var reader = new StreamReader(stream);
+        const string prefix = "COMMIT_DATE=";
         string? line;
         while ((line = reader.ReadLine()) != null)
         {
-            if (line.StartsWith("COMMIT_DATE=", StringComparison.Ordinal))
-                return line["COMMIT_DATE=".Length..];
+            if (line.StartsWith(prefix, StringComparison.Ordinal))
+                return line[prefix.Length..];
         }
         return null;
     }
@@ -90,10 +94,10 @@ public class FlashToolProvider(Assembly assembly, string resourcePrefix) : IFlas
     public void ExtractAllResources()
     {
         Directory.CreateDirectory(GetResourceFolder());
-        foreach (string? name in assembly.GetManifestResourceNames()
-                     .Where(n => n.StartsWith(resourcePrefix + ".", StringComparison.Ordinal)))
+        foreach (string name in ResourceAssembly.GetManifestResourceNames()
+                     .Where(n => n.StartsWith(ResourcePrefix + ".", StringComparison.Ordinal)))
         {
-            string file = name[(resourcePrefix.Length + 1)..];
+            string file = name[(ResourcePrefix.Length + 1)..];
             ExtractResource(file);
         }
     }
@@ -104,7 +108,7 @@ public class FlashToolProvider(Assembly assembly, string resourcePrefix) : IFlas
         if (File.Exists(destPath))
             return;
 
-        using Stream? stream = assembly.GetManifestResourceStream($"{resourcePrefix}.{file}");
+        using Stream? stream = ResourceAssembly.GetManifestResourceStream($"{ResourcePrefix}.{file}");
         if (stream == null)
             return;
         using var fileStream = new FileStream(destPath, FileMode.Create);

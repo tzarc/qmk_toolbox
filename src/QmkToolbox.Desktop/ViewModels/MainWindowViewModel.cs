@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Converters;
@@ -191,8 +190,8 @@ public partial class MainWindowViewModel : LogViewModelBase
     {
         try
         {
-            Assembly asm = Assembly.GetAssembly(typeof(BootloaderFactory))!;
-            using Stream? stream = asm.GetManifestResourceStream("QmkToolbox.Core.Resources.mcu-list.txt");
+            using Stream? stream = typeof(MainWindowViewModel).Assembly
+                .GetManifestResourceStream("QmkToolbox.Desktop.Resources.mcu-list.txt");
             if (stream == null)
                 return;
             using var reader = new StreamReader(stream);

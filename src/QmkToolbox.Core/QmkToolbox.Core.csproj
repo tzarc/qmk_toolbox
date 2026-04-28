@@ -5,10 +5,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="../../resources/firmware-support/mcu-list.txt" Link="Resources/mcu-list.txt" />
-    <EmbeddedResource Include="../../resources/firmware-support/reset.eep" Link="Resources/reset.eep" />
-    <EmbeddedResource Include="../../resources/firmware-support/reset_left.eep" Link="Resources/reset_left.eep" />
-    <EmbeddedResource Include="../../resources/firmware-support/reset_right.eep" Link="Resources/reset_right.eep" />
-  </ItemGroup>
 </Project>

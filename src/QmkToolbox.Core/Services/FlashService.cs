@@ -109,8 +109,18 @@ public static class FlashService
     internal static async Task ReadLinesAsync(StreamReader reader, CancellationToken ct, Action<string, bool> onLine)
     {
         var sb = new StringBuilder();
+        // CR handling requires a one-character lookahead: we cannot emit on CR immediately
+        // because we don't yet know whether the next character is LF (making it CRLF → append)
+        // or something else (bare CR → overwrite). This flag carries that state across
+        // iterations of the inner loop and across buffer boundaries.
         bool pendingCr = false;
         char[] buf = new char[4096];
+
+        void emit(bool overwrite)
+        {
+            onLine(sb.ToString(), overwrite);
+            sb.Clear();
+        }
 
         while (!ct.IsCancellationRequested)
         {
@@ -130,41 +140,29 @@ public static class FlashService
             for (int i = 0; i < count; i++)
             {
                 char c = buf[i];
+
                 if (pendingCr)
                 {
                     pendingCr = false;
+                    // CRLF: emit as a normal (append) line and skip the LF.
+                    // Bare CR: emit as an overwrite line and fall through to process c normally.
+                    emit(overwrite: c != '\n');
                     if (c == '\n')
-                    {
-                        onLine(sb.ToString(), false);
-                        sb.Clear();
                         continue;
-                    }
-                    else
-                    {
-                        onLine(sb.ToString(), true);
-                        sb.Clear();
-                    }
                 }
 
                 if (c == '\r')
-                {
-                    pendingCr = true;
-                }
+                    pendingCr = true;   // defer until we see the next character
                 else if (c == '\n')
-                {
-                    onLine(sb.ToString(), false);
-                    sb.Clear();
-                }
+                    emit(overwrite: false);
                 else
-                {
                     sb.Append(c);
-                }
             }
         }
 
-        if (pendingCr)
-            onLine(sb.ToString(), true);
-        else if (sb.Length > 0)
-            onLine(sb.ToString(), false);
+        // Flush any buffered text. If a CR was the last character, emit as overwrite
+        // (no LF followed, so it was a bare CR). Otherwise emit as a normal trailing line.
+        if (pendingCr || sb.Length > 0)
+            emit(overwrite: pendingCr);
     }
 }

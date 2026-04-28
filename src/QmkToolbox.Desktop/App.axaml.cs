@@ -1,10 +1,8 @@
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
-using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 using QmkToolbox.Desktop.Views;
@@ -30,9 +28,7 @@ public partial class App : Application
             string[] args = desktop.Args ?? [];
             string filePath = args.Length > 0 ? args[0] : "";
             var vm = new MainWindowViewModel(
-                new FlashToolProvider(
-                    Assembly.GetExecutingAssembly(),
-                    "QmkToolbox.Desktop.Resources"),
+                new FlashToolProvider(),
                 new UsbEventsDetector(),
                 new DesktopSerialPortService(),
                 new DesktopMountPointService(),

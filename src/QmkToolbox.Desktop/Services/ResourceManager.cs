@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Desktop.Services;
@@ -16,7 +15,6 @@ public class ResourceManager(IFlashToolProvider toolProvider)
     public void EnsureResources()
     {
         toolProvider.EnsureResourceFolder();
-        ExtractCoreResources();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             EnsureUdevResources();
     }
@@ -25,7 +23,6 @@ public class ResourceManager(IFlashToolProvider toolProvider)
     {
         toolProvider.ClearResourceFolder();
         toolProvider.ExtractAllResources();
-        ExtractCoreResources();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             EnsureUdevResources();
     }
@@ -106,29 +103,6 @@ public class ResourceManager(IFlashToolProvider toolProvider)
             | UnixFileMode.UserExecute
             | UnixFileMode.GroupExecute
             | UnixFileMode.OtherExecute);
-    }
-
-    /// <summary>
-    /// Extracts EEPROM reset images from the Core assembly to the resource folder.
-    /// Skips files that already exist, so it is safe to call from both the startup
-    /// path and the "Clear Resources" path (which deletes the folder first).
-    /// </summary>
-    private void ExtractCoreResources()
-    {
-        string folder = toolProvider.GetResourceFolder();
-        Assembly coreAsm = Assembly.GetAssembly(typeof(BootloaderFactory))!;
-        string[] coreFiles = ["reset.eep", "reset_left.eep", "reset_right.eep"];
-        foreach (string file in coreFiles)
-        {
-            string destPath = Path.Combine(folder, file);
-            if (File.Exists(destPath))
-                continue;
-            using Stream? stream = coreAsm.GetManifestResourceStream($"QmkToolbox.Core.Resources.{file}");
-            if (stream == null)
-                continue;
-            using var fs = new FileStream(destPath, FileMode.Create);
-            stream.CopyTo(fs);
-        }
     }
 
     private static (string Host, string Hash)? ReadReleaseManifest(string folder, string prefix)

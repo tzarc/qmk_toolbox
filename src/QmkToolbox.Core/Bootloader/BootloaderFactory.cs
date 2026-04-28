@@ -124,7 +124,7 @@ public static class BootloaderFactory
             BootloaderType.UsbAsp => new UsbAspDevice(device, toolProvider),
             BootloaderType.UsbTinyIsp => new UsbTinyIspDevice(device, toolProvider),
             BootloaderType.Wb32Dfu => new Wb32DfuDevice(device, toolProvider),
-            BootloaderType.Picotool => new PicotoolDevice(device, toolProvider, isRp2350: device.ProductId == 0x000F),
+            BootloaderType.Picotool => new PicotoolDevice(device, toolProvider),
             BootloaderType.QmkDfu => new AtmelDfuDevice(device, toolProvider, serialPortService),
             BootloaderType.QmkHid => new LufaHidDevice(device, toolProvider),
             BootloaderType.None => null,

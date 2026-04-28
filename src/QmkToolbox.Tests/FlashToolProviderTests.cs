@@ -1,5 +1,4 @@
-using System.Reflection;
-using QmkToolbox.Core.Services;
+using QmkToolbox.Desktop.Services;
 using Xunit;
 
 namespace QmkToolbox.Tests;
@@ -18,8 +17,7 @@ public class FactOnLinuxAttribute : FactAttribute
 
 public class FlashToolProviderTests
 {
-    private static FlashToolProvider Provider() =>
-        new(Assembly.GetExecutingAssembly(), "test");
+    private static FlashToolProvider Provider() => new();
 
     [Fact]
     public void GetResourceFolder_IsRooted() => Assert.True(Path.IsPathRooted(Provider().GetResourceFolder()));
