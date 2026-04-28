@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# make-release-artifacts.sh — Assemble all release artifacts from existing publish-<rid>/ outputs.
+#
+# Expects publish-* directories to already exist (run publish-all.sh first).
+# Clears and recreates artifacts/, then:
+#   - Builds the macOS .app bundle, ZIP, and DMG  (make-macos-app.sh)
+#   - Copies Linux and Windows executables
+#   - Builds the Windows installer               (make-win-installer.sh)
+#   - Builds the macOS .pkg installer            (make-macos-pkg.sh)
+#
+# Usage:  ./scripts/make-release-artifacts.sh
+# Deps:   Docker (ghcr.io/tzarc/qmk_toolchains:builder, amake/innosetup)
 set -eEuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

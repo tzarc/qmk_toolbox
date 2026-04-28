@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# fetch-tools.sh — Download qmk_flashutils, qmk_hidapi, and qmk_driver_installer
-# release binaries for all supported platforms and place them in the repository's
-# resources/ tree.
+# fetch-tools.sh — Download release binaries from four upstream repositories and
+# place them in the repository's resources/ tree:
 #
-# Run this script from the repo root (or any directory) to refresh the bundled
-# binaries.  All outputs are committed to version control; CI uses them directly
-# with no network access required.
+#   qmk_flashutils        flash tool binaries (avrdude, dfu-util, etc.) for all platforms
+#   qmk_hidapi            hidapi native library for all platforms
+#   qmk_driver_installer  WinUSB driver installer (Windows only)
+#   qmk_udev              udev rules + qmk_id helper binary (Linux only)
+#
+# All outputs are committed to version control so that builds and CI require no
+# network access.  Run this script whenever upstream tools need to be updated.
 #
 # Usage:  ./scripts/fetch-tools.sh
 # Deps:   curl, jq, zstd, tar
@@ -80,7 +83,6 @@ for RID in "${!PLATFORMS[@]}"; do
     HIDAPI_DIR="${HIDAPI_ROOT}/${RID}"
     mkdir -p "${TOOLS_DIR}" "${HIDAPI_DIR}"
 
-    # Flash tool binaries (avrdude, dfu-util, etc.)
     echo "  qmk_flashutils-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst -> ${TOOLS_DIR}"
     TOOLS_ARCHIVE="$(fetch_archive "qmk_flashutils-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
     zstd -d --stdout "${TOOLS_ARCHIVE}" \
@@ -119,7 +121,6 @@ for RID in "${!PLATFORMS[@]}"; do
 
     rm -rf "${HIDAPI_TMP}"
 
-    # Mark tool binaries executable (relevant when building on Linux/macOS)
     if [[ "${RID}" != win-* ]]; then
         chmod +x "${TOOLS_DIR}"/* 2>/dev/null || true
     fi

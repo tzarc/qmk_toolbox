@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace QmkToolbox.Core.Services;
+namespace QmkToolbox.Desktop.Services;
 
 [JsonSerializable(typeof(AppSettings))]
 [JsonSourceGenerationOptions(WriteIndented = true)]

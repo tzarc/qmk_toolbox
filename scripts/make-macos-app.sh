@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# make-macos-app.sh — wrap a dotnet publish output into a macOS .app bundle and corresponding DMG file.
+# make-macos-app.sh — Wrap a dotnet publish output into a macOS .app bundle,
+# then produce a ZIP archive and DMG from it.
 #
-# Usage:
-#   scripts/make-macos-app.sh [osx-arm64|osx-x64|osx-universal]   (default: osx-universal)
-#
-# Expects publish-<rid>/ to exist at the repo root (created by publish-all.sh
-# or: dotnet publish -r <rid> -c Release -o ../../publish-<rid>).
-# Produces "QMK Toolbox.app" in the artifacts directory.
+# Usage:  scripts/make-macos-app.sh [osx-arm64|osx-x64|osx-universal]   (default: osx-universal)
+# Input:  publish-<rid>/  (created by publish-all.sh or dotnet publish -r <rid> -c Release)
+# Output: publish-osx-dmg/QMK Toolbox.app
+#         artifacts/QMK Toolbox.app.zip
+#         artifacts/QMK Toolbox.dmg
+# Deps:   Docker (ghcr.io/tzarc/qmk_toolchains:builder)
 
 set -eEuo pipefail
 
@@ -31,23 +32,17 @@ fi
 
 echo "Building QMK Toolbox.app from ${PUBLISH_DIR} ..."
 
-# ── Clean previous bundle ───────────────────────────────────────────────────
 rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
-# ── Copy all published files into Contents/MacOS ────────────────────────────
 cp -R "${PUBLISH_DIR}/." "${MACOS_DIR}/"
 chmod +x "${MACOS_DIR}/qmk_toolbox"
 # Make any extracted native dylibs executable too
 find "${MACOS_DIR}" -name "*.dylib" -exec chmod +x {} \;
 
-# ── Info.plist ──────────────────────────────────────────────────────────────
 cp "${REPO_ROOT}/resources/macos-app-support/Info.plist" "${CONTENTS}/Info.plist"
-
-# ── AppIcon.icns ─────────────────────────────────────────────────────────────
 cp "${REPO_ROOT}/resources/macos-app-support/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
 
-# ── Strip quarantine from the entire bundle ──────────────────────────────────
 if [[ "$(uname -s)" == "Darwin" ]]; then
     xattr -cr "${APP_DIR}"
     echo "  Quarantine attributes removed."

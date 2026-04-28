@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 
@@ -30,7 +29,6 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel vm)
             return;
 
-        // Restore window bounds from settings
         AppSettings settings = vm.Settings.Current;
         if (settings.WindowWidth.HasValue && settings.WindowHeight.HasValue)
         {
@@ -59,7 +57,6 @@ public partial class MainWindow : Window
     // with direct references to the live ViewModel instead.
     private void BuildNativeMenu(MainWindowViewModel vm)
     {
-        // Window-level: File and Tools shown alongside the application menu set in App.axaml.cs.
         var fileMenu = new NativeMenu
         {
             new NativeMenuItem("Open...")

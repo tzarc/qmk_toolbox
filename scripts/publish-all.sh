@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# publish-all.sh — Run dotnet publish for every supported platform RID.
+#
+# When all five platforms are built (the default), also runs lipo to produce
+# the osx-universal binary from the osx-x64 and osx-arm64 outputs.
+# Pass one or more RIDs to build only those targets (skips the lipo step).
+#
+# Usage:  ./scripts/publish-all.sh [RID...]
+# Example: ./scripts/publish-all.sh linux-x64 win-x64
+# Deps:   Docker (mcr.microsoft.com/dotnet/sdk:10.0, ghcr.io/tzarc/qmk_toolchains:builder)
 
 set -eEuo pipefail
 

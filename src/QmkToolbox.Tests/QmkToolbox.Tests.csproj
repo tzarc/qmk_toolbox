@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../QmkToolbox.Core/QmkToolbox.Core.csproj" />
+    <ProjectReference Include="../QmkToolbox.Desktop/QmkToolbox.Desktop.csproj" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-namespace QmkToolbox.Core.Services;
+namespace QmkToolbox.Desktop.Services;
 
 public interface ISettingsService
 {
