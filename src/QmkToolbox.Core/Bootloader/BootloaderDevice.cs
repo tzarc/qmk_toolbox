@@ -37,11 +37,11 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
     public override string ToString() =>
         $"{ManufacturerString} {ProductString} ({VendorId:X4}:{ProductId:X4}:{RevisionBcd:X4})";
 
-    public abstract Task Flash(string mcu, string file);
+    public abstract Task FlashAsync(string mcu, string file);
 
-    public virtual Task FlashEeprom(string mcu, string file) => Task.CompletedTask;
+    public virtual Task FlashEepromAsync(string mcu, string file) => Task.CompletedTask;
 
-    public virtual Task Reset(string mcu) => Task.CompletedTask;
+    public virtual Task ResetAsync(string mcu) => Task.CompletedTask;
 
     protected async Task<int> RunToolAsync(string toolName, params string[] args) =>
         await FlashService.RunToolAsync(toolName, args, ToolProvider, PrintMessage).ConfigureAwait(false);

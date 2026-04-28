@@ -29,4 +29,14 @@ public interface IFlashToolProvider
 
     /// <summary>Extracts all embedded resource files, skipping any that already exist.</summary>
     void ExtractAllResources();
+
+    /// <summary>Clears the resource folder and fully re-extracts all bundled resources.</summary>
+    void ClearAndReExtract();
+
+    /// <summary>
+    /// Returns version strings for the flash utils, hidapi, and (on Linux) udev release manifests.
+    /// Each value is <c>"host:hash"</c> if the manifest was found, or <c>"unknown"</c>.
+    /// The <c>UdevRules</c> field is <see langword="null"/> on non-Linux platforms.
+    /// </summary>
+    (string? FlashUtils, string? HidApi, string? UdevRules) GetManifestInfo();
 }

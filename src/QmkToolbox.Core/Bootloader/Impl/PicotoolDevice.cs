@@ -22,13 +22,13 @@ internal sealed class PicotoolDevice : BootloaderDevice
         IsResettable = true;
     }
 
-    public override async Task Flash(string mcu, string file)
+    public override async Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".uf2", ".bin");
         await RunToolAsync("picotool", "load", file).ConfigureAwait(false);
         await RunToolAsync("picotool", "reboot").ConfigureAwait(false);
     }
 
-    public override Task Reset(string mcu) =>
+    public override Task ResetAsync(string mcu) =>
         RunToolAsync("picotool", "reboot");
 }

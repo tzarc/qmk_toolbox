@@ -34,6 +34,8 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
     public HidConsoleDevice(DeviceInfo deviceInfo) : base(deviceInfo)
     {
         _cts = new CancellationTokenSource();
+        // ReadLoop uses blocking synchronous HID reads (ReadTimeout); Task.Run offloads
+        // it to a thread pool thread so the constructor doesn't block the UI thread.
         Task.Run(() => ReadLoop(_cts.Token), _cts.Token);
     }
 

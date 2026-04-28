@@ -73,7 +73,7 @@ public class FlashOrchestrator(
                 try
                 {
                     Emit("Attempting to flash, please don't remove device", MessageType.Bootloader);
-                    await b.Flash(mcu, firmwarePath);
+                    await b.FlashAsync(mcu, firmwarePath);
                     Emit("Flash complete", MessageType.Bootloader);
                 }
                 catch (Exception ex) when (ex is UnsupportedFileFormatException or ComPortNotFoundException)
@@ -94,7 +94,7 @@ public class FlashOrchestrator(
         {
             try
             {
-                await b.Reset(mcu);
+                await b.ResetAsync(mcu);
             }
             catch (ComPortNotFoundException ex)
             {
@@ -110,7 +110,7 @@ public class FlashOrchestrator(
             try
             {
                 Emit(startMessage, MessageType.Bootloader);
-                await b.FlashEeprom(mcu, fileName);
+                await b.FlashEepromAsync(mcu, fileName);
                 Emit(completeMessage, MessageType.Bootloader);
             }
             catch (ComPortNotFoundException ex)

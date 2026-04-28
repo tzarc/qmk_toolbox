@@ -43,7 +43,7 @@ internal abstract class DfuUtilDevice : BootloaderDevice
         _resetSuffix = resetSuffix;
     }
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".bin");
 
@@ -51,7 +51,7 @@ internal abstract class DfuUtilDevice : BootloaderDevice
         return RunToolAsync("dfu-util", args);
     }
 
-    public override Task Reset(string mcu)
+    public override Task ResetAsync(string mcu)
     {
         if (_resetSuffix == null)
             throw new NotSupportedException($"{Name} does not support reset.");

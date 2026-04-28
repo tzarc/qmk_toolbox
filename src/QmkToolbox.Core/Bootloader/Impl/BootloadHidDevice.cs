@@ -15,12 +15,12 @@ internal sealed class BootloadHidDevice : BootloaderDevice
         IsResettable = true;
     }
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".hex");
         return RunToolAsync("bootloadHID", "-r", file);
     }
 
-    public override Task Reset(string mcu) =>
+    public override Task ResetAsync(string mcu) =>
         RunToolAsync("bootloadHID", "-r");
 }

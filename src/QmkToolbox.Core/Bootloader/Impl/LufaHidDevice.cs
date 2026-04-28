@@ -22,7 +22,7 @@ internal sealed class LufaHidDevice : BootloaderDevice
         PreferredDriver = "HidUsb";
     }
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".hex");
         return RunToolAsync("hid_bootloader_cli", $"-mmcu={mcu}", file, "-v");

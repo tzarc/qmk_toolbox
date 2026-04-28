@@ -15,12 +15,12 @@ internal sealed class HalfKayDevice : BootloaderDevice
         IsResettable = true;
     }
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".hex");
         return RunToolAsync("teensy_loader_cli", $"-mmcu={mcu}", file, "-v");
     }
 
-    public override Task Reset(string mcu) =>
+    public override Task ResetAsync(string mcu) =>
         RunToolAsync("teensy_loader_cli", $"-mmcu={mcu}", "-bv");
 }

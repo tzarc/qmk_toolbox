@@ -58,7 +58,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null, null,
-            bd => bd.Flash("at90usb1286", "test.hex"));
+            bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
         Assert.Equal(3, cmds.Count);
         Assert.Equal("dfu-programmer at90usb1286 erase --force", cmds[0]);
@@ -71,7 +71,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null, null,
-            bd => bd.FlashEeprom("at90usb1286", "reset.eep"));
+            bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
         Assert.Equal(2, cmds.Count);
         Assert.Equal("dfu-programmer at90usb1286 erase --force", cmds[0]);
@@ -83,7 +83,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x2FEF, 0x0936), MockToolProvider(), null, null,
-            bd => bd.FlashEeprom("at90usb1286", "reset.eep"));
+            bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-programmer at90usb1286 flash --force --suppress-validation --eeprom reset.eep", cmds[0]);
@@ -94,7 +94,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x2FEF, 0), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEeprom("at90usb1286", "firmware.uf2"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEepromAsync("at90usb1286", "firmware.uf2"));
         Assert.Contains(".eep", ex.Message);
     }
 
@@ -103,7 +103,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null, null,
-            bd => bd.Reset("at90usb1286"));
+            bd => bd.ResetAsync("at90usb1286"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-programmer at90usb1286 reset", cmds[0]);
@@ -116,7 +116,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x314B, 0x0106), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 314B:0106 -s 0x08000000:leave -D test.bin", cmds[0]);
@@ -127,7 +127,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x314B, 0x0106), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "test.hex"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.hex"));
         Assert.Contains(".bin", ex.Message);
     }
 
@@ -136,7 +136,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x314B, 0x0106), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 314B:0106 -s 0x08000000:leave", cmds[0]);
@@ -149,7 +149,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x2E3C, 0xDF11), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 2E3C:DF11 -s 0x08000000:leave -D test.bin", cmds[0]);
@@ -160,7 +160,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x2E3C, 0xDF11), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "test.hex"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.hex"));
         Assert.Contains(".bin", ex.Message);
     }
 
@@ -169,7 +169,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x2E3C, 0xDF11), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 2E3C:DF11 -s 0x08000000:leave", cmds[0]);
@@ -182,7 +182,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x6124), MockToolProvider(), MockSerialPort("ttyACM0"), null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("mdloader -p ttyACM0 -D test.bin --restart", cmds[0]);
@@ -193,7 +193,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x6124), MockToolProvider(), MockSerialPort("ttyACM0"), null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("mdloader -p ttyACM0 --restart", cmds[0]);
@@ -203,14 +203,14 @@ public class FlashCommandTests
     public async Task AtmelSamBaDevice_Flash_NoComPort_Throws()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), MockToolProvider(), null, null)!;
-        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.Flash("", "test.bin"));
+        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("", "test.bin"));
     }
 
     [Fact]
     public async Task AtmelSamBaDevice_Reset_NoComPort_Throws()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), MockToolProvider(), null, null)!;
-        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.Reset(""));
+        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.ResetAsync(""));
     }
 
     // ── AvrIspDevice ──────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x0483), MockToolProvider(), MockSerialPort("ttyACM0"), null,
-            bd => bd.Flash("atmega32u4", "test.hex"));
+            bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c avrisp -U flash:w:test.hex:i -P ttyACM0", cmds[0]);
@@ -233,7 +233,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x16C0, 0x05DF), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "test.uf2"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.uf2"));
         Assert.Contains(".hex", ex.Message);
     }
 
@@ -242,7 +242,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x05DF), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.hex"));
+            bd => bd.FlashAsync("", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("bootloadHID -r test.hex", cmds[0]);
@@ -253,7 +253,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x05DF), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("bootloadHID -r", cmds[0]);
@@ -266,7 +266,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort("ttyACM0"), null,
-            bd => bd.Flash("atmega32u4", "test.hex"));
+            bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c avr109 -U flash:w:test.hex:i -P ttyACM0", cmds[0]);
@@ -277,7 +277,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort("ttyACM0"), null,
-            bd => bd.FlashEeprom("atmega32u4", "reset.eep"));
+            bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c avr109 -U eeprom:w:reset.eep:i -P ttyACM0", cmds[0]);
@@ -288,7 +288,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEeprom("atmega32u4", "firmware.uf2"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEepromAsync("atmega32u4", "firmware.uf2"));
         Assert.Contains(".eep", ex.Message);
     }
 
@@ -296,7 +296,7 @@ public class FlashCommandTests
     public async Task CaterinaDevice_Flash_NoComPort_Throws()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), MockToolProvider(), null, null)!;
-        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.Flash("atmega32u4", "test.hex"));
+        await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("atmega32u4", "test.hex"));
     }
 
     // ── Gd32VDfuDevice ────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x28E9, 0x0189), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 28E9:0189 -s 0x08000000:leave -D test.bin", cmds[0]);
@@ -317,7 +317,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x28E9, 0x0189), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 28E9:0189 -s 0x08000000:leave", cmds[0]);
@@ -330,7 +330,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x0478), MockToolProvider(), null, null,
-            bd => bd.Flash("at90usb1286", "test.hex"));
+            bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("teensy_loader_cli -mmcu=at90usb1286 test.hex -v", cmds[0]);
@@ -341,7 +341,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x0478), MockToolProvider(), null, null,
-            bd => bd.Reset("at90usb1286"));
+            bd => bd.ResetAsync("at90usb1286"));
 
         Assert.Single(cmds);
         Assert.Equal("teensy_loader_cli -mmcu=at90usb1286 -bv", cmds[0]);
@@ -354,7 +354,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1C11, 0xB007), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 1C11:B007 -D test.bin", cmds[0]);
@@ -365,7 +365,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1C11, 0xB007), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 1C11:B007 -e", cmds[0]);
@@ -378,7 +378,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x03EB, 0x2067, 0), MockToolProvider(), null, null,
-            bd => bd.Flash("atmega32u4", "test.hex"));
+            bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("hid_bootloader_cli -mmcu=atmega32u4 test.hex -v", cmds[0]);
@@ -402,7 +402,7 @@ public class FlashCommandTests
             BootloaderDevice bd = BootloaderFactory.CreateDevice(
                 Usb(0x03EB, 0x2045), MockToolProvider(), null, mount)!;
 
-            await bd.Flash("", src);
+            await bd.FlashAsync("", src);
 
             string dest = Path.Combine(mountDir, "FLASH.BIN");
             Assert.True(File.Exists(dest));
@@ -423,7 +423,7 @@ public class FlashCommandTests
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
             Usb(0x03EB, 0x2045), MockToolProvider(), null, null)!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "firmware.hex"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "firmware.hex"));
         Assert.Contains(".bin", ex.Message);
     }
 
@@ -434,7 +434,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x0483, 0xDF11), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 0483:DF11 -s 0x08000000:leave -D test.bin", cmds[0]);
@@ -445,7 +445,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x0483, 0xDF11), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 0 -d 0483:DF11 -s 0x08000000:leave", cmds[0]);
@@ -458,7 +458,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1EAF, 0x0003), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("dfu-util -a 2 -d 1EAF:0003 -R -D test.bin", cmds[0]);
@@ -471,7 +471,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x05DC), MockToolProvider(), null, null,
-            bd => bd.Flash("atmega32u4", "test.hex"));
+            bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c usbasp -U flash:w:test.hex:i", cmds[0]);
@@ -482,7 +482,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x16C0, 0x05DC), MockToolProvider(), null, null,
-            bd => bd.FlashEeprom("atmega32u4", "reset.eep"));
+            bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c usbasp -U eeprom:w:reset.eep:i", cmds[0]);
@@ -493,7 +493,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x16C0, 0x05DC), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEeprom("atmega32u4", "firmware.uf2"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEepromAsync("atmega32u4", "firmware.uf2"));
         Assert.Contains(".eep", ex.Message);
     }
 
@@ -504,7 +504,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1781, 0x0C9F), MockToolProvider(), null, null,
-            bd => bd.Flash("atmega32u4", "test.hex"));
+            bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c usbtiny -U flash:w:test.hex:i", cmds[0]);
@@ -515,7 +515,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x1781, 0x0C9F), MockToolProvider(), null, null,
-            bd => bd.FlashEeprom("atmega32u4", "reset.eep"));
+            bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
         Assert.Single(cmds);
         Assert.Equal("avrdude -p atmega32u4 -c usbtiny -U eeprom:w:reset.eep:i", cmds[0]);
@@ -530,7 +530,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x2E8A, 0x0003), MockToolProvider(), null, null,
-            bd => bd.Flash("", filename));
+            bd => bd.FlashAsync("", filename));
 
         Assert.Equal(2, cmds.Count);
         Assert.Equal($"picotool load {filename}", cmds[0]);
@@ -542,7 +542,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x2E8A, 0x0003), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "test.hex"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.hex"));
         Assert.Contains(".uf2", ex.Message);
     }
 
@@ -551,7 +551,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x2E8A, 0x0003), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("picotool reboot", cmds[0]);
@@ -562,7 +562,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x2E8A, 0x000F), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.uf2"));
+            bd => bd.FlashAsync("", "test.uf2"));
 
         Assert.Equal(2, cmds.Count);
         Assert.Equal("picotool load test.uf2", cmds[0]);
@@ -576,7 +576,7 @@ public class FlashCommandTests
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x342D, 0xDFA0), MockToolProvider())!;
 
-        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.Flash("", "test.uf2"));
+        UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.uf2"));
         Assert.Contains(".bin", ex.Message);
     }
 
@@ -585,7 +585,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x342D, 0xDFA0), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.bin"));
+            bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
         Assert.Equal("wb32-dfu-updater_cli --toolbox-mode --dfuse-address 0x08000000 --download test.bin", cmds[0]);
@@ -596,7 +596,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x342D, 0xDFA0), MockToolProvider(), null, null,
-            bd => bd.Flash("", "test.hex"));
+            bd => bd.FlashAsync("", "test.hex"));
 
         Assert.Single(cmds);
         Assert.Equal("wb32-dfu-updater_cli --toolbox-mode --download test.hex", cmds[0]);
@@ -607,7 +607,7 @@ public class FlashCommandTests
     {
         List<string> cmds = await Commands(
             Usb(0x342D, 0xDFA0), MockToolProvider(), null, null,
-            bd => bd.Reset(""));
+            bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
         Assert.Equal("wb32-dfu-updater_cli --reset", cmds[0]);

@@ -25,6 +25,8 @@ public class HidApiListener : IHidListener
         HidApi.Hid.Init();
         _cts = new CancellationTokenSource();
         CancellationToken token = _cts.Token;
+        // The polling loop runs indefinitely; Task.Run moves it to a thread pool thread
+        // so it never blocks the UI thread.
         Task.Run(async () =>
         {
             try

@@ -15,7 +15,7 @@ internal sealed class Wb32DfuDevice : BootloaderDevice
         IsResettable = true;
     }
 
-    public override async Task Flash(string mcu, string file)
+    public override async Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".bin", ".hex");
 
@@ -25,6 +25,6 @@ internal sealed class Wb32DfuDevice : BootloaderDevice
             await RunToolAsync("wb32-dfu-updater_cli", "--toolbox-mode", "--download", file).ConfigureAwait(false);
     }
 
-    public override Task Reset(string mcu) =>
+    public override Task ResetAsync(string mcu) =>
         RunToolAsync("wb32-dfu-updater_cli", "--reset");
 }

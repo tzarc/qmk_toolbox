@@ -66,7 +66,6 @@ public partial class MainWindowViewModel : LogViewModelBase
 
     private readonly IFlashToolProvider _toolProvider;
     private readonly IUsbDetector _usbDetector;
-    private readonly ResourceManager _resourceManager;
     private readonly FlashOrchestrator _flashOrchestrator;
 
     private Func<Func<Task>, Task>? _invokeOnUiThread;
@@ -83,7 +82,6 @@ public partial class MainWindowViewModel : LogViewModelBase
         _usbDetector = usbDetector;
         Settings = settingsService;
 
-        _resourceManager = new ResourceManager(toolProvider);
         _flashOrchestrator = new FlashOrchestrator(toolProvider, serialPortService, mountPointService);
         _flashOrchestrator.OutputReceived += (msg, type) => Invoke(() => Log(msg, type));
         _flashOrchestrator.StateChanged += () => Invoke(UpdateCanExecute);
@@ -105,10 +103,12 @@ public partial class MainWindowViewModel : LogViewModelBase
     {
         if (_invokeOnUiThread is null)
             throw new InvalidOperationException("SetUiInvoker must be called before StartListeners.");
+        // EnsureResourceFolder is blocking file I/O (resource extraction); offload to
+        // a thread pool thread so StartListeners returns without blocking the UI thread.
         _ = Task.Run(() =>
         {
             try
-            { _resourceManager.EnsureResources(); }
+            { _toolProvider.EnsureResourceFolder(); }
             catch (Exception ex) { Invoke(() => LogError($"Failed to extract resources: {ex.Message}")); }
         });
         try
@@ -120,8 +120,6 @@ public partial class MainWindowViewModel : LogViewModelBase
     {
         if (!Settings.Current.FirstStart)
             return;
-        Settings.Current.FirstStart = false;
-        Settings.Save();
 
         if (OperatingSystem.IsWindows())
         {
@@ -133,6 +131,9 @@ public partial class MainWindowViewModel : LogViewModelBase
             if (await ShowConfirmAsync("Linux udev Rules", "Would you like to install Linux udev rules for QMK-supported bootloaders and HID devices?"))
                 await InstallUdevRules();
         }
+
+        Settings.Current.FirstStart = false;
+        Settings.Save();
     }
 
     private Task<bool> ShowConfirmAsync(string title, string message)
@@ -217,7 +218,7 @@ public partial class MainWindowViewModel : LogViewModelBase
         LogInfo($"QMK Toolbox {version} (https://qmk.fm/toolbox)");
         try
         {
-            (string? flashUtils, string? hidApi, string? udevRules) = _resourceManager.GetManifestInfo();
+            (string? flashUtils, string? hidApi, string? udevRules) = _toolProvider.GetManifestInfo();
             string manifestInfo = $"Flash utils: {flashUtils}, hidapi: {hidApi}";
             if (udevRules != null)
                 manifestInfo += $", qmk_udev: {udevRules}";
@@ -307,8 +308,10 @@ public partial class MainWindowViewModel : LogViewModelBase
         _flashOrchestrator.FlashEepromAsync(SelectedMcu, _toolProvider.GetToolPath("reset_right.eep"), "Attempting to set handedness, please don't remove device", "EEPROM write complete");
 
     [RelayCommand]
+    // ClearAndReExtract is a synchronous blocking method; Task.Run wraps it so this
+    // RelayCommand returns an awaitable Task without blocking the UI thread.
     private Task ClearResources() =>
-        Task.Run(_resourceManager.ClearAndReExtractResources);
+        Task.Run(_toolProvider.ClearAndReExtract);
 
     [RelayCommand]
     private void Exit()
@@ -337,11 +340,11 @@ public partial class MainWindowViewModel : LogViewModelBase
     private void OpenAbout() => _windowService?.ShowAbout();
 
     [RelayCommand]
-    private void InstallDrivers() => DriverInstaller.Install(_toolProvider, LogError);
+    private void InstallDrivers() => WindowsDriversInstaller.Install(_toolProvider, LogError);
 
     [RelayCommand]
     private async Task InstallUdevRules() =>
-        await UdevInstaller.InstallAsync(
+        await LinuxUdevInstaller.InstallAsync(
             _toolProvider,
             msg => Invoke(() => Log(msg, MessageType.UdevOutput)),
             msg => Invoke(() => Log(msg, MessageType.Error)));

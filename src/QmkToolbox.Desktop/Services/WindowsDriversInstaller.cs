@@ -8,7 +8,7 @@ namespace QmkToolbox.Desktop.Services;
 /// Windows-only driver installer using qmk_driver_installer.exe (bundled resource).
 /// All methods are no-ops on non-Windows platforms.
 /// </summary>
-public static class DriverInstaller
+public static class WindowsDriversInstaller
 {
     private const string DriversListFilename = "drivers.txt";
     private const string InstallerFilename = "qmk_driver_installer.exe";

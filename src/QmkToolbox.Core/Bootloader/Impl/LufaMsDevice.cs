@@ -17,12 +17,14 @@ internal sealed class LufaMsDevice : BootloaderDevice
         MountPoint = mountPointService?.FindMountPoint(device);
     }
 
-    public override async Task Flash(string mcu, string file)
+    public override async Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".bin");
 
-        // PrintMessage/OutputReceived is safe from any thread — callers
-        // (FlashOrchestrator) always marshal to the UI thread via Invoke.
+        // File.Delete/Copy are blocking synchronous calls that can be slow on USB
+        // mass storage; Task.Run offloads them to a thread pool thread so the UI
+        // stays responsive. PrintMessage/OutputReceived are safe from any thread —
+        // callers (FlashOrchestrator) always marshal to the UI thread via Invoke.
         await Task.Run(() =>
         {
             if (MountPoint == null)

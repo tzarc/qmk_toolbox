@@ -48,7 +48,7 @@ internal abstract class AvrdudeDevice : BootloaderDevice
             ? ["-p", mcu, "-c", _programmer, "-U", $"{target}:w:{file}:i", "-P", comPort!]
             : ["-p", mcu, "-c", _programmer, "-U", $"{target}:w:{file}:i"];
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".hex");
         string? comPort = null;
@@ -57,7 +57,7 @@ internal abstract class AvrdudeDevice : BootloaderDevice
         return RunToolAsync("avrdude", BuildArgs(mcu, "flash", file, comPort));
     }
 
-    public override Task FlashEeprom(string mcu, string file)
+    public override Task FlashEepromAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".eep", ".hex");
         string? comPort = null;

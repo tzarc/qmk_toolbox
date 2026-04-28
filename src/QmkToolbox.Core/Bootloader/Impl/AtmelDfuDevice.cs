@@ -24,7 +24,7 @@ internal sealed class AtmelDfuDevice : BootloaderDevice
         IsResettable = true;
     }
 
-    public override async Task Flash(string mcu, string file)
+    public override async Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".hex");
         await RunToolAsync("dfu-programmer", mcu, "erase", "--force").ConfigureAwait(false);
@@ -34,7 +34,7 @@ internal sealed class AtmelDfuDevice : BootloaderDevice
         await RunToolAsync("dfu-programmer", mcu, "reset").ConfigureAwait(false);
     }
 
-    public override async Task FlashEeprom(string mcu, string file)
+    public override async Task FlashEepromAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".eep", ".hex");
 
@@ -47,6 +47,6 @@ internal sealed class AtmelDfuDevice : BootloaderDevice
             PrintMessage("Please reflash device with firmware now", MessageType.Bootloader);
     }
 
-    public override Task Reset(string mcu) =>
+    public override Task ResetAsync(string mcu) =>
         RunToolAsync("dfu-programmer", mcu, "reset");
 }

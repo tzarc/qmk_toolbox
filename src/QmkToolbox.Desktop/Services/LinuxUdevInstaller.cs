@@ -9,7 +9,7 @@ namespace QmkToolbox.Desktop.Services;
 /// Invokes pkexec to copy files into system directories and reload udev rules.
 /// All methods are no-ops on non-Linux platforms.
 /// </summary>
-public static class UdevInstaller
+public static class LinuxUdevInstaller
 {
     private const string QmkIdFilename = "qmk_id";
     private const string RulesFilename = "50-qmk.rules";

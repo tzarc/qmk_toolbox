@@ -22,14 +22,14 @@ internal sealed class AtmelSamBaDevice : BootloaderDevice
         _comPort = new Lazy<string?>(FindComPort);
     }
 
-    public override Task Flash(string mcu, string file)
+    public override Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".bin");
         string port = RequireComPort(_comPort.Value);
         return RunToolAsync("mdloader", "-p", port, "-D", file, "--restart");
     }
 
-    public override Task Reset(string mcu)
+    public override Task ResetAsync(string mcu)
     {
         string port = RequireComPort(_comPort.Value);
         return RunToolAsync("mdloader", "-p", port, "--restart");
