@@ -100,3 +100,13 @@ dotnet publish src/QmkToolbox.Desktop/QmkToolbox.Desktop.csproj -c Release -r <r
 ```
 
 Where `<rid>` is `win-x64`, `osx-arm64`, `osx-x64`, `linux-x64`, or `linux-arm64`.
+
+### Updating NuGet dependencies
+
+```sh
+# Check for outdated packages
+scripts/check-deps.sh
+
+# Upgrade Directory.Packages.props in place
+scripts/check-deps.sh --upgrade
+```
