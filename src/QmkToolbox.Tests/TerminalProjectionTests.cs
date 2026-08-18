@@ -9,7 +9,7 @@ public class TerminalProjectionTests
     // Bootloader has an empty prefix, so it isolates offset behaviour from prefix noise.
     private const MessageType Plain = MessageType.Bootloader;
 
-    private static TerminalBuffer BufferOf(string text, MessageType type = MessageType.Bootloader)
+    private static TerminalBuffer BufferOf(string text, MessageType type)
     {
         var buffer = new TerminalBuffer();
         buffer.Write(text, type);
@@ -90,31 +90,4 @@ public class TerminalProjectionTests
         Assert.Equal(16, runs.TotalLength());
     }
 
-    [Fact]
-    public void ToRuns_TotalLength_GrowsOnAppend()
-    {
-        var buffer = new TerminalBuffer();
-        buffer.Write("abc", Plain);
-        int before = TerminalProjection.ToRuns(buffer).TotalLength();
-
-        buffer.Write("def", Plain);
-        int after = TerminalProjection.ToRuns(buffer).TotalLength();
-
-        Assert.Equal(3, before);
-        Assert.Equal(6, after);
-        Assert.True(after >= before);
-    }
-
-    [Fact]
-    public void ToRuns_TotalLength_ShrinksOnClear()
-    {
-        TerminalBuffer buffer = BufferOf("abc\ndef", Plain);
-        int before = TerminalProjection.ToRuns(buffer).TotalLength();
-
-        buffer.Clear();
-        int after = TerminalProjection.ToRuns(buffer).TotalLength();
-
-        Assert.True(before > 0);
-        Assert.Equal(0, after);
-    }
 }

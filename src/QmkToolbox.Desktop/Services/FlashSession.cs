@@ -61,7 +61,6 @@ public partial class FlashSession : ObservableObject
         _usbDetector.DiagnosticTrace = msg => Invoke(() => DiagnosticTrace?.Invoke(msg));
     }
 
-    private Task InvokeAsync(Func<Task> action) => _uiInvoker(action);
     private void Invoke(Action action) => _ = _uiInvoker(() => { action(); return Task.CompletedTask; });
 
     public McuItem? SelectedMcuPair
@@ -152,7 +151,7 @@ public partial class FlashSession : ObservableObject
     internal Task? AutoFlashTask { get; private set; }
 
     private void OnDeviceConnected(IUsbDevice device)
-        => _ = InvokeAsync(async () =>
+        => _ = _uiInvoker(async () =>
         {
             // Completes synchronously for VID/PID-mapped devices; unmapped mass-storage devices
             // resolve only after the volume probe, so auto-flash waits until the volume is

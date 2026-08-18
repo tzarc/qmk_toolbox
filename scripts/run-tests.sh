@@ -14,7 +14,6 @@ set -eEuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
-REPORTGENERATOR_VERSION="5.5.10"
 
 if [ "$(id -u)" -ne 0 ]; then
     DOCKER_RUN_USER="-u $(id -u):$(id -g)"
@@ -27,7 +26,6 @@ rm -rf "${REPO_ROOT}/TestResults" "${REPO_ROOT}/coveragereport"
 docker run --rm \
     ${DOCKER_RUN_USER} \
     -e HOME=/tmp \
-    -e REPORTGENERATOR_VERSION="${REPORTGENERATOR_VERSION}" \
     -v "${REPO_ROOT}":/app \
     -w /app/src \
     mcr.microsoft.com/dotnet/sdk:10.0 \
@@ -37,9 +35,8 @@ docker run --rm \
             --settings coverage.runsettings \
             --results-directory /app/TestResults \
             "$@"
-        dotnet tool install --tool-path /tmp/rg dotnet-reportgenerator-globaltool \
-            --version "${REPORTGENERATOR_VERSION}" >/dev/null
-        /tmp/rg/reportgenerator \
+        dotnet tool restore >/dev/null
+        dotnet tool run reportgenerator \
             "-reports:/app/TestResults/*/coverage.cobertura.xml" \
             -targetdir:/app/coveragereport \
             "-reporttypes:HtmlInline;MarkdownSummaryGithub;TextSummary" >/dev/null

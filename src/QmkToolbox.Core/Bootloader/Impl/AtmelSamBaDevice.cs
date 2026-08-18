@@ -18,6 +18,7 @@ internal sealed class AtmelSamBaDevice : BootloaderDevice
         PreferredDriver = "usbser";
         IsResettable = true;
         _comPort = FindComPortAsync();
+        ComPortTask = _comPort;
     }
 
     public override async Task FlashAsync(string mcu, string file)
@@ -32,11 +33,4 @@ internal sealed class AtmelSamBaDevice : BootloaderDevice
         string port = RequireComPort(await _comPort.ConfigureAwait(false));
         await RunToolAsync("mdloader", "-p", port, "--restart");
     }
-
-    public override Task WhenReadyAsync() => _comPort;
-
-    public override string ToString() =>
-        _comPort.IsCompletedSuccessfully
-            ? $"{base.ToString()} [{_comPort.Result ?? "port not found"}]"
-            : base.ToString();
 }

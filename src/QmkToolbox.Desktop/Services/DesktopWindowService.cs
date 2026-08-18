@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.ViewModels;
@@ -35,12 +34,6 @@ public sealed class DesktopWindowService
             ]
         });
         return files.Count > 0 ? files[0].TryGetLocalPath() : null;
-    }
-
-    public async Task SetClipboardTextAsync(string text)
-    {
-        if (TopLevel.GetTopLevel(_owner)?.Clipboard is { } clipboard)
-            await clipboard.SetTextAsync(text);
     }
 
     private void ShowSingleton<T>(Func<T> create) where T : Window

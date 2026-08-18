@@ -65,7 +65,7 @@ public partial class LogPanel : UserControl
                 newBuffer.Changed += OnBufferChanged;
 
             RenderBuffer();
-            ScheduleScrollToEnd();
+            Dispatcher.UIThread.Post(LogScroller.ScrollToEnd, DispatcherPriority.Background);
         }
     }
 
@@ -230,10 +230,4 @@ public partial class LogPanel : UserControl
         return true;
     }
 
-    private void ScheduleScrollToEnd()
-    {
-        Dispatcher.UIThread.Post(
-            LogScroller.ScrollToEnd,
-            DispatcherPriority.Background);
-    }
 }

@@ -12,7 +12,7 @@
         <Configuration>
           <Format>cobertura</Format>
           <Exclude>[qmk_toolbox]QmkToolbox.Desktop.Views.*,[qmk_toolbox]CompiledAvaloniaXaml.*,[qmk_toolbox]QmkToolbox.Desktop.App,[qmk_toolbox]QmkToolbox.Desktop.Program,[qmk_toolbox]QmkToolbox.Desktop.Services.DesktopWindowService</Exclude>
-          <ExcludeByAttribute>GeneratedCodeAttribute,ObsoleteAttribute</ExcludeByAttribute>
+          <ExcludeByAttribute>GeneratedCodeAttribute</ExcludeByAttribute>
         </Configuration>
       </DataCollector>
     </DataCollectors>

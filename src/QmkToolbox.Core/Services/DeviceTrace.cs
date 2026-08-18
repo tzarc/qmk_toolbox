@@ -8,12 +8,9 @@ namespace QmkToolbox.Core.Services;
 /// </summary>
 public static class DeviceTrace
 {
-    /// <summary>Formats a VID/PID pair as <c>VID:XXXX PID:XXXX</c> (uppercase hex).</summary>
-    public static string VidPid(ushort vendorId, ushort productId) =>
-        $"VID:{vendorId:X4} PID:{productId:X4}";
-
-    /// <inheritdoc cref="VidPid(ushort, ushort)"/>
-    public static string VidPid(IUsbDevice device) => VidPid(device.VendorId, device.ProductId);
+    /// <summary>Formats a device's VID/PID as <c>VID:XXXX PID:XXXX</c> (uppercase hex).</summary>
+    public static string VidPid(IUsbDevice device) =>
+        $"VID:{device.VendorId:X4} PID:{device.ProductId:X4}";
 
     /// <summary>
     /// Formats VID/PID plus revision as <c>VID:XXXX PID:XXXX REV:XXXX</c> — for arrival traces,

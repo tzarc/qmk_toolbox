@@ -90,9 +90,9 @@ public class FlashOrchestrator(
     {
         if (!device.IsMassStorage)
             return null;
-        string markers = string.Join(", ", MassStorageBootloader.Probeable.Select(f => f.MarkerFile));
         DiagnosticTrace?.Invoke(
-            $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> mass storage, probing for {markers} until removal");
+            $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> mass storage, probing for" +
+            $" {string.Join(", ", MassStorageBootloader.Probeable.Select(f => f.MarkerFile))} until removal");
         var cancellation = new CancellationTokenSource();
         _volumeProbes.Add((device, cancellation));
         try

@@ -7,8 +7,6 @@ public static class FlashService
 {
     private const int FlashTimeoutMinutes = 5;
 
-    public delegate void OutputReceivedDelegate(string data, MessageType type);
-
     /// <summary>
     /// Launches a flash tool as a child process and returns its exit code.
     /// stdout/stderr are forwarded as raw text chunks as they arrive — embedded '\r'/'\n'
@@ -29,7 +27,7 @@ public static class FlashService
         string toolName,
         string[] args,
         IFlashToolProvider toolProvider,
-        OutputReceivedDelegate? outputReceived,
+        Action<string, MessageType>? outputReceived,
         IProcessRunner? runner = null,
         TimeProvider? timeProvider = null)
     {
@@ -66,21 +64,13 @@ public static class FlashService
                 await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
                 return process.ExitCode;
             }
-            catch (OperationCanceledException)
-            {
-                outputReceived?.Invoke($"Flash tool timed out after {FlashTimeoutMinutes} minutes.", MessageType.Error);
-                try
-                {
-                    process.Kill();
-                }
-                catch { }
-                return -1;
-            }
             catch (Exception ex)
             {
-                // A pump failure (e.g. IOException mid-read) must not leave the child process
-                // running or abort the caller's remaining devices.
-                outputReceived?.Invoke($"Error reading tool output: {ex.Message}", MessageType.Error);
+                // Timeout or pump failure (e.g. IOException mid-read); either way the child
+                // process must not be left running or abort the caller's remaining devices.
+                outputReceived?.Invoke(ex is OperationCanceledException
+                    ? $"Flash tool timed out after {FlashTimeoutMinutes} minutes."
+                    : $"Error reading tool output: {ex.Message}", MessageType.Error);
                 try
                 {
                     process.Kill();

@@ -8,14 +8,17 @@ namespace QmkToolbox.Desktop.Services;
 /// Extracts bundled tool binaries and data files to a local app-data folder and
 /// resolves platform-appropriate tool paths.
 /// </summary>
-public class FlashToolProvider : IFlashToolProvider
+public class FlashToolProvider(string? resourceFolder = null, Assembly? resourceAssembly = null) : IFlashToolProvider
 {
-    private static readonly Assembly ResourceAssembly = typeof(FlashToolProvider).Assembly;
     private const string ResourcePrefix = "QmkToolbox.Desktop.Resources";
 
-    public string GetResourceFolder() => Path.Combine(
+    // Both parameters are test seams (cf. SettingsService's path); production uses the defaults.
+    private readonly Assembly _resources = resourceAssembly ?? typeof(FlashToolProvider).Assembly;
+    private readonly string _resourceFolder = resourceFolder ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "QMK", "Toolbox", "Resources");
+
+    public string GetResourceFolder() => _resourceFolder;
 
     public string GetToolPath(string toolName)
     {
@@ -26,26 +29,15 @@ public class FlashToolProvider : IFlashToolProvider
 
     /// <summary>
     /// Ensures the resource folder exists and all bundled resources are present.
-    /// If the installed manifest's COMMIT_DATE does not match the embedded one,
+    /// If any installed manifest's COMMIT_DATE does not match its embedded one,
     /// the folder is wiped and fully re-extracted. Otherwise, <see cref="ExtractAllResources"/>
-    /// is called to fill any individually missing files (cheap: skips files that exist).
-    /// On Linux, also ensures udev resources are up to date.
+    /// fills any individually missing files (cheap: skips files that exist).
     /// </summary>
     public void EnsureResourceFolder()
     {
-        string folder = GetResourceFolder();
-        Directory.CreateDirectory(folder);
-
-        if (!IsUpToDate(folder))
-        {
-            Directory.Delete(folder, true);
-            Directory.CreateDirectory(folder);
-        }
-
+        if (!IsUpToDate(GetResourceFolder()))
+            ClearResourceFolder();
         ExtractAllResources();
-
-        if (OperatingSystem.IsLinux())
-            EnsureUdevResources(GetResourceFolder());
     }
 
     /// <summary>
@@ -55,8 +47,6 @@ public class FlashToolProvider : IFlashToolProvider
     {
         ClearResourceFolder();
         ExtractAllResources();
-        if (OperatingSystem.IsLinux())
-            EnsureUdevResources(GetResourceFolder());
     }
 
     /// <summary>
@@ -88,27 +78,21 @@ public class FlashToolProvider : IFlashToolProvider
     }
 
     /// <summary>
-    /// Returns true when the installed manifest's COMMIT_DATE matches the
-    /// embedded one, meaning the resource folder is already current.
+    /// Returns true when every embedded release manifest's COMMIT_DATE matches its
+    /// installed copy; the resource folder is then already current.
     /// </summary>
-    private static bool IsUpToDate(string folder)
-    {
-        string? manifestResourceName = ResourceAssembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.StartsWith(ResourcePrefix + ".", StringComparison.Ordinal)
-                              && n.Contains("_release_", StringComparison.Ordinal));
-        if (manifestResourceName == null)
-            return false;
-
-        string manifestFile = manifestResourceName[(ResourcePrefix.Length + 1)..];
-        string installedManifest = Path.Combine(folder, manifestFile);
-        if (!File.Exists(installedManifest))
-            return false;
-
-        string? embeddedDate = ReadCommitDate(() => ResourceAssembly.GetManifestResourceStream(manifestResourceName));
-        string? installedDate = ReadCommitDate(() => File.OpenRead(installedManifest));
-
-        return embeddedDate != null && embeddedDate == installedDate;
-    }
+    private bool IsUpToDate(string folder) =>
+        _resources.GetManifestResourceNames()
+            .Where(n => n.StartsWith(ResourcePrefix + ".", StringComparison.Ordinal)
+                     && n.Contains("_release_", StringComparison.Ordinal))
+            .All(name =>
+            {
+                string installed = Path.Combine(folder, name[(ResourcePrefix.Length + 1)..]);
+                if (!File.Exists(installed))
+                    return false;
+                string? embeddedDate = ReadCommitDate(() => _resources.GetManifestResourceStream(name));
+                return embeddedDate != null && embeddedDate == ReadCommitDate(() => File.OpenRead(installed));
+            });
 
     public static string? ReadCommitDate(Func<Stream?> openStream)
     {
@@ -136,7 +120,7 @@ public class FlashToolProvider : IFlashToolProvider
     private void ExtractAllResources()
     {
         Directory.CreateDirectory(GetResourceFolder());
-        foreach (string name in ResourceAssembly.GetManifestResourceNames()
+        foreach (string name in _resources.GetManifestResourceNames()
                      .Where(n => n.StartsWith(ResourcePrefix + ".", StringComparison.Ordinal)))
         {
             string file = name[(ResourcePrefix.Length + 1)..];
@@ -150,7 +134,7 @@ public class FlashToolProvider : IFlashToolProvider
         if (File.Exists(destPath))
             return;
 
-        using Stream? stream = ResourceAssembly.GetManifestResourceStream($"{ResourcePrefix}.{file}");
+        using Stream? stream = _resources.GetManifestResourceStream($"{ResourcePrefix}.{file}");
         if (stream == null)
             return;
         using var fileStream = new FileStream(destPath, FileMode.Create);
@@ -158,49 +142,6 @@ public class FlashToolProvider : IFlashToolProvider
 
         if (!OperatingSystem.IsWindows() && IsExecutable(destPath))
             MakeExecutable(destPath);
-    }
-
-    /// <summary>
-    /// Checks the embedded qmk_udev manifest COMMIT_DATE against the installed copy.
-    /// Re-extracts qmk_id, 50-qmk.rules, and the manifest if the version differs or
-    /// any file is missing.
-    /// </summary>
-    [SupportedOSPlatform("linux")]
-    private static void EnsureUdevResources(string folder)
-    {
-        string? manifestResourceName = ResourceAssembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.StartsWith($"{ResourcePrefix}.qmk_udev_release_", StringComparison.Ordinal));
-        if (manifestResourceName == null)
-            return;
-        string manifestName = manifestResourceName[(ResourcePrefix.Length + 1)..];
-
-        string? embeddedDate = ReadCommitDate(() => ResourceAssembly.GetManifestResourceStream(manifestResourceName));
-        if (embeddedDate == null)
-            return;
-
-        string installedManifestPath = Path.Combine(folder, manifestName);
-        bool allPresent = File.Exists(installedManifestPath)
-                       && File.Exists(Path.Combine(folder, "qmk_id"))
-                       && File.Exists(Path.Combine(folder, "50-qmk.rules"));
-
-        if (allPresent)
-        {
-            string? installedDate = ReadCommitDate(() => File.OpenRead(installedManifestPath));
-            if (installedDate == embeddedDate)
-                return;
-        }
-
-        foreach (string file in (string[])["qmk_id", "50-qmk.rules", manifestName])
-        {
-            string destPath = Path.Combine(folder, file);
-            using Stream? stream = ResourceAssembly.GetManifestResourceStream($"{ResourcePrefix}.{file}");
-            if (stream == null)
-                continue;
-            using var fs = new FileStream(destPath, FileMode.Create);
-            stream.CopyTo(fs);
-        }
-
-        MakeExecutable(Path.Combine(folder, "qmk_id"));
     }
 
     private static (string Host, string Hash)? ReadReleaseManifest(string folder, string prefix)

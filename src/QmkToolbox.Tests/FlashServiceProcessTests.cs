@@ -53,20 +53,9 @@ public class FlashServiceProcessTests
     }
 
     [Fact]
-    public async Task RunToolAsync_NonZeroExit_Propagated()
-    {
-        var process = new FakeRunningProcess(exitCode: 42);
-
-        int exit = await FlashService.RunToolAsync("tool", [], Provider(), null,
-            new FakeProcessRunner(process));
-
-        Assert.Equal(42, exit);
-    }
-
-    [Fact]
     public async Task RunToolAsync_StartFailure_EmitsErrorAndReturnsMinusOne()
     {
-        var runner = new FakeProcessRunner(new Win32Exception("No such file or directory"));
+        var runner = new FakeProcessRunner(startException: new Win32Exception("No such file or directory"));
         MessageType? errorType = null;
         string? errorMessage = null;
 
@@ -117,23 +106,10 @@ public class FlashServiceProcessTests
     }
 }
 
-internal sealed class FakeProcessRunner : IProcessRunner
+internal sealed class FakeProcessRunner(IRunningProcess? process = null, Exception? startException = null) : IProcessRunner
 {
-    private readonly IRunningProcess? _process;
-    private readonly Exception? _startException;
-
-    public FakeProcessRunner(IRunningProcess process)
-    {
-        _process = process;
-    }
-
-    public FakeProcessRunner(Exception startException)
-    {
-        _startException = startException;
-    }
-
     public IRunningProcess Start(string fileName, string workingDir, IReadOnlyList<string> args) =>
-        _startException != null ? throw _startException : _process!;
+        startException != null ? throw startException : process!;
 }
 
 internal sealed class FakeRunningProcess(

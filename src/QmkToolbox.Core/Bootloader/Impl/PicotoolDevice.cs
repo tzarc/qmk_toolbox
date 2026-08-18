@@ -6,16 +6,15 @@ namespace QmkToolbox.Core.Bootloader.Impl;
 /// <summary>Raspberry Pi BOOTSEL bootloader device (via picotool).</summary>
 internal sealed class PicotoolDevice : BootloaderDevice
 {
-    private static readonly Dictionary<ushort, string> ModelNames = new()
-    {
-        [0x0003] = "RP2040",
-        [0x000F] = "RP2350",
-    };
-
     public PicotoolDevice(IUsbDevice device, IFlashToolProvider toolProvider)
         : base(device, toolProvider)
     {
-        string model = ModelNames.GetValueOrDefault(device.ProductId, $"0x{device.ProductId:X4}");
+        string model = device.ProductId switch
+        {
+            0x0003 => "RP2040",
+            0x000F => "RP2350",
+            _ => $"0x{device.ProductId:X4}",
+        };
         Type = BootloaderType.Picotool;
         Name = $"Picotool ({model})";
         PreferredDriver = "WinUSB";

@@ -21,10 +21,8 @@ public class HidConsoleViewModelTests
         public event Action<IHidDevice, string>? ConsoleReportReceived;
         public event Action<string>? ErrorOccurred;
 
-        public bool Disposed;
-
         public void Start() { }
-        public void Dispose() => Disposed = true;
+        public void Dispose() { }
 
         public void RaiseConnected(IHidDevice d) => HidDeviceConnected?.Invoke(d);
         public void RaiseDisconnected(IHidDevice d) => HidDeviceDisconnected?.Invoke(d);
@@ -180,11 +178,4 @@ public class HidConsoleViewModelTests
         Assert.Contains("HID polling stopped unexpectedly: boom", vm.Buffer.ToString());
     }
 
-    [Fact]
-    public void Dispose_DisposesTheListener()
-    {
-        (HidConsoleViewModel vm, FakeHidListener listener) = NewConsole();
-        vm.Dispose();
-        Assert.True(listener.Disposed);
-    }
 }

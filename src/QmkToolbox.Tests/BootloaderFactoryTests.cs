@@ -133,6 +133,7 @@ public class BootloaderFactoryTests
     [InlineData("STM32F411-BlackPill", "UF2 (STM32F411-BlackPill)")]
     public void CreateMassStorageDevice_Uf2_TypeAndNameReflectBoardId(string? boardId, string expectedName)
     {
+        // VID/PID are arbitrary: Mass-storage UF2-based devices are matched by marker file, not ID.
         IUsbDevice device = Usb(0x239A, 0x00FF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 

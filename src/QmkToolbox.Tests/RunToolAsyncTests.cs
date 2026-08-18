@@ -12,7 +12,7 @@ namespace QmkToolbox.Tests;
 /// </summary>
 public class RunToolAsyncTests
 {
-    [Fact]
+    [FactOnLinux] // spawns /usr/bin/printf via the real SystemProcessRunner
     public async Task RunToolAsync_ForwardsOutputRaw_WithCrAndLfIntact()
     {
         IFlashToolProvider provider = Substitute.For<IFlashToolProvider>();

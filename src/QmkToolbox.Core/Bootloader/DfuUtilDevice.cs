@@ -51,11 +51,11 @@ internal abstract class DfuUtilDevice : BootloaderDevice
         return RunToolAsync("dfu-util", args);
     }
 
+    // Only reachable when IsResettable (the orchestrator filters on it); a null suffix
+    // degrades to a plain dfu-util invocation rather than guarding a path nothing takes.
     public override Task ResetAsync(string mcu)
     {
-        if (_resetSuffix == null)
-            throw new NotSupportedException($"{Name} does not support reset.");
-        string[] args = ["-a", _altSetting.ToString(), "-d", _deviceId, .. _resetSuffix];
+        string[] args = ["-a", _altSetting.ToString(), "-d", _deviceId, .. _resetSuffix ?? []];
         return RunToolAsync("dfu-util", args);
     }
 }

@@ -6,7 +6,7 @@ namespace QmkToolbox.Core.Services;
 /// <summary>USB device path and ID parsing helpers.</summary>
 public static class UsbDeviceParser
 {
-    public static readonly Regex HwIdRegex = new(
+    private static readonly Regex HwIdRegex = new(
         @"VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4})(?:&REV_([0-9A-Fa-f]{4}))?",
         RegexOptions.IgnoreCase);
 
@@ -72,15 +72,4 @@ public static class UsbDeviceParser
                ushort.TryParse(text.Trim(), NumberStyles.HexNumber, null, out rev);
     }
 
-    /// <summary>
-    /// Returns true only for Windows root USB devices (USB\VID_...\... without a &amp;MI_ interface suffix).
-    /// On non-Windows platforms always returns true.
-    /// </summary>
-    public static bool IsWindowsRootUsbDevice(string devicePath)
-        => IsWindowsRootUsbDevice(devicePath, OperatingSystem.IsWindows());
-
-    public static bool IsWindowsRootUsbDevice(string devicePath, bool isWindows) =>
-        !isWindows ||
-        (devicePath.StartsWith("USB\\VID_", StringComparison.OrdinalIgnoreCase) &&
-         !devicePath.Contains("&MI_", StringComparison.OrdinalIgnoreCase));
 }

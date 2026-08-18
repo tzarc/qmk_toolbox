@@ -10,9 +10,7 @@ namespace QmkToolbox.Core.Bootloader;
 /// </summary>
 public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider toolProvider, ISerialPortService? serialPortService = null, IMountPointService? mountPointService = null)
 {
-    public delegate void FlashOutputReceivedDelegate(BootloaderDevice device, string data, MessageType type);
-
-    public event FlashOutputReceivedDelegate? OutputReceived;
+    public event Action<BootloaderDevice, string, MessageType>? OutputReceived;
 
     public IUsbDevice Device { get; } = device;
     protected IFlashToolProvider ToolProvider { get; } = toolProvider;
@@ -21,9 +19,6 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
 
     public ushort VendorId => Device.VendorId;
     public ushort ProductId => Device.ProductId;
-    public ushort RevisionBcd => Device.RevisionBcd;
-    public string ManufacturerString => Device.ManufacturerString;
-    public string ProductString => Device.ProductString;
     public string Driver => Device.Driver;
     public string DevicePath => Device.DevicePath;
 
@@ -33,14 +28,19 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
     public BootloaderType Type { get; init; }
     public string Name { get; init; } = "";
 
-    public override string ToString() =>
-        $"{ManufacturerString} {ProductString} ({VendorId:X4}:{ProductId:X4}:{RevisionBcd:X4})";
-
     /// <summary>
-    /// Resolves when the device is ready to display (e.g. serial port has appeared).
-    /// Returns <see cref="Task.CompletedTask"/> for devices that need no async setup.
+    /// Background serial-port resolution for devices that expose one; doubles as the
+    /// readiness signal (<see cref="WhenReadyAsync"/>) and the <c>[port]</c> display suffix.
     /// </summary>
-    public virtual Task WhenReadyAsync() => Task.CompletedTask;
+    protected Task<string?>? ComPortTask { get; set; }
+
+    public override string ToString() =>
+        ComPortTask is { IsCompletedSuccessfully: true }
+            ? $"{Device} [{ComPortTask.Result ?? "port not found"}]"
+            : Device.ToString()!;
+
+    /// <summary>Resolves when the device is ready to display (e.g. serial port has appeared).</summary>
+    public virtual Task WhenReadyAsync() => ComPortTask ?? Task.CompletedTask;
 
     public abstract Task FlashAsync(string mcu, string file);
 
@@ -48,8 +48,8 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
 
     public virtual Task ResetAsync(string mcu) => Task.CompletedTask;
 
-    protected async Task<int> RunToolAsync(string toolName, params string[] args) =>
-        await FlashService.RunToolAsync(toolName, args, ToolProvider, PrintMessage).ConfigureAwait(false);
+    protected Task<int> RunToolAsync(string toolName, params string[] args) =>
+        FlashService.RunToolAsync(toolName, args, ToolProvider, PrintMessage);
 
     protected void PrintMessage(string message, MessageType type) =>
         OutputReceived?.Invoke(this, message, type);
@@ -59,52 +59,35 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
     /// </summary>
     protected static void ValidateFileExtension(string file, params string[] extensions)
     {
-        string ext = Path.GetExtension(file);
-        foreach (string allowed in extensions)
-        {
-            if (string.Equals(ext, allowed, StringComparison.OrdinalIgnoreCase))
-                return;
-        }
-        throw new UnsupportedFileFormatException(extensions);
+        if (!extensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+            throw new UnsupportedFileFormatException(extensions);
     }
 
-    // Caterina (and other serial-port bootloaders) enumerate via USB first, then expose a
-    // virtual serial port a moment later. Poll with short delays so the port has time to appear.
-    protected async Task<string?> FindComPortAsync()
+    // Poll cadence for serial-port/mount resolution: a test seam like
+    // FlashOrchestrator.VolumeProbeDelayMs; production always uses the default.
+    public int PollDelayMs { get; set; } = 250;
+
+    // Serial ports (Caterina et al.) and mass-storage volumes both appear some time after
+    // the USB arrival event; poll with short delays so the resource has time to appear.
+    private async Task<string?> PollAsync(Func<string?> resolve)
     {
-        if (SerialPortService == null)
-            return null;
         const int attempts = 10;
-        const int delayMs = 250;
         for (int i = 0; i < attempts; i++)
         {
-            string? port = SerialPortService.FindSerialPort(Device);
-            if (port != null)
-                return port;
+            string? result = resolve();
+            if (result != null)
+                return result;
             if (i < attempts - 1)
-                await Task.Delay(delayMs).ConfigureAwait(false);
+                await Task.Delay(PollDelayMs).ConfigureAwait(false);
         }
         return null;
     }
 
-    // Automounting completes after the USB arrival event, so mass-storage bootloader volumes
-    // are resolved at flash time with the same poll-and-retry treatment serial ports get.
-    protected async Task<string?> FindMountPointAsync(string markerFile)
-    {
-        if (MountPointService == null)
-            return null;
-        const int attempts = 10;
-        const int delayMs = 250;
-        for (int i = 0; i < attempts; i++)
-        {
-            string? mount = MountPointService.FindMountPoint(Device, markerFile);
-            if (mount != null)
-                return mount;
-            if (i < attempts - 1)
-                await Task.Delay(delayMs).ConfigureAwait(false);
-        }
-        return null;
-    }
+    protected Task<string?> FindComPortAsync() =>
+        SerialPortService == null ? Task.FromResult<string?>(null) : PollAsync(() => SerialPortService.FindSerialPort(Device));
+
+    protected Task<string?> FindMountPointAsync(string markerFile) =>
+        MountPointService == null ? Task.FromResult<string?>(null) : PollAsync(() => MountPointService.FindMountPoint(Device, markerFile));
 
     /// <summary>
     /// Returns <paramref name="comPort"/> if non-null, or throws <see cref="ComPortNotFoundException"/>.

@@ -110,34 +110,13 @@ public class TerminalBuffer
         int total = _lines.Count + 1; // completed + current line
         if (total <= maxLines)
             return;
-        int excess = total - maxLines;
-        if (excess > _lines.Count)
-            excess = _lines.Count;
-        _lines.RemoveRange(0, excess);
+        _lines.RemoveRange(0, Math.Min(total - maxLines, _lines.Count));
         Changed?.Invoke();
     }
 
     /// <summary> Returns the plain text content of all lines (for clipboard export). </summary>
-    public override string ToString()
-    {
-        var sb = new StringBuilder();
-        bool first = true;
-        foreach (TerminalLine line in AllLines())
-        {
-            if (!first)
-                sb.AppendLine();
-            foreach (TerminalSegment seg in line.Segments)
-                sb.Append(seg.Text);
-            first = false;
-        }
-        return sb.ToString();
-    }
-
-    private IEnumerable<TerminalLine> AllLines()
-    {
-        foreach (TerminalLine line in _lines)
-            yield return line;
-        if (CurrentLine.Segments.Count > 0)
-            yield return CurrentLine;
-    }
+    public override string ToString() =>
+        string.Join(Environment.NewLine,
+            (CurrentLine.Segments.Count > 0 ? _lines.Append(CurrentLine) : _lines)
+            .Select(l => string.Concat(l.Segments.Select(s => s.Text))));
 }

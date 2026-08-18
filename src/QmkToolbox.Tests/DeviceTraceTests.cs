@@ -8,7 +8,7 @@ public class DeviceTraceTests
 {
     [Fact]
     public void VidPid_FormatsUppercaseFourDigitHex()
-        => Assert.Equal("VID:03EB PID:2FF4", DeviceTrace.VidPid(0x03EB, 0x2FF4));
+        => Assert.Equal("VID:03EB PID:2FF4", DeviceTrace.VidPid(new UsbDeviceInfo(0x03EB, 0x2FF4, 0, "", "", "", "")));
 
     [Fact]
     public void VidPidRev_IncludesRevision()

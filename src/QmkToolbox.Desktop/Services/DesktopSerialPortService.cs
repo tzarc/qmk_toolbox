@@ -65,14 +65,8 @@ public class DesktopSerialPortService : ISerialPortService
     [SupportedOSPlatform("macos")]
     private static string? FindNewestSerialPortMacOS()
     {
-        string[] ports = SerialPort.GetPortNames();
-        if (ports.Length == 0)
-            return null;
-        if (ports.Length == 1)
-            return ports[0];
-
         // Sort by device node creation time (descending) — newest first
-        return ports
+        return SerialPort.GetPortNames()
             .Select(p => new FileInfo(p))
             .Where(fi => fi.Exists)
             .OrderByDescending(fi => fi.CreationTimeUtc)

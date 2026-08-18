@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,7 +10,7 @@ public partial class KeyTesterViewModel : ObservableObject
     [ObservableProperty] private string _lastKeycode = "";
     [ObservableProperty] private string _lastScanCode = "";
 
-    public ObservableCollection<KeyViewModel> Keys { get; } = new(BuildKeys());
+    public KeyViewModel[] Keys { get; } = BuildKeys();
 
     private readonly Dictionary<PhysicalKey, KeyViewModel> _keyMap;
 
@@ -43,10 +42,8 @@ public partial class KeyTesterViewModel : ObservableObject
         LastScanCode = "";
     }
 
-    private static IEnumerable<KeyViewModel> BuildKeys()
-    {
-        var keys = new List<KeyViewModel>
-        {
+    private static KeyViewModel[] BuildKeys() =>
+        [
             // ── Function row (y=0) ─────────────────────────────────────────────
             new(PhysicalKey.Escape, "Esc", 0, 0, 40),
             new(PhysicalKey.F1, "F1", 66, 0, 40),
@@ -162,8 +159,5 @@ public partial class KeyTesterViewModel : ObservableObject
             new(PhysicalKey.ArrowRight, "→", 810, 228, 40),
             new(PhysicalKey.NumPad0, "0", 856, 228, 84),
             new(PhysicalKey.NumPadDecimal, ".", 944, 228, 40)
-        };
-
-        return keys;
-    }
+        ];
 }

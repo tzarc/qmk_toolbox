@@ -139,32 +139,4 @@ public class UsbDeviceParserTests
     [InlineData("not hex")]
     public void TryParseBcdDevice_Invalid_ReturnsFalse(string? input)
         => Assert.False(UsbDeviceParser.TryParseBcdDevice(input, out _));
-
-    // ── IsWindowsRootUsbDevice ─────────────────────────────────────────────────
-
-    [Theory]
-    [InlineData(@"USB\VID_0483&PID_DF11\5&2D4F03CB&0&2")] // root USB device
-    [InlineData(@"USB\VID_2E8A&PID_0003\5&ABC")]           // Raspberry Pi root
-    public void IsWindowsRootUsbDevice_OnWindows_AcceptsRootUsbDevice(string path) =>
-        Assert.True(UsbDeviceParser.IsWindowsRootUsbDevice(path, isWindows: true));
-
-    [Theory]
-    [InlineData(@"USB\VID_0483&PID_DF11&MI_00\7&123")] // composite interface child
-    [InlineData(@"USB\VID_2E8A&PID_0003&MI_02\7&456")] // another interface child
-    public void IsWindowsRootUsbDevice_OnWindows_RejectsCompositeInterface(string path) =>
-        Assert.False(UsbDeviceParser.IsWindowsRootUsbDevice(path, isWindows: true));
-
-    [Theory]
-    [InlineData(@"HID\VID_0483&PID_DF11\1&ABC")]   // HID child
-    [InlineData(@"USBSTOR\DISK&VEN_&PROD_\1&ABC")] // USB storage
-    [InlineData("")]                                // empty path
-    public void IsWindowsRootUsbDevice_OnWindows_RejectsNonUsbRoot(string path) =>
-        Assert.False(UsbDeviceParser.IsWindowsRootUsbDevice(path, isWindows: true));
-
-    [Theory]
-    [InlineData(@"HID\VID_0483&PID_DF11\1&ABC")]    // would be rejected on Windows
-    [InlineData(@"USB\VID_0483&PID_DF11&MI_00\7")] // would be rejected on Windows
-    [InlineData("")]
-    public void IsWindowsRootUsbDevice_OnNonWindows_AlwaysReturnsTrue(string path) =>
-        Assert.True(UsbDeviceParser.IsWindowsRootUsbDevice(path, isWindows: false));
 }

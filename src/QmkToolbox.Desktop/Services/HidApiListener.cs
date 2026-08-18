@@ -54,10 +54,7 @@ public class HidApiListener : IHidListener
 
     private void Poll()
     {
-        var all = HidApi.Hid.Enumerate().ToList();
-        var current = all
-            .Where(HidConsoleDevice.Match)
-            .ToList();
+        var current = HidApi.Hid.Enumerate().Where(HidConsoleDevice.Match).ToList();
         List<BaseHidDevice> disconnected;
         List<BaseHidDevice> connected = [];
 

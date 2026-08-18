@@ -23,9 +23,6 @@ else
     DOCKER_RUN_USER=""
 fi
 
-MACOS_X64_BUILT=0
-MACOS_ARM64_BUILT=0
-
 cd "${REPO_ROOT}"
 rm -rf "${REPO_ROOT}/"publish-* "${REPO_ROOT}/artifacts"
 for RID in $REQUESTED_BUILD_TARGETS; do
@@ -36,16 +33,10 @@ for RID in $REQUESTED_BUILD_TARGETS; do
         -w /app/src/QmkToolbox.Desktop \
         mcr.microsoft.com/dotnet/sdk:10.0 \
         dotnet publish -o ../../publish-${RID} -r ${RID} -c Release
-
-    if [[ "${RID}" == "osx-x64" ]]; then
-        MACOS_X64_BUILT=1
-    elif [[ "${RID}" == "osx-arm64" ]]; then
-        MACOS_ARM64_BUILT=1
-    fi
 done
 
 # If both macOS targets were built, then run lipo to produce the universal binary.
-if [[ $MACOS_X64_BUILT -eq 1 && $MACOS_ARM64_BUILT -eq 1 ]]; then
+if [[ -d "${REPO_ROOT}/publish-osx-x64" && -d "${REPO_ROOT}/publish-osx-arm64" ]]; then
     # The publish output is a single self-contained executable (PublishSingleFile=true),
     # so we only need to lipo the one binary to create the universal build.
     mkdir -p "${REPO_ROOT}/publish-osx-universal"

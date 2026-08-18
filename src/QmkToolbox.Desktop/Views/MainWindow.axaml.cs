@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.Services;
@@ -51,9 +52,9 @@ public partial class MainWindow : Window
         // The session marshals USB events itself (invoker supplied at construction); this
         // invoker only serves the ViewModel's own background callbacks (e.g. udev install).
         vm.SetUiInvoker(Avalonia.Threading.Dispatcher.UIThread.InvokeAsync);
-        var windowService = new DesktopWindowService(this);
-        vm.SetWindowService(windowService);
-        vm.SetClipboardFunc(windowService.SetClipboardTextAsync);
+        vm.SetWindowService(new DesktopWindowService(this));
+        if (Clipboard is { } clipboard)
+            vm.SetClipboardFunc(clipboard.SetTextAsync);
         vm.Session.Start();
         await vm.RunFirstStartSetupAsync();
     }

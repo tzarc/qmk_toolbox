@@ -16,10 +16,7 @@
 set -eEuo pipefail
 
 for cmd in curl jq zstd tar; do
-    if ! command -v "${cmd}" >/dev/null 2>&1; then
-        echo "Error: required command '${cmd}' not found." >&2
-        exit 1
-    fi
+    command -v "${cmd}" >/dev/null 2>&1 || { echo "Error: required command '${cmd}' not found." >&2; exit 1; }
 done
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -46,16 +43,11 @@ declare -A HIDAPI_NAMES=(
 TOOLS_ROOT="${REPO_ROOT}/resources/flashutils"
 HIDAPI_ROOT="${REPO_ROOT}/resources/hidapi"
 
-# Local download cache to avoid re-downloading the same archive more than once.
-CACHE_DIR="$(mktemp -d)"
-trap 'rm -rf "${CACHE_DIR}"' EXIT
+# Scratch dir for downloads and archive extraction, cleaned up on exit.
+SCRATCH_DIR="$(mktemp -d)"
+trap 'rm -rf "${SCRATCH_DIR}"' EXIT
 
 CURL_OPTS=(-fsSL)
-if ! curl "${CURL_OPTS[@]}" --head "https://github.com" >/dev/null 2>&1; then
-    echo "Error: TLS connection to github.com failed." >&2
-    echo "Fix your CA certificates or set CURL_CA_BUNDLE to your CA bundle path." >&2
-    exit 1
-fi
 
 FLASHUTILS_TAG="$(curl "${CURL_OPTS[@]}" "https://api.github.com/repos/qmk/qmk_flashutils/releases/latest" | jq -r '.tag_name')"
 echo "qmk_flashutils release: ${FLASHUTILS_TAG}"
@@ -63,14 +55,9 @@ BASE_URL="https://github.com/qmk/qmk_flashutils/releases/download/${FLASHUTILS_T
 
 fetch_archive() {
     local name="$1"
-    local cached="${CACHE_DIR}/${name}"
-    if [[ ! -f "${cached}" ]]; then
-        echo "  Downloading ${name}..." >&2
-        curl "${CURL_OPTS[@]}" -o "${cached}" "${BASE_URL}/${name}" >&2
-    else
-        echo "  Using cached ${name}" >&2
-    fi
-    echo "${cached}"
+    echo "  Downloading ${name}..." >&2
+    curl "${CURL_OPTS[@]}" -o "${SCRATCH_DIR}/${name}" "${BASE_URL}/${name}" >&2
+    echo "${SCRATCH_DIR}/${name}"
 }
 
 for RID in "${!PLATFORMS[@]}"; do
@@ -85,8 +72,7 @@ for RID in "${!PLATFORMS[@]}"; do
 
     echo "  qmk_flashutils-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst -> ${TOOLS_DIR}"
     TOOLS_ARCHIVE="$(fetch_archive "qmk_flashutils-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
-    zstd -d --stdout "${TOOLS_ARCHIVE}" \
-        | tar -x --strip-components=1 -C "${TOOLS_DIR}"
+    tar --zstd -xf "${TOOLS_ARCHIVE}" --strip-components=1 -C "${TOOLS_DIR}"
 
     # Remove tools that are not needed by QMK Toolbox
     rm -f "${TOOLS_DIR}"/dfu-prefix "${TOOLS_DIR}"/dfu-prefix.exe \
@@ -96,9 +82,9 @@ for RID in "${!PLATFORMS[@]}"; do
     # HidApi.Net 1.x actually searches for on this platform.
     echo "  qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst -> ${HIDAPI_DIR}"
     HIDAPI_ARCHIVE="$(fetch_archive "qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
-    HIDAPI_TMP="$(mktemp -d)"
-    zstd -d --stdout "${HIDAPI_ARCHIVE}" \
-        | tar -x --strip-components=1 -C "${HIDAPI_TMP}"
+    HIDAPI_TMP="${SCRATCH_DIR}/hidapi-${RID}"
+    mkdir -p "${HIDAPI_TMP}"
+    tar --zstd -xf "${HIDAPI_ARCHIVE}" --strip-components=1 -C "${HIDAPI_TMP}"
 
     # Move the library (whatever it was named in the archive) to the expected name
     HIDAPI_SRC="$(find "${HIDAPI_TMP}" -maxdepth 1 -type f \( \
@@ -107,7 +93,6 @@ for RID in "${!PLATFORMS[@]}"; do
 
     if [[ -z "${HIDAPI_SRC}" ]]; then
         echo "  ERROR: no library file found in qmk_hidapi-${PLATFORM} archive" >&2
-        rm -rf "${HIDAPI_TMP}"
         exit 1
     fi
 
@@ -118,8 +103,6 @@ for RID in "${!PLATFORMS[@]}"; do
     if [[ -n "${HIDAPI_MANIFEST}" ]]; then
         cp "${HIDAPI_MANIFEST}" "${HIDAPI_DIR}/$(basename "${HIDAPI_MANIFEST}")"
     fi
-
-    rm -rf "${HIDAPI_TMP}"
 
     if [[ "${RID}" != win-* ]]; then
         chmod +x "${TOOLS_DIR}"/* 2>/dev/null || true

@@ -76,9 +76,8 @@ internal static class MacUsbRegistry
             for (int i = 0; i < attempts; i++)
             {
                 int seen = 0;
-                // IOUSBHostInterface is the modern class (10.11+); IOUSBInterface covers older stacks.
-                if (QueryInterfaces("IOUSBHostInterface", vendorId, productId, ref seen) ||
-                    QueryInterfaces("IOUSBInterface", vendorId, productId, ref seen))
+                // .NET 10 requires macOS 13+, where interface nubs are always IOUSBHostInterface.
+                if (QueryInterfaces("IOUSBHostInterface", vendorId, productId, ref seen))
                 {
                     return true;
                 }

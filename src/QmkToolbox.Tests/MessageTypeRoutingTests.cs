@@ -25,6 +25,16 @@ public class MessageTypeRoutingTests
         => Assert.Equal(expected, type.IsRawStream());
 
     [Fact]
+    public void IsRawStream_HandlesEveryMessageType()
+    {
+        // Regression guard (July 2026: an incomplete IsRawStream shipped a
+        // NotImplementedException): an unhandled new enum value must fail here,
+        // not at render time.
+        foreach (MessageType type in Enum.GetValues<MessageType>())
+            _ = type.IsRawStream();
+    }
+
+    [Fact]
     public void Log_RawType_AppendsWithoutInventingABreak()
     {
         var vm = new TestLog();

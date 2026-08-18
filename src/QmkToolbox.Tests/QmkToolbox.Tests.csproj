@@ -23,4 +23,11 @@
     <ProjectReference Include="../QmkToolbox.Core/QmkToolbox.Core.csproj" />
     <ProjectReference Include="../QmkToolbox.Desktop/QmkToolbox.Desktop.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Fixture resources for FlashToolProviderExtractionTests, embedded under the production
+         resource prefix so extraction runs against this assembly deterministically. -->
+    <EmbeddedResource Include="Fixtures/flashutils_release_testhost" LogicalName="QmkToolbox.Desktop.Resources.flashutils_release_testhost" />
+    <EmbeddedResource Include="Fixtures/hidapi_release_testhost" LogicalName="QmkToolbox.Desktop.Resources.hidapi_release_testhost" />
+    <EmbeddedResource Include="Fixtures/avrdude" LogicalName="QmkToolbox.Desktop.Resources.avrdude" />
+  </ItemGroup>
 </Project>

@@ -118,9 +118,6 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
     private static extern bool GetMessageW(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 
     [DllImport("user32.dll")]
-    private static extern bool TranslateMessage(ref MSG lpMsg);
-
-    [DllImport("user32.dll")]
     private static extern IntPtr DispatchMessageW(ref MSG lpMsg);
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -258,7 +255,6 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
 
         while (GetMessageW(out MSG msg, IntPtr.Zero, 0, 0))
         {
-            TranslateMessage(ref msg);
             DispatchMessageW(ref msg);
         }
 

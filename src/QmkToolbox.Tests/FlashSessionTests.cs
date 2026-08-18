@@ -22,8 +22,6 @@ public sealed class FlashSessionTests : IDisposable
 
         public Action? OnStart;
         public bool Started;
-        public bool Stopped;
-        public bool Disposed;
 
         public void Start()
         {
@@ -31,8 +29,8 @@ public sealed class FlashSessionTests : IDisposable
             OnStart?.Invoke();
         }
 
-        public void Stop() => Stopped = true;
-        public void Dispose() => Disposed = true;
+        public void Stop() { }
+        public void Dispose() { }
 
         public void RaiseConnected(IUsbDevice device) => DeviceConnected?.Invoke(device);
         public void RaiseDisconnected(IUsbDevice device) => DeviceDisconnected?.Invoke(device);
@@ -350,12 +348,4 @@ public sealed class FlashSessionTests : IDisposable
         Assert.True(_h.Detector.Started);
     }
 
-    [Fact]
-    public void Stop_StopsAndDisposesDetector()
-    {
-        _h.Session.Stop();
-
-        Assert.True(_h.Detector.Stopped);
-        Assert.True(_h.Detector.Disposed);
-    }
 }

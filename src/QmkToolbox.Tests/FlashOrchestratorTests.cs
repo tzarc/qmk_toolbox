@@ -15,6 +15,7 @@ public class FlashOrchestratorTests
         VolumeProbeDelayMs = 1,
     };
 
+    // VID/PID are arbitrary: marker-probed devices are outside the VID/PID map by construction.
     private static IUsbDevice MassStorage(ushort pid = 0x00FF, string path = "path0") =>
         new UsbDeviceInfo(0x239A, pid, 0, "Test", "Board", "", path, IsMassStorage: true);
 
