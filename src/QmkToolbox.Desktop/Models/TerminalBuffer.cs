@@ -113,10 +113,4 @@ public class TerminalBuffer
         _lines.RemoveRange(0, Math.Min(total - maxLines, _lines.Count));
         Changed?.Invoke();
     }
-
-    /// <summary> Returns the plain text content of all lines (for clipboard export). </summary>
-    public override string ToString() =>
-        string.Join(Environment.NewLine,
-            (CurrentLine.Segments.Count > 0 ? _lines.Append(CurrentLine) : _lines)
-            .Select(l => string.Concat(l.Segments.Select(s => s.Text))));
 }

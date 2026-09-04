@@ -38,6 +38,15 @@ public static class TerminalProjection
         return runs;
     }
 
+    /// <summary>
+    /// Flattens the buffer to plain text exactly as rendered: prefixes included,
+    /// <see cref="Environment.NewLine"/> between lines. Used for clipboard export, so what is
+    /// copied matches what is shown.
+    /// </summary>
+    public static string ToText(TerminalBuffer buffer) =>
+        string.Concat(ToRuns(buffer).Select(r =>
+            r.Kind == TerminalRunKind.LineBreak ? Environment.NewLine : r.Text));
+
     private static MessageType LineType(TerminalLine line) =>
         line.Segments.Count > 0 ? line.Segments[0].Type : default;
 

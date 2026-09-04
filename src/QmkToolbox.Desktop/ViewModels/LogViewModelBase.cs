@@ -48,6 +48,6 @@ public abstract partial class LogViewModelBase : ObservableObject
     private async Task CopyAll()
     {
         if (_setClipboardText != null)
-            await _setClipboardText(Buffer.ToString());
+            await _setClipboardText(TerminalProjection.ToText(Buffer));
     }
 }

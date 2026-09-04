@@ -12,7 +12,7 @@ public class TerminalBufferTests
     {
         var buffer = new TerminalBuffer();
         buffer.Write("hello\n", MessageType.CommandOutput);
-        Assert.Equal("hello", buffer.ToString());
+        Assert.Equal("hello", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class TerminalBufferTests
         var buffer = new TerminalBuffer();
         buffer.Write("foo", MessageType.CommandOutput);
         buffer.Write("bar", MessageType.CommandOutput);
-        Assert.Equal("foobar", buffer.ToString());
+        Assert.Equal("foobar", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class TerminalBufferTests
     {
         var buffer = new TerminalBuffer();
         buffer.Write("a\nb\nc\n", MessageType.CommandOutput);
-        Assert.Equal("a\nb\nc", buffer.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal("a\nb\nc", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class TerminalBufferTests
         // The canonical case: "aaa\rbb\n" renders as "bba".
         var buffer = new TerminalBuffer();
         buffer.Write("aaa\rbb\n", MessageType.CommandOutput);
-        Assert.Equal("bba", buffer.ToString());
+        Assert.Equal("bba", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class TerminalBufferTests
     {
         var buffer = new TerminalBuffer();
         buffer.Write("12345\rAB\n", MessageType.CommandOutput);
-        Assert.Equal("AB345", buffer.ToString());
+        Assert.Equal("AB345", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class TerminalBufferTests
     {
         var buffer = new TerminalBuffer();
         buffer.Write("ab\rWXYZ\n", MessageType.CommandOutput);
-        Assert.Equal("WXYZ", buffer.ToString());
+        Assert.Equal("WXYZ", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class TerminalBufferTests
         buffer.Write("10%\r", MessageType.CommandOutput);
         buffer.Write("55%\r", MessageType.CommandOutput);
         buffer.Write("100%\n", MessageType.CommandOutput);
-        Assert.Equal("100%", buffer.ToString());
+        Assert.Equal("100%", TerminalText.Flatten(buffer));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class TerminalBufferTests
         var buffer = new TerminalBuffer();
         buffer.Write("something\n", MessageType.CommandOutput);
         buffer.Clear();
-        Assert.Equal(string.Empty, buffer.ToString());
+        Assert.Equal(string.Empty, TerminalText.Flatten(buffer));
         Assert.Empty(buffer.Lines);
     }
 
@@ -134,6 +134,6 @@ public class TerminalBufferTests
         buffer.Changed += () => count++;
         buffer.Write(string.Empty, MessageType.CommandOutput);
         Assert.Equal(0, count);
-        Assert.Equal(string.Empty, buffer.ToString());
+        Assert.Equal(string.Empty, TerminalText.Flatten(buffer));
     }
 }

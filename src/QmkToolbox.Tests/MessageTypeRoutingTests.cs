@@ -43,7 +43,7 @@ public class MessageTypeRoutingTests
 
         Assert.Equal(3, vm.Buffer.Col);   // cursor advanced within the current line
         Assert.Empty(vm.Buffer.Lines);    // nothing committed
-        Assert.Equal("abc", vm.Buffer.ToString());
+        Assert.Equal("abc", TerminalText.Flatten(vm.Buffer));
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class MessageTypeRoutingTests
 
         Assert.Equal(0, vm.Buffer.Col);    // line ended, cursor home
         Assert.Single(vm.Buffer.Lines);    // "hi" committed
-        Assert.Equal("hi", vm.Buffer.ToString());
+        Assert.Equal("hi", TerminalText.Flatten(vm.Buffer));
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class MessageTypeRoutingTests
 
         Assert.Equal(0, vm.Buffer.Col);
         Assert.Equal(2, vm.Buffer.Lines.Count);   // "ab" then "X"
-        Assert.Equal("ab\nX", vm.Buffer.ToString());
+        Assert.Equal("ab\nX", TerminalText.Flatten(vm.Buffer));
     }
 
     private sealed class TestLog : LogViewModelBase;

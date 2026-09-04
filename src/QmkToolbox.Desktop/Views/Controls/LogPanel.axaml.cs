@@ -41,9 +41,13 @@ public partial class LogPanel : UserControl
         set => SetValue(ClearCommandProperty, value);
     }
 
+    /// <summary>Copies the current selection, like the built-in flyout this panel's menu replaces.</summary>
+    public ICommand CopySelectionCommand { get; }
+
     public LogPanel()
     {
         InitializeComponent();
+        CopySelectionCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(LogText.Copy);
         ActualThemeVariantChanged += (_, _) => RenderBuffer();
         LogText.PointerMoved += OnLogTextPointerMoved;
         LogText.PointerExited += OnLogTextPointerExited;

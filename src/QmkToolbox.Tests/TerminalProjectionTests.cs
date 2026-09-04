@@ -6,6 +6,21 @@ namespace QmkToolbox.Tests;
 
 public class TerminalProjectionTests
 {
+    [Fact]
+    public void ToText_MatchesRenderedRuns_PrefixesAndNewlines()
+    {
+        // Clipboard text must equal what the view renders: prefixes included, one break per line.
+        var buffer = new TerminalBuffer();
+        buffer.Write("done\n", MessageType.Info);
+        buffer.Write("50%", MessageType.CommandOutput);
+
+        Assert.Equal($"* done{Environment.NewLine}> 50%", TerminalProjection.ToText(buffer));
+    }
+
+    [Fact]
+    public void ToText_EmptyBuffer_IsEmpty() =>
+        Assert.Equal(string.Empty, TerminalProjection.ToText(new TerminalBuffer()));
+
     // Bootloader has an empty prefix, so it isolates offset behaviour from prefix noise.
     private const MessageType Plain = MessageType.Bootloader;
 

@@ -2,6 +2,7 @@ using NSubstitute;
 using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Services;
+using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 using Xunit;
@@ -92,7 +93,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     {
         MainWindowViewModel vm = NewVm();
 
-        string log = vm.Buffer.ToString();
+        string log = TerminalProjection.ToText(vm.Buffer);
         Assert.Contains("QMK Toolbox", log);
         Assert.Contains("Supported bootloaders:", log);
         Assert.Contains("via dfu-util", log);

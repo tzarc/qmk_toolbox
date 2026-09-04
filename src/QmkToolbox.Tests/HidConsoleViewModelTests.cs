@@ -1,4 +1,5 @@
 using QmkToolbox.Core.Models;
+using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 using Xunit;
@@ -61,7 +62,7 @@ public class HidConsoleViewModelTests
         listener.RaiseConnected(new FakeHidDevice("Planck"));
 
         Assert.Equal([AllDevices, "Planck"], Labels(vm));
-        Assert.Contains("HID console device connected: Planck", vm.Buffer.ToString());
+        Assert.Contains("HID console device connected: Planck", TerminalProjection.ToText(vm.Buffer));
     }
 
     [Fact]
@@ -72,7 +73,7 @@ public class HidConsoleViewModelTests
         listener.RaiseConnected(new FakeHidDevice("Mouse", isConsole: false));
 
         Assert.Equal([AllDevices], Labels(vm));
-        Assert.Equal("", vm.Buffer.ToString());
+        Assert.Equal("", TerminalProjection.ToText(vm.Buffer));
     }
 
     [Fact]
@@ -131,7 +132,7 @@ public class HidConsoleViewModelTests
 
         listener.RaiseReport(device, "dbg: hello\n");
 
-        Assert.Contains("dbg: hello", vm.Buffer.ToString());
+        Assert.Contains("dbg: hello", TerminalProjection.ToText(vm.Buffer));
     }
 
     [Fact]
@@ -147,8 +148,8 @@ public class HidConsoleViewModelTests
         listener.RaiseReport(planck, "from planck\n");
         listener.RaiseReport(corne, "from corne\n");
 
-        Assert.DoesNotContain("from planck", vm.Buffer.ToString());
-        Assert.Contains("from corne", vm.Buffer.ToString());
+        Assert.DoesNotContain("from planck", TerminalProjection.ToText(vm.Buffer));
+        Assert.Contains("from corne", TerminalProjection.ToText(vm.Buffer));
     }
 
     [Fact]
@@ -164,8 +165,8 @@ public class HidConsoleViewModelTests
         listener.RaiseReport(left, "from left\n");
         listener.RaiseReport(right, "from right\n");
 
-        Assert.DoesNotContain("from left", vm.Buffer.ToString());
-        Assert.Contains("from right", vm.Buffer.ToString());
+        Assert.DoesNotContain("from left", TerminalProjection.ToText(vm.Buffer));
+        Assert.Contains("from right", TerminalProjection.ToText(vm.Buffer));
     }
 
     [Fact]
@@ -175,7 +176,7 @@ public class HidConsoleViewModelTests
 
         listener.RaiseError("HID polling stopped unexpectedly: boom");
 
-        Assert.Contains("HID polling stopped unexpectedly: boom", vm.Buffer.ToString());
+        Assert.Contains("HID polling stopped unexpectedly: boom", TerminalProjection.ToText(vm.Buffer));
     }
 
 }
