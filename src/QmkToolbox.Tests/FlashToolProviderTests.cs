@@ -77,15 +77,23 @@ public sealed class FlashToolProviderExtractionTests : IDisposable
     }
 
     [Fact]
-    public void GetManifestInfo_ReadsHostAndHashFromInstalledManifests()
+    public void DescribeVersions_ReadsHostAndHashFromInstalledManifests()
     {
         FlashToolProvider provider = Provider();
         provider.EnsureResourceFolder();
 
-        (string? flashUtils, string? hidApi, _) = provider.GetManifestInfo();
+        string info = provider.DescribeVersions();
 
-        Assert.Equal("testhost:cafebabe", flashUtils);
-        Assert.Equal("testhost:deadbeef", hidApi);
+        Assert.Contains("Flash utils: testhost:cafebabe", info);
+        Assert.Contains("hidapi: testhost:deadbeef", info);
+    }
+
+    [Fact]
+    public void GetDataFilePath_CombinesResourceFolderAndFileName()
+    {
+        FlashToolProvider provider = Provider();
+
+        Assert.Equal(Path.Combine(provider.GetResourceFolder(), "reset.eep"), provider.GetDataFilePath("reset.eep"));
     }
 
     [Fact]

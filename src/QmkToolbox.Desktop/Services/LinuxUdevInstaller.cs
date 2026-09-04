@@ -20,9 +20,8 @@ public static class LinuxUdevInstaller
             return;
         processRunner ??= SystemProcessRunner.Shared;
 
-        string resourceFolder = toolProvider.GetResourceFolder();
-        string qmkIdSrc = Path.Combine(resourceFolder, QmkIdFilename);
-        string rulesSrc = Path.Combine(resourceFolder, RulesFilename);
+        string qmkIdSrc = toolProvider.GetDataFilePath(QmkIdFilename);
+        string rulesSrc = toolProvider.GetDataFilePath(RulesFilename);
 
         if (!File.Exists(qmkIdSrc) || !File.Exists(rulesSrc))
         {

@@ -17,9 +17,8 @@ public static class WindowsDriversInstaller
         if (!OperatingSystem.IsWindows())
             return;
 
-        string toolboxData = toolProvider.GetResourceFolder();
-        string installerPath = Path.Combine(toolboxData, InstallerFilename);
-        string driversPath = Path.Combine(toolboxData, DriversListFilename);
+        string installerPath = toolProvider.GetDataFilePath(InstallerFilename);
+        string driversPath = toolProvider.GetDataFilePath(DriversListFilename);
 
         if (!File.Exists(installerPath) || !File.Exists(driversPath))
         {

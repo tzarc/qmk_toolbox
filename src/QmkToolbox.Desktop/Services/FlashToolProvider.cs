@@ -22,10 +22,12 @@ public class FlashToolProvider(string? resourceFolder = null, Assembly? resource
 
     public string GetToolPath(string toolName)
     {
-        if (OperatingSystem.IsWindows() && !Path.HasExtension(toolName))
+        if (OperatingSystem.IsWindows())
             toolName += ".exe";
         return Path.Combine(GetResourceFolder(), toolName);
     }
+
+    public string GetDataFilePath(string fileName) => Path.Combine(GetResourceFolder(), fileName);
 
     /// <summary>
     /// Ensures the resource folder exists and all bundled resources are present.
@@ -50,31 +52,37 @@ public class FlashToolProvider(string? resourceFolder = null, Assembly? resource
     }
 
     /// <summary>
-    /// Returns version strings for the flash utils, hidapi, and (on Linux) udev release manifests.
+    /// One line describing the installed flash utils, hidapi, and (on Linux) udev rule versions.
     /// </summary>
-    public (string? FlashUtils, string? HidApi, string? UdevRules) GetManifestInfo()
+    public string DescribeVersions()
     {
-        string folder = GetResourceFolder();
-        (string Host, string Hash)? flash = ReadReleaseManifest(folder, "flashutils");
-        (string Host, string Hash)? hidapi = ReadReleaseManifest(folder, "hidapi");
-        string? flashStr = flash.HasValue ? $"{flash.Value.Host}:{flash.Value.Hash}" : "unknown";
-        string? hidapiStr = hidapi.HasValue ? $"{hidapi.Value.Host}:{hidapi.Value.Hash}" : "unknown";
-        string? udevStr = null;
-        if (OperatingSystem.IsLinux())
+        try
         {
-            string? installedManifest = Directory.EnumerateFiles(folder, "qmk_udev_release_*").FirstOrDefault();
-            if (installedManifest != null)
+            string folder = GetResourceFolder();
+            (string Host, string Hash)? flash = ReadReleaseManifest(folder, "flashutils");
+            (string Host, string Hash)? hidapi = ReadReleaseManifest(folder, "hidapi");
+            string flashStr = flash.HasValue ? $"{flash.Value.Host}:{flash.Value.Hash}" : "unknown";
+            string hidapiStr = hidapi.HasValue ? $"{hidapi.Value.Host}:{hidapi.Value.Hash}" : "unknown";
+            string info = $"Flash utils: {flashStr}, hidapi: {hidapiStr}";
+            if (OperatingSystem.IsLinux())
             {
-                string arch = Path.GetFileName(installedManifest)["qmk_udev_release_".Length..];
-                string? version = ReadCommitDate(() => File.OpenRead(installedManifest));
-                udevStr = version != null ? $"{arch}:{version}" : "unknown";
+                string udevStr = "unknown";
+                string? installedManifest = Directory.EnumerateFiles(folder, "qmk_udev_release_*").FirstOrDefault();
+                if (installedManifest != null)
+                {
+                    string arch = Path.GetFileName(installedManifest)["qmk_udev_release_".Length..];
+                    string? version = ReadCommitDate(() => File.OpenRead(installedManifest));
+                    udevStr = version != null ? $"{arch}:{version}" : "unknown";
+                }
+                info += $", qmk_udev: {udevStr}";
             }
-            else
-            {
-                udevStr = "unknown";
-            }
+            return info;
         }
-        return (flashStr, hidapiStr, udevStr);
+        catch (Exception)
+        {
+            // The banner must never fail over a missing or unreadable manifest.
+            return "Flash utils: unknown, hidapi: unknown";
+        }
     }
 
     /// <summary>

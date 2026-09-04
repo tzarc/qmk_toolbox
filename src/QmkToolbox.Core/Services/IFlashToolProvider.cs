@@ -5,8 +5,11 @@ namespace QmkToolbox.Core.Services;
 /// </summary>
 public interface IFlashToolProvider
 {
-    /// <summary>Returns the absolute path to the named tool binary.</summary>
+    /// <summary>Returns the absolute path to the named tool binary. Tool names carry no extension.</summary>
     string GetToolPath(string toolName);
+
+    /// <summary>Returns the absolute path to the named bundled data file (e.g. an EEPROM image or a driver list).</summary>
+    string GetDataFilePath(string fileName);
 
     /// <summary>Returns the absolute path to the local resource folder where tools are extracted.</summary>
     string GetResourceFolder();
@@ -21,10 +24,6 @@ public interface IFlashToolProvider
     /// <summary>Clears the resource folder and fully re-extracts all bundled resources.</summary>
     void ClearAndReExtract();
 
-    /// <summary>
-    /// Returns version strings for the flash utils, hidapi, and (on Linux) udev release manifests.
-    /// Each value is <c>"host:hash"</c> if the manifest was found, or <c>"unknown"</c>.
-    /// The <c>UdevRules</c> field is <see langword="null"/> on non-Linux platforms.
-    /// </summary>
-    (string? FlashUtils, string? HidApi, string? UdevRules) GetManifestInfo();
+    /// <summary>One human-readable line describing the installed resource versions, for the startup banner.</summary>
+    string DescribeVersions();
 }

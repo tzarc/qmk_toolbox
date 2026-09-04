@@ -233,7 +233,7 @@ public partial class FlashSession : ObservableObject
             "Attempting to set handedness, please don't remove device", "EEPROM write complete");
 
     private Task FlashEepromAsync(string eepFile, string startMessage, string completeMessage) =>
-        _orchestrator.FlashEepromAsync(SelectedMcu, _toolProvider.GetToolPath(eepFile), startMessage, completeMessage);
+        _orchestrator.FlashEepromAsync(SelectedMcu, _toolProvider.GetDataFilePath(eepFile), startMessage, completeMessage);
 
     // ClearAndReExtract is a synchronous blocking method; Task.Run keeps it off the UI thread,
     // and routing through the orchestrator's gate serialises it with flashing so it can't delete

@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Reflection;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -155,15 +154,7 @@ public partial class MainWindowViewModel : LogViewModelBase
             : ThisAssembly.Git.Tag + dirty;
         string buildDate = ThisAssembly.Git.CommitDate[..10];
         LogInfo($"QMK Toolbox {version} ({gitRev}, {buildDate}) (https://qmk.fm/toolbox)");
-        try
-        {
-            (string? flashUtils, string? hidApi, string? udevRules) = _toolProvider.GetManifestInfo();
-            string manifestInfo = $"Flash utils: {flashUtils}, hidapi: {hidApi}";
-            if (udevRules != null)
-                manifestInfo += $", qmk_udev: {udevRules}";
-            LogInfo(manifestInfo);
-        }
-        catch (Exception ex) { Debug.WriteLine($"Failed to read release manifests: {ex.Message}"); }
+        LogInfo(_toolProvider.DescribeVersions());
 
         LogInfo("Supported bootloaders:");
         foreach (BootloaderBanner.Entry entry in BootloaderBanner.Bootloaders)

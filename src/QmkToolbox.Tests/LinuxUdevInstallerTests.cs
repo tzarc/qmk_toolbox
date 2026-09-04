@@ -62,7 +62,7 @@ public class LinuxUdevInstallerTests
         File.WriteAllText(Path.Combine(folder, "qmk_id"), "#!/bin/sh\n");
         File.WriteAllText(Path.Combine(folder, "50-qmk.rules"), "# rules\n");
         IFlashToolProvider provider = Substitute.For<IFlashToolProvider>();
-        provider.GetResourceFolder().Returns(folder);
+        provider.GetDataFilePath(Arg.Any<string>()).Returns(ci => Path.Combine(folder, ci.Arg<string>()));
         return (provider, folder);
     }
 
@@ -115,7 +115,8 @@ public class LinuxUdevInstallerTests
     public async Task InstallAsync_MissingResources_ReportsErrorWithoutLaunching()
     {
         IFlashToolProvider provider = Substitute.For<IFlashToolProvider>();
-        provider.GetResourceFolder().Returns(Path.Combine(Path.GetTempPath(), "does-not-exist"));
+        provider.GetDataFilePath(Arg.Any<string>()).Returns(ci =>
+            Path.Combine(Path.GetTempPath(), "does-not-exist", ci.Arg<string>()));
         var runner = new ScriptCapturingRunner();
         var errors = new List<string>();
 
