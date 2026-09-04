@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -13,13 +12,6 @@ namespace QmkToolbox.Desktop.Views;
 /// <summary>Main application window: hosts firmware selection, flashing controls, and the log panel.</summary>
 public partial class MainWindow : Window
 {
-    private NativeMenuItem? _autoFlashItem;
-    private NativeMenuItem? _showAllItem;
-    private NativeMenuItem? _darkThemeItem;
-    private NativeMenuItem? _lightThemeItem;
-    private NativeMenuItem? _systemThemeItem;
-    private MainWindowViewModel? _nativeMenuVm;
-
     private readonly DesktopWindowService? _windowService;
 
     // Parameterless overload for the XAML designer/loader only.
@@ -48,12 +40,12 @@ public partial class MainWindow : Window
         }
         if (settings.WindowX.HasValue && settings.WindowY.HasValue)
         {
-            var pos = new PixelPoint((int)settings.WindowX.Value, (int)settings.WindowY.Value);
-            if (Screens.All.Any(s => s.WorkingArea.Contains(pos)))
+            var saved = new PixelPoint((int)settings.WindowX.Value, (int)settings.WindowY.Value);
+            if (WindowPlacement.Clamp(saved, Screens.All.Select(s => s.WorkingArea)) is { } pos)
                 Position = pos;
         }
 
-        BuildNativeMenu(vm);
+        NativeMenu.SetMenu(this, AppMenu.Build(vm));
 
         // The session marshals USB events itself (invoker supplied at construction); this
         // invoker only serves the ViewModel's own background callbacks (e.g. udev install).
@@ -65,136 +57,8 @@ public partial class MainWindow : Window
         await vm.RunFirstStartSetupAsync();
     }
 
-    // NativeMenu.Menu on a Window in AXAML doesn't inherit DataContext, so all {Binding}
-    // commands resolve to null and the items are disabled. Build the menu programmatically
-    // with direct references to the live ViewModel instead.
-    private void BuildNativeMenu(MainWindowViewModel vm)
-    {
-        var fileMenu = new NativeMenu
-        {
-            new NativeMenuItem("Open...")
-            {
-                Command = vm.OpenFileCommand,
-                Gesture = new KeyGesture(Key.O, KeyModifiers.Meta)
-            }
-        };
-
-        var eepromMenu = new NativeMenu
-        {
-            new NativeMenuItem("Clear EEPROM") { Command = vm.ClearEepromCommand },
-            new NativeMenuItem("Set Left Hand") { Command = vm.SetLeftHandCommand },
-            new NativeMenuItem("Set Right Hand") { Command = vm.SetRightHandCommand }
-        };
-
-        var autoFlashItem = new NativeMenuItem("Auto-Flash")
-        {
-            Command = vm.ToggleAutoFlashCommand,
-            ToggleType = MenuItemToggleType.CheckBox,
-            IsChecked = vm.Session.AutoFlashEnabled
-        };
-
-        var showAllItem = new NativeMenuItem("Show All Devices")
-        {
-            Command = vm.ToggleShowAllDevicesCommand,
-            ToggleType = MenuItemToggleType.CheckBox,
-            IsChecked = vm.Session.ShowAllDevices
-        };
-
-        var darkThemeItem = new NativeMenuItem("Dark")
-        {
-            Command = vm.SetThemeCommand,
-            CommandParameter = "Dark",
-            ToggleType = MenuItemToggleType.Radio,
-            IsChecked = vm.IsDarkTheme
-        };
-        var lightThemeItem = new NativeMenuItem("Light")
-        {
-            Command = vm.SetThemeCommand,
-            CommandParameter = "Light",
-            ToggleType = MenuItemToggleType.Radio,
-            IsChecked = vm.IsLightTheme
-        };
-        var systemThemeItem = new NativeMenuItem("System")
-        {
-            Command = vm.SetThemeCommand,
-            CommandParameter = "Default",
-            ToggleType = MenuItemToggleType.Radio,
-            IsChecked = vm.IsSystemTheme
-        };
-
-        vm.PropertyChanged += OnVmPropertyChanged;
-        vm.Session.PropertyChanged += OnSessionPropertyChanged;
-        _autoFlashItem = autoFlashItem;
-        _showAllItem = showAllItem;
-        _darkThemeItem = darkThemeItem;
-        _lightThemeItem = lightThemeItem;
-        _systemThemeItem = systemThemeItem;
-        _nativeMenuVm = vm;
-
-        var themeMenu = new NativeMenu { darkThemeItem, lightThemeItem, systemThemeItem };
-
-        var toolsMenu = new NativeMenu
-        {
-            new NativeMenuItem("Flash") { Command = vm.FlashCommand },
-            new NativeMenuItem("Exit DFU") { Command = vm.ResetCommand },
-            new NativeMenuItem("EEPROM") { Menu = eepromMenu },
-            new NativeMenuItemSeparator(),
-            autoFlashItem,
-            showAllItem,
-            new NativeMenuItemSeparator(),
-            new NativeMenuItem("Key Tester") { Command = vm.OpenKeyTesterCommand },
-            new NativeMenuItem("HID Console") { Command = vm.OpenHidConsoleCommand },
-            new NativeMenuItemSeparator(),
-            new NativeMenuItem("Clear Resources") { Command = vm.ClearResourcesCommand },
-            new NativeMenuItemSeparator(),
-            new NativeMenuItem("Theme") { Menu = themeMenu }
-        };
-
-        var helpMenu = new NativeMenu
-        {
-            new NativeMenuItem("About QMK Toolbox") { Command = vm.OpenAboutCommand },
-            new NativeMenuItemSeparator(),
-            new NativeMenuItem("Debug Log") { Command = vm.OpenDebugLogCommand }
-        };
-
-        var windowMenu = new NativeMenu
-        {
-            new NativeMenuItem("File") { Menu = fileMenu },
-            new NativeMenuItem("Tools") { Menu = toolsMenu },
-            new NativeMenuItem("Help") { Menu = helpMenu }
-        };
-
-        NativeMenu.SetMenu(this, windowMenu);
-    }
-
-    private void OnSessionPropertyChanged(object? sender, PropertyChangedEventArgs args)
-    {
-        if (args.PropertyName == nameof(FlashSession.AutoFlashEnabled))
-        {
-            _autoFlashItem!.IsChecked = _nativeMenuVm!.Session.AutoFlashEnabled;
-        }
-        else if (args.PropertyName == nameof(FlashSession.ShowAllDevices))
-        {
-            _showAllItem!.IsChecked = _nativeMenuVm!.Session.ShowAllDevices;
-        }
-    }
-
-    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs args)
-    {
-        if (args.PropertyName is nameof(MainWindowViewModel.IsDarkTheme)
-                                   or nameof(MainWindowViewModel.IsLightTheme)
-                                   or nameof(MainWindowViewModel.IsSystemTheme))
-        {
-            _darkThemeItem!.IsChecked = _nativeMenuVm!.IsDarkTheme;
-            _lightThemeItem!.IsChecked = _nativeMenuVm!.IsLightTheme;
-            _systemThemeItem!.IsChecked = _nativeMenuVm!.IsSystemTheme;
-        }
-    }
-
     protected override void OnClosing(WindowClosingEventArgs e)
     {
-        _nativeMenuVm?.PropertyChanged -= OnVmPropertyChanged;
-        _nativeMenuVm?.Session.PropertyChanged -= OnSessionPropertyChanged;
         if (DataContext is MainWindowViewModel vm)
         {
             // Save window bounds before vm.SaveSettings() serialises the whole settings object

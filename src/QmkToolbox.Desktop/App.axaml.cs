@@ -36,7 +36,9 @@ public partial class App : Application
                 MountPoints = new DesktopMountPointService(),
             };
             var orchestrator = new Core.Services.FlashOrchestrator(bootloaderServices);
-            var windowService = new DesktopWindowService();
+            // HidApiListener calls Hid.Init() on Start() and Hid.Exit() on Dispose(); one is
+            // created per HID console window and disposed when that window closes.
+            var windowService = new DesktopWindowService(() => new HidApiListener());
 
             // One marshalling sink per stream, owned here: every log/trace producer routes
             // through these, so UI-thread marshalling is guaranteed at the composition root

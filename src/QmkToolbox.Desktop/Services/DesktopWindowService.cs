@@ -6,7 +6,7 @@ using QmkToolbox.Desktop.Views;
 
 namespace QmkToolbox.Desktop.Services;
 
-public sealed class DesktopWindowService : IWindowService
+public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) : IWindowService
 {
     private readonly Dictionary<Type, Window> _singletons = [];
 
@@ -58,11 +58,10 @@ public sealed class DesktopWindowService : IWindowService
     public void ShowKeyTester() =>
         ShowSingleton(() => new KeyTesterWindow { DataContext = new KeyTesterViewModel() });
 
-    // HidApiListener calls Hid.Init() on Start() and Hid.Exit() on Dispose().
-    // Its lifecycle is scoped to the console window: created here and disposed
+    // The listener's lifecycle is scoped to the console window: created here and disposed
     // when the window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
     public void ShowHidConsole() =>
-        ShowSingleton(() => new HidConsoleWindow { DataContext = new HidConsoleViewModel(new HidApiListener()) });
+        ShowSingleton(() => new HidConsoleWindow { DataContext = new HidConsoleViewModel(hidListenerFactory()) });
 
     public void ShowAbout()
     {

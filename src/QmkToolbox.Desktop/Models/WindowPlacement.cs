@@ -1,0 +1,15 @@
+using Avalonia;
+
+namespace QmkToolbox.Desktop.Models;
+
+/// <summary>Window placement policy, kept pure so it is testable without a windowing system.</summary>
+public static class WindowPlacement
+{
+    /// <summary>
+    /// Returns <paramref name="saved"/> when it lies within any of the given work areas, or
+    /// <see langword="null"/> when it is off-screen (e.g. a monitor was removed since the last
+    /// run) and the window should keep its default placement.
+    /// </summary>
+    public static PixelPoint? Clamp(PixelPoint saved, IEnumerable<PixelRect> workAreas) =>
+        workAreas.Any(a => a.Contains(saved)) ? saved : null;
+}
