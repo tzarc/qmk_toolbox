@@ -5,17 +5,28 @@ using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Services;
 
+/// <summary>
+/// Tracks connected bootloader devices and runs flash / reset / EEPROM operations against
+/// them. Thread-safe: device events and commands may arrive on any thread, and
+/// <see cref="OutputReceived"/> and <see cref="StateChanged"/> are raised on whichever
+/// thread triggered them, so subscribers marshal to the UI themselves.
+/// </summary>
 public class FlashOrchestrator(BootloaderServices services)
 {
     private static readonly bool IsWindows = OperatingSystem.IsWindows();
+
+    // Guards _bootloaders and _volumeProbes.
+    private readonly Lock _stateLock = new();
+
+    // Admits the single in-flight operation of RunExclusiveAsync; a second attempt is
+    // refused rather than queued.
+    private readonly SemaphoreSlim _operationGate = new(1, 1);
 
     private readonly List<BootloaderDevice> _bootloaders = [];
 
     // Pending volume probes, one per unknown mass-storage device (mostly not bootloaders;
     // e.g. thumb drives), watching for a marker volume to appear, so a disconnect can end
-    // its device's probe. Like IsBusy, mutated only on the UI thread: every caller marshals
-    // to it, and the probe's awaits must keep the captured context (no ConfigureAwait(false))
-    // so the finally that removes the entry resumes there too.
+    // its device's probe.
     private readonly List<(UsbDeviceInfo Device, CancellationTokenSource Cancellation)> _volumeProbes = [];
 
     // Every unknown mass-storage device is polled for a marker volume for as long as it
@@ -28,13 +39,23 @@ public class FlashOrchestrator(BootloaderServices services)
 
     public Action<string>? DiagnosticTrace { get; set; }
 
-    public bool HasBootloaders => _bootloaders.Count > 0;
-    public bool HasResettable => _bootloaders.Any(b => b.IsResettable);
-    public bool HasEepromFlashable => _bootloaders.Any(b => b.IsEepromFlashable);
-    public int BootloaderCount => _bootloaders.Count;
+    public bool HasBootloaders => BootloaderCount > 0;
+    public bool HasResettable => SnapshotBootloaders().Any(b => b.IsResettable);
+    public bool HasEepromFlashable => SnapshotBootloaders().Any(b => b.IsEepromFlashable);
+
+    public int BootloaderCount
+    {
+        get { lock (_stateLock) return _bootloaders.Count; }
+    }
 
     /// <summary> True while a flash / reset / EEPROM / resource-maintenance operation is running. </summary>
-    public bool IsBusy { get; private set; }
+    public bool IsBusy => _operationGate.CurrentCount == 0;
+
+    private List<BootloaderDevice> SnapshotBootloaders()
+    {
+        lock (_stateLock)
+            return [.. _bootloaders];
+    }
 
     /// <summary>
     /// Registers a connected USB device as a bootloader if recognised.
@@ -54,16 +75,17 @@ public class FlashOrchestrator(BootloaderServices services)
                 Emit($"USB device connected{WindowsDriverSuffix(device.Driver)}: {device}", MessageType.Usb);
             DiagnosticTrace?.Invoke(
                 $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> not a bootloader");
-            bd = await TryCreateMassStorageDeviceAsync(device);
+            bd = await TryCreateMassStorageDeviceAsync(device).ConfigureAwait(false);
             if (bd == null)
                 return false;
         }
 
         bd.OutputReceived += OnFlashOutput;
-        _bootloaders.Add(bd);
+        lock (_stateLock)
+            _bootloaders.Add(bd);
         DiagnosticTrace?.Invoke(
             $"[ORCH+] {DeviceTrace.VidPidRev(device)} path:{DeviceTrace.Path(device.DevicePath)}" +
-            $" -> {bd.Name}  (bootloaders:{_bootloaders.Count})");
+            $" -> {bd.Name}  (bootloaders:{BootloaderCount})");
         StateChanged?.Invoke();
         // Await port resolution (instant for most devices; up to ~2.5 s for serial-port
         // bootloaders) so the connected message includes the resolved port in ToString().
@@ -92,7 +114,8 @@ public class FlashOrchestrator(BootloaderServices services)
             $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> mass storage, probing for" +
             $" {string.Join(", ", MassStorageBootloader.Probeable.Select(f => f.MarkerFile))} until removal");
         var cancellation = new CancellationTokenSource();
-        _volumeProbes.Add((device, cancellation));
+        lock (_stateLock)
+            _volumeProbes.Add((device, cancellation));
         try
         {
             while (true)
@@ -108,7 +131,7 @@ public class FlashOrchestrator(BootloaderServices services)
                         (boardId == null ? "" : $" (Board-ID: {boardId})"));
                     return BootloaderFactory.CreateMassStorageDevice(family.Type, device, services, boardId, mount);
                 }
-                await Task.Delay(VolumeProbeDelayMs, cancellation.Token);
+                await Task.Delay(VolumeProbeDelayMs, cancellation.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -119,7 +142,8 @@ public class FlashOrchestrator(BootloaderServices services)
         }
         finally
         {
-            _volumeProbes.RemoveAll(p => p.Cancellation == cancellation);
+            lock (_stateLock)
+                _volumeProbes.RemoveAll(p => p.Cancellation == cancellation);
             cancellation.Dispose();
         }
     }
@@ -128,24 +152,36 @@ public class FlashOrchestrator(BootloaderServices services)
     // again; with several unknown devices probing at once (e.g. a thumb drive alongside a
     // keyboard), only one may register per volume.
     private bool IsMountClaimed(string mount) =>
-        _bootloaders.Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
+        SnapshotBootloaders().Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
 
     // The detector guarantees a removal delivers the identical UsbDeviceInfo instance it announced
     // at arrival (see IUsbEventsDetector.DeviceDisconnected), so matching is reference identity;
     // no path/VID-PID re-matching here.
-    private void CancelVolumeProbe(UsbDeviceInfo device) =>
-        _volumeProbes.FirstOrDefault(p => p.Device == device).Cancellation?.Cancel();
+    private void CancelVolumeProbe(UsbDeviceInfo device)
+    {
+        CancellationTokenSource? cancellation;
+        lock (_stateLock)
+            cancellation = _volumeProbes.FirstOrDefault(p => p.Device == device).Cancellation;
+        cancellation?.Cancel();
+    }
 
     public void OnDeviceDisconnected(UsbDeviceInfo device, bool showAllDevices)
     {
         CancelVolumeProbe(device);
 
-        BootloaderDevice? bd = _bootloaders.FirstOrDefault(b => b.Device == device);
+        BootloaderDevice? bd;
+        int remaining;
+        lock (_stateLock)
+        {
+            bd = _bootloaders.FirstOrDefault(b => b.Device == device);
+            if (bd != null)
+                _bootloaders.Remove(bd);
+            remaining = _bootloaders.Count;
+        }
 
         if (bd != null)
         {
             bd.OutputReceived -= OnFlashOutput;
-            _bootloaders.Remove(bd);
             Emit($"{bd.Name} device disconnected{WindowsDriverSuffix(bd.Driver)}: {bd}", MessageType.Bootloader);
         }
         else if (showAllDevices)
@@ -158,12 +194,12 @@ public class FlashOrchestrator(BootloaderServices services)
             string prefix = $"[ORCH-] {DeviceTrace.VidPid(device)} path:{DeviceTrace.Path(device.DevicePath)}";
             if (bd != null)
             {
-                DiagnosticTrace($"{prefix} -> matched  (bootloaders:{_bootloaders.Count})");
+                DiagnosticTrace($"{prefix} -> matched  (bootloaders:{remaining})");
             }
-            else if (_bootloaders.Count > 0)
+            else if (remaining > 0)
             {
                 DiagnosticTrace(
-                    $"{prefix} -> *** no match  (bootloaders:{_bootloaders.Count} - possible phantom entry)");
+                    $"{prefix} -> *** no match  (bootloaders:{remaining} - possible phantom entry)");
             }
             else
             {
@@ -178,24 +214,21 @@ public class FlashOrchestrator(BootloaderServices services)
     /// Runs <paramref name="operation"/> as the single in-flight flash / reset / EEPROM /
     /// resource-maintenance operation, returning <see langword="true"/> if it ran or
     /// <see langword="false"/> without running when one is already in progress.
-    /// <see cref="IsBusy"/> is UI-thread-affine: every caller marshals to the UI thread, so the
-    /// check-then-set before the first await is atomic and needs no lock.
     /// </summary>
     public async Task<bool> RunExclusiveAsync(Func<Task> operation)
     {
-        if (IsBusy)
+        if (!_operationGate.Wait(0))
             return false;
 
-        IsBusy = true;
         StateChanged?.Invoke();
         try
         {
-            await operation();
+            await operation().ConfigureAwait(false);
             return true;
         }
         finally
         {
-            IsBusy = false;
+            _operationGate.Release();
             StateChanged?.Invoke();
         }
     }
@@ -211,15 +244,15 @@ public class FlashOrchestrator(BootloaderServices services)
 
     private async Task FlashAllCore(string mcu, string firmwarePath)
     {
-        DiagnosticTrace?.Invoke($"[FLASH] FlashAllAsync start  (bootloaders:{_bootloaders.Count})");
+        DiagnosticTrace?.Invoke($"[FLASH] FlashAllAsync start  (bootloaders:{BootloaderCount})");
         try
         {
-            foreach (BootloaderDevice b in _bootloaders.ToList())
+            foreach (BootloaderDevice b in SnapshotBootloaders())
             {
                 try
                 {
                     Emit("Attempting to flash, please don't remove device", MessageType.Bootloader);
-                    await b.FlashAsync(mcu, firmwarePath);
+                    await b.FlashAsync(mcu, firmwarePath).ConfigureAwait(false);
                     Emit("Flash complete", MessageType.Bootloader);
                 }
                 catch (Exception ex) when (ex is UnsupportedFileFormatException or ComPortNotFoundException)
@@ -230,18 +263,18 @@ public class FlashOrchestrator(BootloaderServices services)
         }
         finally
         {
-            DiagnosticTrace?.Invoke($"[FLASH] FlashAllAsync finally  (bootloaders:{_bootloaders.Count})");
+            DiagnosticTrace?.Invoke($"[FLASH] FlashAllAsync finally  (bootloaders:{BootloaderCount})");
         }
     }
 
     private async Task ResetAllCore(string mcu)
     {
-        DiagnosticTrace?.Invoke($"[RESET] ResetAllAsync start  (bootloaders:{_bootloaders.Count})");
-        foreach (BootloaderDevice b in _bootloaders.Where(b => b.IsResettable).ToList())
+        DiagnosticTrace?.Invoke($"[RESET] ResetAllAsync start  (bootloaders:{BootloaderCount})");
+        foreach (BootloaderDevice b in SnapshotBootloaders().Where(b => b.IsResettable))
         {
             try
             {
-                await b.ResetAsync(mcu);
+                await b.ResetAsync(mcu).ConfigureAwait(false);
             }
             catch (ComPortNotFoundException ex)
             {
@@ -252,12 +285,12 @@ public class FlashOrchestrator(BootloaderServices services)
 
     private async Task FlashEepromCore(string mcu, string fileName, string startMessage, string completeMessage)
     {
-        foreach (BootloaderDevice b in _bootloaders.Where(b => b.IsEepromFlashable).ToList())
+        foreach (BootloaderDevice b in SnapshotBootloaders().Where(b => b.IsEepromFlashable))
         {
             try
             {
                 Emit(startMessage, MessageType.Bootloader);
-                await b.FlashEepromAsync(mcu, fileName);
+                await b.FlashEepromAsync(mcu, fileName).ConfigureAwait(false);
                 Emit(completeMessage, MessageType.Bootloader);
             }
             catch (ComPortNotFoundException ex)
