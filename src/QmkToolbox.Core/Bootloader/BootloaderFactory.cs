@@ -89,20 +89,17 @@ public static class BootloaderFactory
         BootloaderType type = GetDeviceType(device.VendorId, device.ProductId, device.RevisionBcd);
         return type switch
         {
-            BootloaderType.Apm32Dfu => new Apm32DfuDevice(device, services),
-            BootloaderType.At32Dfu => new At32DfuDevice(device, services),
+            BootloaderType.Apm32Dfu or BootloaderType.At32Dfu or BootloaderType.Gd32VDfu
+                or BootloaderType.KiibohdDfu or BootloaderType.Stm32Dfu or BootloaderType.Stm32Duino =>
+                new DfuUtilDevice(DfuUtilBootloader.For(type), device, services),
             BootloaderType.AtmelDfu or BootloaderType.QmkDfu => new AtmelDfuDevice(device, services, type),
             BootloaderType.AtmelSamBa => new AtmelSamBaDevice(device, services),
             BootloaderType.AvrIsp => new AvrIspDevice(device, services),
             BootloaderType.BootloadHid => new BootloadHidDevice(device, services),
             BootloaderType.Caterina => new CaterinaDevice(device, services),
-            BootloaderType.Gd32VDfu => new Gd32VDfuDevice(device, services),
             BootloaderType.HalfKay => new HalfKayDevice(device, services),
-            BootloaderType.KiibohdDfu => new KiibohdDfuDevice(device, services),
             BootloaderType.LufaHid or BootloaderType.QmkHid => new LufaHidDevice(device, services, type),
             BootloaderType.LufaMs => CreateMassStorageDevice(type, device, services),
-            BootloaderType.Stm32Dfu => new Stm32DfuDevice(device, services),
-            BootloaderType.Stm32Duino => new Stm32DuinoDevice(device, services),
             BootloaderType.UsbAsp => new UsbAspDevice(device, services),
             BootloaderType.UsbTinyIsp => new UsbTinyIspDevice(device, services),
             BootloaderType.Wb32Dfu => new Wb32DfuDevice(device, services),

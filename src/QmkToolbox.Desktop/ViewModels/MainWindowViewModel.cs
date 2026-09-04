@@ -4,6 +4,7 @@ using System.Reflection;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
@@ -174,21 +175,11 @@ public partial class MainWindowViewModel : LogViewModelBase
         catch (Exception ex) { Debug.WriteLine($"Failed to read release manifests: {ex.Message}"); }
 
         LogInfo("Supported bootloaders:");
-        LogInfo(" - ARM DFU (APM32, AT32, Kiibohd, STM32, STM32duino) and RISC-V DFU (GD32V) via dfu-util (http://dfu-util.sourceforge.net/)");
-        LogInfo(" - Atmel SAM-BA (Massdrop) via Massdrop Loader (https://github.com/massdrop/mdloader)");
-        LogInfo(" - Atmel/LUFA/QMK DFU via dfu-programmer (http://dfu-programmer.github.io/)");
-        LogInfo(" - BootloadHID (Atmel, PS2AVRGB) via bootloadHID (https://www.obdev.at/products/vusb/bootloadhid.html)");
-        LogInfo(" - Caterina (Arduino, Pro Micro) via avrdude (http://nongnu.org/avrdude/)");
-        LogInfo(" - HalfKay (Teensy, Ergodox EZ) via Teensy Loader (https://pjrc.com/teensy/loader_cli.html)");
-        LogInfo(" - LUFA Mass Storage");
-        LogInfo(" - LUFA/QMK HID via hid_bootloader_cli (https://github.com/abcminiuser/lufa)");
-        LogInfo(" - Raspberry Pi RP2040/RP2350 (BOOTSEL) via picotool (https://github.com/raspberrypi/picotool)");
-        LogInfo(" - UF2 Mass Storage (https://github.com/microsoft/uf2)");
-        LogInfo(" - WB32 DFU via wb32-dfu-updater_cli (https://github.com/WestberryTech/wb32-dfu-updater)");
+        foreach (BootloaderBanner.Entry entry in BootloaderBanner.Bootloaders)
+            LogInfo($" - {entry.Line}");
         LogInfo("Supported ISP flashers:");
-        LogInfo(" - AVRISP (Arduino ISP)");
-        LogInfo(" - USBasp (AVR ISP)");
-        LogInfo(" - USBTiny (AVR Pocket)");
+        foreach (BootloaderBanner.Entry entry in BootloaderBanner.IspFlashers)
+            LogInfo($" - {entry.Line}");
     }
 
     private bool CanFlash => Session.CanFlash;
