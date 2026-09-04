@@ -48,11 +48,31 @@ public partial class LogPanel : UserControl
     {
         InitializeComponent();
         CopySelectionCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(LogText.Copy);
+        // Shared by the text block and the scroll viewer: the text block's flyout replaces
+        // SelectableTextBlock's built-in Copy-only flyout, which otherwise swallows every
+        // right-click over the (full-width, hit-testable) text area; the scroll viewer's
+        // covers the empty space below short content.
+        MenuFlyout contextMenu = BuildContextMenu();
+        LogText.ContextFlyout = contextMenu;
+        LogScroller.ContextFlyout = contextMenu;
         ActualThemeVariantChanged += (_, _) => RenderBuffer();
         LogText.PointerMoved += OnLogTextPointerMoved;
         LogText.PointerExited += OnLogTextPointerExited;
         LogText.PointerPressInterceptor = OnLogTextPointerPress;
         LogText.LayoutUpdated += (_, _) => _urlRectCache = null;
+    }
+
+    // Commands are referenced directly (CopyCommand/ClearCommand through their property
+    // observables, since XAML sets them after construction): the flyout's popup has its own
+    // name scope, so {Binding #Root...} on resource-declared items never resolves.
+    private MenuFlyout BuildContextMenu()
+    {
+        var copy = new MenuItem { Header = "Copy", Command = CopySelectionCommand };
+        var copyAll = new MenuItem { Header = "Copy All" };
+        copyAll.Bind(MenuItem.CommandProperty, this.GetObservable(CopyCommandProperty));
+        var clear = new MenuItem { Header = "Clear" };
+        clear.Bind(MenuItem.CommandProperty, this.GetObservable(ClearCommandProperty));
+        return new MenuFlyout { Items = { copy, copyAll, new Separator(), clear } };
     }
 
     private bool IsDark => ActualThemeVariant == ThemeVariant.Dark;
@@ -133,7 +153,10 @@ public partial class LogPanel : UserControl
                 switch (run.Kind)
                 {
                     case TerminalRunKind.LineBreak:
-                        inlines.Add(new LineBreak());
+                        // A literal "\n" Run, not a LineBreak inline: LineBreak flattens to
+                        // Environment.NewLine, which is two characters on Windows and would
+                        // shift every offset after it (the projection counts one per break).
+                        inlines.Add(new Run(run.Text));
                         break;
 
                     case TerminalRunKind.Prefix:
@@ -165,6 +188,11 @@ public partial class LogPanel : UserControl
         }
 
         _renderedTextLength = runs.TotalLength();
+        // Selection restore and URL hit-testing use projection offsets against the control's
+        // flattened text; the two must agree exactly or both drift silently.
+        System.Diagnostics.Debug.Assert(
+            inlines == null || (inlines.Text?.Length ?? 0) == _renderedTextLength,
+            "Projection offsets diverge from the rendered text.");
 
         // Only restore when the buffer grew; a shrink (clear/trim) invalidates the offsets.
         if (hadSelection && _renderedTextLength >= prevLength)

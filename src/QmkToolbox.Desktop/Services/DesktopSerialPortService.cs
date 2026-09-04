@@ -27,10 +27,9 @@ public class DesktopSerialPortService : ISerialPortService
     /// These symlinks are maintained by udev and encode the VID, PID, and serial
     /// number in their filename, providing a reliable match without timestamp heuristics.
     /// </summary>
-    [SupportedOSPlatform("linux")]
-    private static string? FindByIdLinux(UsbDeviceInfo device)
+    /// <param name="byIdDir">Overrides the symlink directory (used by tests).</param>
+    internal static string? FindByIdLinux(UsbDeviceInfo device, string byIdDir = "/dev/serial/by-id")
     {
-        const string byIdDir = "/dev/serial/by-id";
         if (!Directory.Exists(byIdDir))
             return null;
 

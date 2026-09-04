@@ -27,4 +27,21 @@ internal class HitTestableTextBlock : SelectableTextBlock
         }
         base.OnPointerPressed(e);
     }
+
+    // SelectableTextBlock collapses the selection when a right-click release lands outside
+    // it, after the context menu has already been requested, so the menu's Copy would find
+    // nothing selected. Keep the selection: the menu acts on it wherever the click lands.
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton == MouseButton.Right)
+        {
+            int start = SelectionStart;
+            int end = SelectionEnd;
+            base.OnPointerReleased(e);
+            SetCurrentValue(SelectionStartProperty, start);
+            SetCurrentValue(SelectionEndProperty, end);
+            return;
+        }
+        base.OnPointerReleased(e);
+    }
 }

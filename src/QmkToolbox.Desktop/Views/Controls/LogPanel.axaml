@@ -6,29 +6,17 @@
              x:CompileBindings="True"
              x:Name="Root">
 
-    <UserControl.Resources>
-        <!-- Shared by the text block and the scroll viewer: the text block's flyout replaces
-             SelectableTextBlock's built-in Copy-only flyout, which otherwise swallows every
-             right-click over the (full-width, hit-testable) text area; the scroll viewer's
-             covers the empty space below short content. -->
-        <MenuFlyout x:Key="LogContextMenu">
-            <MenuItem Header="Copy" Command="{Binding #Root.CopySelectionCommand}" />
-            <MenuItem Header="Copy All" Command="{Binding #Root.CopyCommand}" />
-            <Separator />
-            <MenuItem Header="Clear" Command="{Binding #Root.ClearCommand}" />
-        </MenuFlyout>
-    </UserControl.Resources>
-
+    <!-- The context menu is built in code-behind (BuildContextMenu): flyout content opens in
+         a popup with its own name scope, so {Binding #Root...} on the items never resolves
+         and the commands come out null. -->
     <ScrollViewer Name="LogScroller"
-                  Background="{DynamicResource LogPanelBackground}"
-                  ContextFlyout="{StaticResource LogContextMenu}">
+                  Background="{DynamicResource LogPanelBackground}">
         <!-- Transparent (not null) background so the whole arranged width is hit-testable:
              lets a selection start in the empty space to the right of a short line, not just
              directly over glyphs. -->
         <controls:HitTestableTextBlock Name="LogText"
                                        Background="Transparent"
                                        HorizontalAlignment="Stretch"
-                                       ContextFlyout="{StaticResource LogContextMenu}"
                                        FontFamily="avares://qmk_toolbox/Assets/Fonts#JetBrains Mono NL"
                                        FontSize="12"
                                        TextWrapping="Wrap"
