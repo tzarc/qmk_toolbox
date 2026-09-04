@@ -5,7 +5,7 @@ using Usb.Events;
 
 namespace QmkToolbox.Desktop.Services;
 
-// Used on Linux and macOS only. Windows has its own native detector; see WindowsUsbEventsDetector.
+// Used on Linux and macOS only. Windows has its own native probe; see WindowsUsbProbe.
 
 /// <summary>
 /// Shared Usb.Events subscription plumbing for the Linux and macOS probes: translates raw

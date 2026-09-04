@@ -62,6 +62,26 @@ public static class UsbDeviceParser
     }
 
     /// <summary>
+    /// Converts a Windows device interface path to the device instance ID used by cfgmgr32:
+    /// <c>\\?\USB#VID_0483&amp;PID_DF11#serial#{guid}</c> → <c>USB\VID_0483&amp;PID_DF11\serial</c>.
+    /// </summary>
+    public static string InterfacePathToInstanceId(string path)
+    {
+        if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
+        {
+            path = path[4..];
+        }
+        path = path.Replace('#', '\\');
+        // Strip the trailing \{interface-class-guid} segment.
+        int guidStart = path.LastIndexOf('\\');
+        if (guidStart > 0 && guidStart + 1 < path.Length && path[guidStart + 1] == '{')
+        {
+            path = path[..guidStart];
+        }
+        return path;
+    }
+
+    /// <summary>
     /// Parses a Linux sysfs <c>bcdDevice</c> attribute value — four hex digits with a trailing
     /// newline (e.g. <c>"0936\n"</c> for revision 9.36).
     /// </summary>

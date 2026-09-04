@@ -96,7 +96,7 @@
   </ItemGroup>
   <!-- Usb.Events is only used on Linux and macOS. On Windows its WMI backend (Win32_PnPEntity with
        WITHIN 2 polling) incurs ~7 seconds of cold-start latency under .NET 10. Windows builds use
-       WindowsUsbEventsDetector instead, which calls RegisterDeviceNotification directly. -->
+       WindowsUsbProbe instead, which calls RegisterDeviceNotification directly. -->
   <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('win'))">
     <PackageReference Include="Usb.Events" />
   </ItemGroup>

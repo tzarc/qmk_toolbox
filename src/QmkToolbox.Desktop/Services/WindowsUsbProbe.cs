@@ -17,16 +17,20 @@ namespace QmkToolbox.Desktop.Services;
 // no cold-start overhead, and no trim incompatibilities.
 
 /// <summary>
-/// Windows USB detector using RegisterDeviceNotification via a message-only window.
-/// Avoids WMI entirely — events arrive synchronously via WndProc with no polling latency.
+/// Windows probe using RegisterDeviceNotification via a message-only window. Avoids WMI entirely;
+/// events arrive synchronously via WndProc with no polling latency. Removal hints carry the
+/// interface path only: Windows interface paths are canonical and always present, so the tracker
+/// never needs a VID/PID fallback.
 /// </summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
+internal sealed class WindowsUsbProbe : IUsbProbe
 {
-    private readonly List<IUsbDevice> _devices = [];
-    private readonly Lock _devicesLock = new();
+    public event Action<UsbDeviceInfo>? Arrived;
+    public event Action<UsbRemovalHint>? Removed;
 
-    public Action<string>? DiagnosticTrace { get; set; }
+    // Interface paths compare case-insensitively (some paths are reported with differing case).
+    public StringComparison PathComparison => StringComparison.OrdinalIgnoreCase;
+
     private Thread? _messageThread;
     private volatile IntPtr _hwnd = IntPtr.Zero;
     private IntPtr _notifyHandle = IntPtr.Zero;
@@ -37,9 +41,6 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
     // Kept as a field — delegate must outlive the unmanaged window class registration.
     private WndProcDelegate? _wndProcDelegate;
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-    public event Action<IUsbDevice>? DeviceConnected;
-    public event Action<IUsbDevice>? DeviceDisconnected;
 
     // GUID_DEVINTERFACE_USB_DEVICE — fires only for root USB device nodes, not composite children.
     private static readonly Guid GuidDevInterfaceUsbDevice =
@@ -172,33 +173,36 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
             throw new InvalidOperationException($"USB notification window creation failed (Win32 error {_windowError}).");
         if (_notifyHandle == IntPtr.Zero)
             throw new InvalidOperationException($"USB device notification registration failed (Win32 error {_notifyError}).");
-
-        // RegisterDeviceNotification delivers future arrivals only; a board already sitting in
-        // bootloader mode when the app launches must be swept up explicitly. Runs after the
-        // notification window exists so nothing can slip between sweep and subscription (a
-        // device delivered by both is dropped by HandleArrival's duplicate-path guard).
-        EnumeratePresentDevices();
     }
 
-    private void EnumeratePresentDevices()
+    /// <summary>
+    /// The devices with a present USB device interface. The tracker calls this after
+    /// <see cref="Start"/>, so the notification window already exists and nothing can slip
+    /// between sweep and subscription: a device delivered by both is dropped by the tracker's
+    /// duplicate-path guard.
+    /// </summary>
+    public IEnumerable<UsbDeviceInfo> EnumeratePresent()
     {
+        List<UsbDeviceInfo> devices = [];
         try
         {
             Guid guid = GuidDevInterfaceUsbDevice;
             if (CM_Get_Device_Interface_List_SizeW(out uint len, ref guid, null, CM_GET_DEVICE_INTERFACE_LIST_PRESENT) != CR_SUCCESS || len <= 1)
-                return;
+                return devices;
             var buffer = new char[len];
             if (CM_Get_Device_Interface_ListW(ref guid, null, buffer, len, CM_GET_DEVICE_INTERFACE_LIST_PRESENT) != CR_SUCCESS)
-                return;
+                return devices;
             foreach (string path in new string(buffer).Split('\0', StringSplitOptions.RemoveEmptyEntries))
             {
-                HandleArrival(path);
+                if (BuildDeviceInfo(path) is { } device)
+                    devices.Add(device);
             }
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"Initial USB device enumeration failed: {ex.Message}");
         }
+        return devices;
     }
 
     public void Stop()
@@ -282,11 +286,12 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
 
                     if (eventType == DBT_DEVICEARRIVAL)
                     {
-                        HandleArrival(deviceInterfacePath);
+                        if (BuildDeviceInfo(deviceInterfacePath) is { } device)
+                            Arrived?.Invoke(device);
                     }
                     else
                     {
-                        HandleRemoval(deviceInterfacePath);
+                        Removed?.Invoke(new UsbRemovalHint(deviceInterfacePath));
                     }
                 }
             }
@@ -294,51 +299,16 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
 
-    private void HandleArrival(string deviceInterfacePath)
-    {
-        UsbDeviceInfo? device = BuildDeviceInfo(deviceInterfacePath);
-        if (device == null)
-            return;
-        lock (_devicesLock)
-        {
-            // A device can be delivered twice when the startup sweep and a WM_DEVICECHANGE
-            // arrival race; interface paths are canonical, so drop the duplicate.
-            if (_devices.Any(d => string.Equals(d.DevicePath, deviceInterfacePath, StringComparison.OrdinalIgnoreCase)))
-                return;
-            _devices.Add(device);
-        }
-        DiagnosticTrace?.Invoke(
-            $"[USB+] {DeviceTrace.VidPidRev(device)} path:{DeviceTrace.Path(deviceInterfacePath)}");
-        DeviceConnected?.Invoke(device);
-    }
-
-    private void HandleRemoval(string deviceInterfacePath)
-    {
-        IUsbDevice? existing;
-        lock (_devicesLock)
-        {
-            // Windows interface paths are canonical and always present — match by path only
-            // (case-insensitive), no VID/PID fallback.
-            existing = UsbDeviceMatcher.Find(_devices, deviceInterfacePath, vidPidFallback: null, StringComparison.OrdinalIgnoreCase);
-            if (existing != null)
-                _devices.Remove(existing);
-        }
-        if (DiagnosticTrace != null)
-        {
-            if (existing != null)
-                DiagnosticTrace($"[USB-] path:{DeviceTrace.Path(deviceInterfacePath)} -> matched  ({DeviceTrace.VidPid(existing)})");
-            else
-                DiagnosticTrace($"[USB-] path:{DeviceTrace.Path(deviceInterfacePath)} -> no match -> dropped");
-        }
-        if (existing != null)
-            DeviceDisconnected?.Invoke(existing);
-    }
-
     private static UsbDeviceInfo? BuildDeviceInfo(string deviceInterfacePath)
     {
-        // Convert device interface path to device instance ID for cfgmgr32:
-        //   \\?\USB#VID_0483&PID_DF11#serial#{A5DCBF10-...}  →  USB\VID_0483&PID_DF11\serial
-        string instanceId = InterfacePathToInstanceId(deviceInterfacePath);
+        string instanceId = UsbDeviceParser.InterfacePathToInstanceId(deviceInterfacePath);
+
+        // Composite child functions (&MI_xx) are not devices; their root node carries the whole
+        // board. The present-device list can include them (e.g. an RP2040 BOOTSEL's picotool and
+        // USBSTOR functions), but WM_DEVICECHANGE only ever delivers roots, so a swept child
+        // would be a phantom entry whose removal never arrives.
+        if (instanceId.Contains("&MI_", StringComparison.OrdinalIgnoreCase))
+            return null;
 
         if (!UsbDeviceParser.TryParseHwId(instanceId, out ushort vid, out ushort pid, out ushort rev))
             return null;
@@ -378,23 +348,6 @@ public sealed class WindowsUsbEventsDetector : IUsbEventsDetector
 
     private static bool IsMassStorageService(string service) =>
         string.Equals(service, "USBSTOR", StringComparison.OrdinalIgnoreCase);
-
-    // \\?\USB#VID_0483&PID_DF11#3C00...#{a5dcbf10-...}  →  USB\VID_0483&PID_DF11\3C00...
-    private static string InterfacePathToInstanceId(string path)
-    {
-        if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
-        {
-            path = path[4..];
-        }
-        path = path.Replace('#', '\\');
-        // Strip the trailing \{interface-class-guid} segment.
-        int guidStart = path.LastIndexOf('\\');
-        if (guidStart > 0 && guidStart + 1 < path.Length && path[guidStart + 1] == '{')
-        {
-            path = path[..guidStart];
-        }
-        return path;
-    }
 
     private static List<string> CollectChildServices(uint rootDevNode)
     {

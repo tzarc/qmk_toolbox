@@ -44,8 +44,50 @@ internal static class MacUsbRegistry
     [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
     private static extern int IORegistryEntryGetPath(IntPtr entry, string plane, byte[] path);
 
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    private static extern IntPtr IOBSDNameMatching(IntPtr mainPort, uint options, string bsdName);
+
+    [DllImport(IOKitLib, ExactSpelling = true)]
+    private static extern IntPtr IOServiceGetMatchingService(IntPtr mainPort, IntPtr matching);
+
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    private static extern int IORegistryEntryGetParentEntry(IntPtr entry, string plane, out IntPtr parent);
+
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    private static extern bool IOObjectConformsTo(IntPtr obj, string className);
+
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
     private static extern void CFRelease(IntPtr cf);
+
+    // macOS statfs: the 64-bit-inode variant is the plain symbol on arm64 but carries the
+    // $INODE64 suffix on x86_64; both RIDs ship from the same source, so pick at runtime.
+    [DllImport("libSystem", EntryPoint = "statfs", CharSet = CharSet.Ansi)]
+    private static extern int StatfsArm64(string path, ref StatfsBuf buf);
+
+    [DllImport("libSystem", EntryPoint = "statfs$INODE64", CharSet = CharSet.Ansi)]
+    private static extern int StatfsX64(string path, ref StatfsBuf buf);
+
+    private static int Statfs(string path, ref StatfsBuf buf) =>
+        RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? StatfsArm64(path, ref buf)
+            : StatfsX64(path, ref buf);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct StatfsBuf
+    {
+        public uint f_bsize;
+        public int f_iosize;
+        public ulong f_blocks, f_bfree, f_bavail, f_files, f_ffree;
+        public ulong f_fsid;
+        public uint f_owner;
+        public uint f_type;
+        public uint f_flags;
+        public uint f_fssubtype;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] f_fstypename;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)] public byte[] f_mntonname;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)] public byte[] f_mntfromname;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)] public byte[] f_reserved;
+    }
 
     /// <summary>
     /// Returns <c>bcdDevice</c> for the first present USB device matching the VID/PID, or 0
@@ -223,6 +265,64 @@ internal static class MacUsbRegistry
             // A failed sweep must never break startup; hotplug events still work.
         }
         return devices;
+    }
+
+    /// <summary>
+    /// Resolves the USB device carrying the volume mounted at <paramref name="mountPath"/>
+    /// (e.g. <c>/Volumes/RPI-RP2</c>): statfs yields the backing BSD device, IOKit yields its
+    /// IOMedia object, and the registry parent chain leads to the owning IOUSBHostDevice.
+    /// Returns null whenever any step cannot be answered; the caller treats unknown ownership
+    /// as acceptable rather than rejecting a working volume.
+    /// </summary>
+    public static (ushort VendorId, ushort ProductId, string DevicePath)? FindVolumeOwner(string mountPath)
+    {
+        try
+        {
+            var buf = new StatfsBuf();
+            if (Statfs(mountPath, ref buf) != 0)
+                return null;
+            int len = Array.IndexOf(buf.f_mntfromname, (byte)0);
+            string mntFrom = System.Text.Encoding.UTF8.GetString(buf.f_mntfromname, 0, len < 0 ? buf.f_mntfromname.Length : len);
+            if (!mntFrom.StartsWith("/dev/", StringComparison.Ordinal))
+                return null;
+            string bsdName = mntFrom["/dev/".Length..];
+
+            // IOServiceGetMatchingService consumes the matching dictionary.
+            IntPtr matching = IOBSDNameMatching(IntPtr.Zero, 0, bsdName);
+            if (matching == IntPtr.Zero)
+                return null;
+            IntPtr entry = IOServiceGetMatchingService(IntPtr.Zero, matching);
+
+            // Walk the IOService plane upward from the IOMedia object to the USB device node.
+            for (int depth = 0; entry != IntPtr.Zero && depth < 16; depth++)
+            {
+                try
+                {
+                    if (IOObjectConformsTo(entry, "IOUSBHostDevice"))
+                    {
+                        return (ReadUShortProperty(entry, "idVendor"),
+                                ReadUShortProperty(entry, "idProduct"),
+                                RegistryPath(entry));
+                    }
+                    if (IORegistryEntryGetParentEntry(entry, "IOService", out IntPtr parent) != 0)
+                        return null;
+                    IOObjectRelease(entry);
+                    entry = parent;
+                }
+                catch
+                {
+                    IOObjectRelease(entry);
+                    throw;
+                }
+            }
+            if (entry != IntPtr.Zero)
+                IOObjectRelease(entry);
+        }
+        catch (Exception)
+        {
+            // Ownership resolution must never break the volume probe.
+        }
+        return null;
     }
 
     private static string RegistryPath(IntPtr service)

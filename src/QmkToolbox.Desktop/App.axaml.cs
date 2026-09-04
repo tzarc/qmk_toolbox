@@ -28,18 +28,17 @@ public partial class App : Application
             string[] args = desktop.Args ?? [];
             string filePath = args.Length > 0 ? args[0] : "";
             var toolProvider = new FlashToolProvider();
-            Core.Services.IUsbEventsDetector usbDetector =
+            Core.Services.IUsbProbe usbProbe =
 #if WINDOWS
 #pragma warning disable CA1416 // Gated by #if WINDOWS — only compiled for Windows RIDs
-                new WindowsUsbEventsDetector();
+                new WindowsUsbProbe();
 #pragma warning restore CA1416
 #else
 #pragma warning disable CA1416 // Gated by the IsMacOS check — the Mac probe is only constructed on macOS
-                new Core.Services.UsbDeviceTracker(OperatingSystem.IsMacOS()
-                    ? new MacUsbProbe()
-                    : new LinuxUsbProbe());
+                OperatingSystem.IsMacOS() ? new MacUsbProbe() : new LinuxUsbProbe();
 #pragma warning restore CA1416
 #endif
+            var usbDetector = new Core.Services.UsbDeviceTracker(usbProbe);
             var bootloaderServices = new Core.Bootloader.BootloaderServices(toolProvider)
             {
                 SerialPorts = new DesktopSerialPortService(),
