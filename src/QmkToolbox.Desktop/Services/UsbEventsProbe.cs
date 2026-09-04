@@ -5,12 +5,12 @@ using Usb.Events;
 
 namespace QmkToolbox.Desktop.Services;
 
-// Used on Linux and macOS only. Windows has its own native probe; see WindowsUsbProbe.
+// Used on macOS only. Windows and Linux have native probes; see WindowsUsbProbe/LinuxUsbProbe.
 
 /// <summary>
-/// Shared Usb.Events subscription plumbing for the Linux and macOS probes: translates raw
-/// watcher callbacks into arrival/removal payloads. Subclasses own the per-OS ID parsing, the
-/// arrival enrichment (bcdDevice, mass-storage flag), and the native present-device sweep.
+/// Usb.Events subscription plumbing for the macOS probe: translates raw watcher callbacks into
+/// arrival/removal payloads. The subclass owns the ID parsing, the arrival enrichment
+/// (bcdDevice, mass-storage flag), and the native present-device sweep.
 /// </summary>
 internal abstract class UsbEventsProbe : IUsbProbe
 {
