@@ -1,0 +1,168 @@
+using NSubstitute;
+using QmkToolbox.Core.Bootloader;
+using QmkToolbox.Core.Models;
+using QmkToolbox.Core.Services;
+using QmkToolbox.Desktop.Services;
+using QmkToolbox.Desktop.ViewModels;
+using Xunit;
+
+namespace QmkToolbox.Tests;
+
+/// <summary>
+/// Drives MainWindowViewModel through its constructor seams: a substitute
+/// <see cref="IWindowService"/> and a recording theme applier stand in for Avalonia, the real
+/// FlashSession runs over the usual fakes, and settings live in a per-test temp file.
+/// </summary>
+public sealed class MainWindowViewModelTests : IDisposable
+{
+    private sealed class FakeUsbDetector : IUsbEventsDetector
+    {
+        public event Action<IUsbDevice>? DeviceConnected;
+        public event Action<IUsbDevice>? DeviceDisconnected;
+        public Action<string>? DiagnosticTrace { get; set; }
+
+        public void Start() { }
+        public void Stop() { }
+        public void Dispose() { }
+
+        public void RaiseConnected(IUsbDevice device) => DeviceConnected?.Invoke(device);
+        public void RaiseDisconnected(IUsbDevice device) => DeviceDisconnected?.Invoke(device);
+    }
+
+    private readonly FakeUsbDetector _detector = new();
+    private readonly IWindowService _windowService = Substitute.For<IWindowService>();
+    private readonly List<string> _appliedThemes = [];
+    private readonly IFlashToolProvider _toolProvider;
+    private readonly FlashSession _session;
+    private readonly SettingsService _settings;
+    private readonly string _settingsPath;
+
+    public MainWindowViewModelTests()
+    {
+        _settingsPath = Path.Combine(Path.GetTempPath(), $"mwvm-test-{Guid.NewGuid():N}.json");
+        _settings = new SettingsService(_settingsPath);
+        _toolProvider = Substitute.For<IFlashToolProvider>();
+        var orchestrator = new FlashOrchestrator(new BootloaderServices(_toolProvider)
+        {
+            ProcessRunner = new CapturingProcessRunner(),
+            SerialPorts = Substitute.For<ISerialPortService>(),
+            MountPoints = Substitute.For<IMountPointService>(),
+        });
+        _session = new FlashSession(f => f(), _detector, orchestrator, _toolProvider);
+    }
+
+    public void Dispose()
+    {
+        if (File.Exists(_settingsPath))
+            File.Delete(_settingsPath);
+    }
+
+    private MainWindowViewModel NewVm(string filePath = "") =>
+        new(_session, _toolProvider, _settings, _windowService, _appliedThemes.Add, filePath);
+
+    // ── theme ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Construction_AppliesPersistedThemeVariant()
+    {
+        _settings.Current.ThemeVariant = "Dark";
+
+        MainWindowViewModel vm = NewVm();
+
+        Assert.Equal("Dark", Assert.Single(_appliedThemes));
+        Assert.True(vm.IsDarkTheme);
+    }
+
+    [Fact]
+    public void SetTheme_AppliesVariantAndUpdatesFlags()
+    {
+        MainWindowViewModel vm = NewVm();
+
+        vm.SetThemeCommand.Execute("Light");
+
+        Assert.Equal("Light", _appliedThemes[^1]);
+        Assert.True(vm.IsLightTheme);
+        Assert.False(vm.IsDarkTheme);
+    }
+
+    // ── startup banner ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Construction_LogsStartupBanner()
+    {
+        MainWindowViewModel vm = NewVm();
+
+        string log = vm.Buffer.ToString();
+        Assert.Contains("QMK Toolbox", log);
+        Assert.Contains("Supported bootloaders:", log);
+        Assert.Contains("via dfu-util", log);
+        Assert.Contains("Supported ISP flashers:", log);
+    }
+
+    // ── firmware path ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Construction_WithFilePathArgument_SelectsFirmware()
+    {
+        NewVm("/fw/from-cli.hex");
+
+        Assert.Equal("/fw/from-cli.hex", _session.FirmwarePath);
+    }
+
+    [Fact]
+    public async Task OpenFile_PickedFile_SelectsFirmware()
+    {
+        _windowService.PickFirmwareFileAsync().Returns("/fw/picked.hex");
+        MainWindowViewModel vm = NewVm();
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Equal("/fw/picked.hex", _session.FirmwarePath);
+    }
+
+    [Fact]
+    public async Task OpenFile_PickerCancelled_KeepsCurrentFirmware()
+    {
+        _windowService.PickFirmwareFileAsync().Returns((string?)null);
+        MainWindowViewModel vm = NewVm();
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Equal("", _session.FirmwarePath);
+    }
+
+    // ── command enablement relay ──────────────────────────────────────────────
+
+    [Fact]
+    public void DeviceConnected_EnablesFlashCommand()
+    {
+        MainWindowViewModel vm = NewVm();
+        bool raised = false;
+        vm.FlashCommand.CanExecuteChanged += (_, _) => raised = true;
+        Assert.False(vm.FlashCommand.CanExecute(null));
+
+        _detector.RaiseConnected(new UsbDeviceInfo(0x03EB, 0x2FEF, 0, "", "", "", ""));
+
+        Assert.True(raised);
+        Assert.True(vm.FlashCommand.CanExecute(null));
+    }
+
+    // ── first-start setup ─────────────────────────────────────────────────────
+
+    [FactOnLinux] // RunFirstStartSetupAsync's confirm prompt is OS-specific (udev rules on Linux)
+    public async Task FirstStart_ConfirmDeclined_CompletesAndClearsFirstStartFlag()
+    {
+        _settings.Current.FirstStart = true;
+        MainWindowViewModel vm = NewVm();
+
+        Task setup = vm.RunFirstStartSetupAsync();
+        Assert.True(vm.IsConfirmVisible);
+        Assert.Equal("Linux udev Rules", vm.ConfirmTitle);
+
+        vm.ConfirmNoCommand.Execute(null);
+        await setup;
+
+        Assert.False(vm.IsConfirmVisible);
+        Assert.False(_settings.Current.FirstStart);
+    }
+}

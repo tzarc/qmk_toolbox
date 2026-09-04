@@ -6,14 +6,18 @@ using QmkToolbox.Desktop.Views;
 
 namespace QmkToolbox.Desktop.Services;
 
-public sealed class DesktopWindowService
+public sealed class DesktopWindowService : IWindowService
 {
-    private readonly Window _owner;
     private readonly Dictionary<Type, Window> _singletons = [];
 
-    public DesktopWindowService(Window owner)
+    /// <summary>
+    /// Binds the service to its owner window once it exists; the service is constructed at the
+    /// composition root, before any window. Every window-facing member is triggered from UI
+    /// inside the owner window, so none can run before attachment.
+    /// </summary>
+    public void AttachWindow(Window owner)
     {
-        _owner = owner;
+        Owner = owner;
         owner.Closed += (_, _) =>
         {
             foreach (Window w in _singletons.Values.ToList())
@@ -21,9 +25,11 @@ public sealed class DesktopWindowService
         };
     }
 
+    private Window Owner { get => field ?? throw new InvalidOperationException("AttachWindow has not been called."); set; }
+
     public async Task<string?> PickFirmwareFileAsync()
     {
-        IReadOnlyList<IStorageFile> files = await _owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        IReadOnlyList<IStorageFile> files = await Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open Firmware File",
             AllowMultiple = false,
@@ -46,7 +52,7 @@ public sealed class DesktopWindowService
         T window = create();
         _singletons[typeof(T)] = window;
         window.Closed += (_, _) => _singletons.Remove(typeof(T));
-        window.Show(_owner);
+        window.Show(Owner);
     }
 
     public void ShowKeyTester() =>
@@ -61,7 +67,7 @@ public sealed class DesktopWindowService
     public void ShowAbout()
     {
         var win = new AboutWindow();
-        win.ShowDialog(_owner);
+        win.ShowDialog(Owner);
     }
 
     public void ShowDebugLog() =>

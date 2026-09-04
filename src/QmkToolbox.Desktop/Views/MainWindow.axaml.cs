@@ -20,8 +20,14 @@ public partial class MainWindow : Window
     private NativeMenuItem? _systemThemeItem;
     private MainWindowViewModel? _nativeMenuVm;
 
-    public MainWindow()
+    private readonly DesktopWindowService? _windowService;
+
+    // Parameterless overload for the XAML designer/loader only.
+    public MainWindow() : this(null) { }
+
+    public MainWindow(DesktopWindowService? windowService)
     {
+        _windowService = windowService;
         InitializeComponent();
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
@@ -52,7 +58,7 @@ public partial class MainWindow : Window
         // The session marshals USB events itself (invoker supplied at construction); this
         // invoker only serves the ViewModel's own background callbacks (e.g. udev install).
         vm.SetUiInvoker(Avalonia.Threading.Dispatcher.UIThread.InvokeAsync);
-        vm.SetWindowService(new DesktopWindowService(this));
+        _windowService?.AttachWindow(this);
         if (Clipboard is { } clipboard)
             vm.SetClipboardFunc(clipboard.SetTextAsync);
         vm.Session.Start();

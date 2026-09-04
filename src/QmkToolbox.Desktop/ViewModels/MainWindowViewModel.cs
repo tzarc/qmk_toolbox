@@ -8,7 +8,6 @@ using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
-using AvaloniaTheme = Avalonia.Styling.ThemeVariant;
 
 namespace QmkToolbox.Desktop.ViewModels;
 
@@ -33,16 +32,21 @@ public partial class MainWindowViewModel : LogViewModelBase
     public SettingsService Settings { get; }
 
     private readonly IFlashToolProvider _toolProvider;
-    private DesktopWindowService? _windowService;
+    private readonly IWindowService _windowService;
+    private readonly Action<string> _themeApplier;
 
     public MainWindowViewModel(
         FlashSession session,
         IFlashToolProvider toolProvider,
         SettingsService settingsService,
+        IWindowService windowService,
+        Action<string> themeApplier,
         string filePath = "")
     {
         Session = session;
         _toolProvider = toolProvider;
+        _windowService = windowService;
+        _themeApplier = themeApplier;
         Settings = settingsService;
         Settings.ErrorLogger = LogError;
 
@@ -79,20 +83,9 @@ public partial class MainWindowViewModel : LogViewModelBase
         }
     }
 
-    public void SetWindowService(DesktopWindowService service)
-    {
-        _windowService = service;
-        Session.DiagnosticTrace = service.TraceDebug;
-    }
-
     partial void OnThemeVariantChanged(string value)
     {
-        Application.Current!.RequestedThemeVariant = value switch
-        {
-            "Light" => AvaloniaTheme.Light,
-            "Default" => AvaloniaTheme.Default,
-            _ => AvaloniaTheme.Dark,
-        };
+        _themeApplier(value);
         OnPropertyChanged(nameof(IsDarkTheme));
         OnPropertyChanged(nameof(IsLightTheme));
         OnPropertyChanged(nameof(IsSystemTheme));
@@ -215,24 +208,22 @@ public partial class MainWindowViewModel : LogViewModelBase
     [RelayCommand]
     private async Task OpenFile()
     {
-        if (_windowService == null)
-            return;
         string? path = await _windowService.PickFirmwareFileAsync();
         if (path != null)
             Session.SetFirmwarePath(path);
     }
 
     [RelayCommand]
-    private void OpenKeyTester() => _windowService?.ShowKeyTester();
+    private void OpenKeyTester() => _windowService.ShowKeyTester();
 
     [RelayCommand]
-    private void OpenHidConsole() => _windowService?.ShowHidConsole();
+    private void OpenHidConsole() => _windowService.ShowHidConsole();
 
     [RelayCommand]
-    private void OpenAbout() => _windowService?.ShowAbout();
+    private void OpenAbout() => _windowService.ShowAbout();
 
     [RelayCommand]
-    private void OpenDebugLog() => _windowService?.ShowDebugLog();
+    private void OpenDebugLog() => _windowService.ShowDebugLog();
 
     [RelayCommand]
     private void InstallDrivers() => WindowsDriversInstaller.Install(_toolProvider, LogError);

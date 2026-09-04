@@ -50,9 +50,11 @@ public partial class App : Application
                 usbDetector,
                 orchestrator,
                 toolProvider);
-            var vm = new MainWindowViewModel(session, toolProvider, new SettingsService(), filePath);
+            var windowService = new DesktopWindowService();
+            var vm = new MainWindowViewModel(session, toolProvider, new SettingsService(), windowService, ApplyTheme, filePath);
+            session.DiagnosticTrace = windowService.TraceDebug;
             _mainWindowViewModel = vm;
-            desktop.MainWindow = new MainWindow { DataContext = vm };
+            desktop.MainWindow = new MainWindow(windowService) { DataContext = vm };
 
             // Builds the native app menu for non-macOS platforms (Windows, Linux).
             // On macOS the NSMenuBar reads NativeMenu.Menu from the Application during
@@ -80,6 +82,16 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    // The Avalonia adapter for the ViewModel's theme-applier seam: maps the persisted
+    // variant name onto the application-wide requested theme.
+    private static void ApplyTheme(string variant) =>
+        Current!.RequestedThemeVariant = variant switch
+        {
+            "Light" => Avalonia.Styling.ThemeVariant.Light,
+            "Default" => Avalonia.Styling.ThemeVariant.Default,
+            _ => Avalonia.Styling.ThemeVariant.Dark,
+        };
 
     // Handler for the "About QMK Toolbox" NativeMenuItem declared in App.axaml.
     // On macOS, the AXAML-declared NativeMenu.Menu is what the NSMenuBar uses for the
