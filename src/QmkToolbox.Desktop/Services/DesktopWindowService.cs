@@ -61,7 +61,11 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     // The listener's lifecycle is scoped to the console window: created here and disposed
     // when the window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
     public void ShowHidConsole() =>
-        ShowSingleton(() => new HidConsoleWindow { DataContext = new HidConsoleViewModel(hidListenerFactory()) });
+        ShowSingleton(() => new HidConsoleWindow
+        {
+            DataContext = new HidConsoleViewModel(
+                hidListenerFactory(), Avalonia.Threading.Dispatcher.UIThread.InvokeAsync)
+        });
 
     public void ShowAbout()
     {

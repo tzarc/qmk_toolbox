@@ -15,6 +15,12 @@ public abstract partial class LogViewModelBase : ObservableObject
 
     protected Func<Func<Task>, Task>? UiInvoker { get; private set; }
 
+    /// <summary>
+    /// Supplies the UI-thread marshaller used by <see cref="Invoke"/>. ViewModels fed from
+    /// background threads must receive the invoker at construction (see HidConsoleViewModel);
+    /// this set-later path is only for viewmodels whose background callbacks cannot fire
+    /// before their window opens and supplies it (MainWindowViewModel's udev-install logging).
+    /// </summary>
     public void SetUiInvoker(Func<Func<Task>, Task> invoker) => UiInvoker = invoker;
     public void SetClipboardFunc(Func<string, Task> func) => _setClipboardText = func;
 

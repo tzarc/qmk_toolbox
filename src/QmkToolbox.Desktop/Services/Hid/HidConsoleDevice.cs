@@ -7,7 +7,8 @@ namespace QmkToolbox.Desktop.Services.Hid;
 /// <summary>
 /// Represents a QMK HID Console device (usage page 0xFF31, usage 0x0074).
 /// Opens the device on construction and continuously reads console output on a background
-/// thread, raising <see cref="ConsoleReportReceived"/> with the decoded text of each report.
+/// thread, raising <see cref="BaseHidDevice.ConsoleReportReceived"/> with the decoded text of
+/// each report.
 /// The console is a raw byte stream chunked into null-padded USB reports; the consumer's
 /// terminal buffer interprets '\r'/'\n'.
 /// </summary>
@@ -24,8 +25,6 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
 
     public static BaseHidDevice? TryCreate(DeviceInfo d) =>
         Match(d) ? new HidConsoleDevice(d) : null;
-
-    public event Action<HidConsoleDevice, string>? ConsoleReportReceived;
 
     private CancellationTokenSource? _cts;
     private readonly Task? _readTask;
@@ -66,7 +65,7 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
 
                 int charCount = _decoder.GetChars(buffer, 0, validBytes, charBuffer, 0);
                 if (charCount > 0)
-                    ConsoleReportReceived?.Invoke(this, new string(charBuffer, 0, charCount));
+                    RaiseConsoleReport(new string(charBuffer, 0, charCount));
             }
         }
         catch (Exception ex) when (ex is HidException or IOException or ObjectDisposedException)

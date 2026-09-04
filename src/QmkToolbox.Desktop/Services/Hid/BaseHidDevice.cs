@@ -18,6 +18,11 @@ public abstract class BaseHidDevice(DeviceInfo deviceInfo) : IHidDevice
     /// <inheritdoc />
     public abstract bool IsConsoleDevice { get; }
 
+    /// <summary>Raised with the decoded text of each console report; only console devices raise it.</summary>
+    public event Action<BaseHidDevice, string>? ConsoleReportReceived;
+
+    protected void RaiseConsoleReport(string data) => ConsoleReportReceived?.Invoke(this, data);
+
     public override string ToString() =>
         $"{ManufacturerString} {ProductString} ({VendorId:X4}:{ProductId:X4}:{RevisionBcd:X4})";
 }

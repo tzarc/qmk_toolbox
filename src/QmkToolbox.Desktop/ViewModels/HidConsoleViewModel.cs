@@ -25,8 +25,12 @@ public partial class HidConsoleViewModel : LogViewModelBase, IDisposable
 
     private readonly IHidListener _hidListener;
 
-    public HidConsoleViewModel(IHidListener hidListener)
+    // The listener can raise events as soon as Start() runs, before the console window has
+    // opened, so the UI invoker must arrive here rather than through the set-later path.
+    public HidConsoleViewModel(IHidListener hidListener, Func<Func<Task>, Task>? uiInvoker = null)
     {
+        if (uiInvoker != null)
+            SetUiInvoker(uiInvoker);
         _hidListener = hidListener;
         _hidListener.HidDeviceConnected += OnDeviceConnected;
         _hidListener.HidDeviceDisconnected += OnDeviceDisconnected;
@@ -55,22 +59,27 @@ public partial class HidConsoleViewModel : LogViewModelBase, IDisposable
             return;
         Invoke(() =>
         {
+            // Move the selection off the dying entry before removing it: removing the selected
+            // item makes the ComboBox clear its selection, and that null lands through the
+            // two-way binding after anything this handler assigns.
+            if (SelectedDevice?.DevicePath == device.DevicePath)
+                SelectedDevice = AllDevices;
             HidDeviceEntry? entry = Devices.FirstOrDefault(d => d.DevicePath == device.DevicePath);
             if (entry != null)
                 Devices.Remove(entry);
             Log($"HID console device disconnected: {device}", MessageType.Hid);
-            if (SelectedDevice?.DevicePath == device.DevicePath)
-                SelectedDevice = AllDevices;
         });
     }
 
-    private void OnConsoleReportReceived(IHidDevice device, string data)
-    {
-        string? selectedPath = SelectedDevice?.DevicePath;
-        if (selectedPath != null && selectedPath != device.DevicePath)
-            return;
-        Invoke(() => Log(data, MessageType.HidOutput));
-    }
+    // SelectedDevice is UI state; reading it inside the marshalled block serialises the
+    // filter against selection changes.
+    private void OnConsoleReportReceived(IHidDevice device, string data) =>
+        Invoke(() =>
+        {
+            string? selectedPath = SelectedDevice?.DevicePath;
+            if (selectedPath == null || selectedPath == device.DevicePath)
+                Log(data, MessageType.HidOutput);
+        });
 
     private void OnErrorOccurred(string message) =>
         Invoke(() => Log(message, MessageType.Error));

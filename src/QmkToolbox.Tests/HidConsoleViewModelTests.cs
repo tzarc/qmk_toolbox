@@ -108,6 +108,28 @@ public class HidConsoleViewModelTests
         Assert.Equal(AllDevices, vm.SelectedDevice?.Label);
     }
 
+    // The ComboBox clears its selection when the selected item is removed, and that null
+    // arrives through the two-way binding after this handler runs; the selection must
+    // therefore already be off the entry by the time it leaves the collection.
+    [Fact]
+    public void DeviceDisconnected_SelectionResetsBeforeTheEntryIsRemoved()
+    {
+        (HidConsoleViewModel vm, FakeHidListener listener) = NewConsole();
+        var device = new FakeHidDevice("Planck");
+        listener.RaiseConnected(device);
+        vm.SelectedDevice = vm.Devices[1];
+        HidDeviceEntry? selectionAtRemoval = null;
+        vm.Devices.CollectionChanged += (_, args) =>
+        {
+            if (args.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+                selectionAtRemoval = vm.SelectedDevice;
+        };
+
+        listener.RaiseDisconnected(device);
+
+        Assert.Equal(AllDevices, selectionAtRemoval?.Label);
+    }
+
     [Fact]
     public void DeviceDisconnected_OtherDeviceSelected_SelectionKept()
     {

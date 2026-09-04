@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
-using Avalonia.Threading;
 using QmkToolbox.Desktop.ViewModels;
 
 namespace QmkToolbox.Desktop.Views;
@@ -17,7 +16,6 @@ public partial class HidConsoleWindow : Window
         base.OnOpened(e);
         if (DataContext is HidConsoleViewModel vm)
         {
-            vm.SetUiInvoker(Dispatcher.UIThread.InvokeAsync);
             TopLevel? top = GetTopLevel(this);
             if (top?.Clipboard is { } clipboard)
                 vm.SetClipboardFunc(clipboard.SetTextAsync);
