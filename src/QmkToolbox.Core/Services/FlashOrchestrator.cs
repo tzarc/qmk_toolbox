@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Bootloader.Impl;
 using QmkToolbox.Core.Models;
@@ -15,7 +16,7 @@ public class FlashOrchestrator(BootloaderServices services)
     // its device's probe. Like IsBusy, mutated only on the UI thread: every caller marshals
     // to it, and the probe's awaits must keep the captured context (no ConfigureAwait(false))
     // so the finally that removes the entry resumes there too.
-    private readonly List<(IUsbDevice Device, CancellationTokenSource Cancellation)> _volumeProbes = [];
+    private readonly List<(UsbDeviceInfo Device, CancellationTokenSource Cancellation)> _volumeProbes = [];
 
     // Every unknown mass-storage device is polled for a marker volume for as long as it
     // stays connected — desktops like KDE mount removable drives only when the user asks,
@@ -42,7 +43,7 @@ public class FlashOrchestrator(BootloaderServices services)
     /// volume carrying a bootloader marker file until it mounts or the device is removed, so
     /// completion can lag the arrival by however long the user takes to mount the drive.
     /// </summary>
-    public async Task<bool> OnDeviceConnectedAsync(IUsbDevice device, bool showAllDevices)
+    public async Task<bool> OnDeviceConnectedAsync(UsbDeviceInfo device, bool showAllDevices)
     {
         BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, services);
         if (bd == null)
@@ -83,7 +84,7 @@ public class FlashOrchestrator(BootloaderServices services)
     /// appears only when the OS (or the user, on desktops that don't automount) mounts the
     /// drive.
     /// </summary>
-    private async Task<BootloaderDevice?> TryCreateMassStorageDeviceAsync(IUsbDevice device)
+    private async Task<BootloaderDevice?> TryCreateMassStorageDeviceAsync(UsbDeviceInfo device)
     {
         if (!device.IsMassStorage || services.MountPoints is not { } mountPoints)
             return null;
@@ -129,17 +130,17 @@ public class FlashOrchestrator(BootloaderServices services)
     private bool IsMountClaimed(string mount) =>
         _bootloaders.Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
 
-    // The detector guarantees a removal delivers the identical IUsbDevice instance it announced
+    // The detector guarantees a removal delivers the identical UsbDeviceInfo instance it announced
     // at arrival (see IUsbEventsDetector.DeviceDisconnected), so matching is reference identity;
     // no path/VID-PID re-matching here.
-    private void CancelVolumeProbe(IUsbDevice device) =>
-        _volumeProbes.FirstOrDefault(p => ReferenceEquals(p.Device, device)).Cancellation?.Cancel();
+    private void CancelVolumeProbe(UsbDeviceInfo device) =>
+        _volumeProbes.FirstOrDefault(p => p.Device == device).Cancellation?.Cancel();
 
-    public void OnDeviceDisconnected(IUsbDevice device, bool showAllDevices)
+    public void OnDeviceDisconnected(UsbDeviceInfo device, bool showAllDevices)
     {
         CancelVolumeProbe(device);
 
-        BootloaderDevice? bd = _bootloaders.FirstOrDefault(b => ReferenceEquals(b.Device, device));
+        BootloaderDevice? bd = _bootloaders.FirstOrDefault(b => b.Device == device);
 
         if (bd != null)
         {

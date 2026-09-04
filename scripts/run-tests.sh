@@ -30,7 +30,7 @@ docker run --rm \
     -w /app/src \
     mcr.microsoft.com/dotnet/sdk:10.0 \
     sh -c '
-        dotnet test QmkToolbox.Tests/QmkToolbox.Tests.csproj \
+        dotnet test QmkToolbox.slnx \
             --collect:"XPlat Code Coverage" \
             --settings coverage.runsettings \
             --results-directory /app/TestResults \

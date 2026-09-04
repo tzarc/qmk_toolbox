@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace QmkToolbox.Core.Services;
+namespace Qmk.Usb.Discovery;
 
 /// <summary>USB device path and ID parsing helpers.</summary>
-public static class UsbDeviceParser
+internal static class UsbDeviceParser
 {
     private static readonly Regex HwIdRegex = new(
         @"VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4})(?:&REV_([0-9A-Fa-f]{4}))?",
@@ -22,6 +22,10 @@ public static class UsbDeviceParser
             : ushort.TryParse(s, NumberStyles.HexNumber, null, out value));
     }
 
+    /// <summary>
+    /// Extracts VID, PID, and (when present) revision from a Windows-format hardware ID or
+    /// device path: any string carrying <c>VID_xxxx&amp;PID_xxxx[&amp;REV_xxxx]</c>.
+    /// </summary>
     public static bool TryParseHwId(string devicePath, out ushort vid, out ushort pid, out ushort rev)
     {
         vid = pid = rev = 0;

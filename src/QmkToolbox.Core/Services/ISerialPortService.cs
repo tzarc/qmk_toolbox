@@ -1,4 +1,4 @@
-using QmkToolbox.Core.Models;
+using Qmk.Usb.Discovery;
 
 namespace QmkToolbox.Core.Services;
 
@@ -11,5 +11,5 @@ public interface ISerialPortService
     /// Returns the serial port name (e.g. <c>/dev/ttyACM0</c> or <c>COM3</c>) for
     /// <paramref name="device"/>, or <see langword="null"/> if none can be found.
     /// </summary>
-    string? FindSerialPort(IUsbDevice device);
+    string? FindSerialPort(UsbDeviceInfo device);
 }

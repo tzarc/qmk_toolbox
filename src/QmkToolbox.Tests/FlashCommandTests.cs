@@ -1,4 +1,5 @@
 using NSubstitute;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
@@ -17,8 +18,8 @@ public class FlashCommandTests
 {
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    private static IUsbDevice Usb(ushort vid, ushort pid, ushort rev = 0) =>
-        new UsbDeviceInfo(vid, pid, rev, "", "", "", "");
+    private static UsbDeviceInfo Usb(ushort vid, ushort pid, ushort rev = 0) =>
+        new(vid, pid, rev, "", "", "", "");
 
     private static IFlashToolProvider MockToolProvider()
     {
@@ -42,7 +43,7 @@ public class FlashCommandTests
     private static ISerialPortService MockSerialPort()
     {
         ISerialPortService s = Substitute.For<ISerialPortService>();
-        s.FindSerialPort(Arg.Any<IUsbDevice>()).Returns("ttyACM0");
+        s.FindSerialPort(Arg.Any<UsbDeviceInfo>()).Returns("ttyACM0");
         return s;
     }
 
@@ -50,13 +51,13 @@ public class FlashCommandTests
     {
         // NSubstitute auto-returns "" for strings; the poll must see null ("no port yet").
         ISerialPortService s = Substitute.For<ISerialPortService>();
-        s.FindSerialPort(Arg.Any<IUsbDevice>()).Returns((string?)null);
+        s.FindSerialPort(Arg.Any<UsbDeviceInfo>()).Returns((string?)null);
         return s;
     }
 
     /// <summary>Creates a device via the factory and collects the commands its runner launched.</summary>
     private static async Task<List<string>> Commands(
-        IUsbDevice usb,
+        UsbDeviceInfo usb,
         ISerialPortService? serial,
         Func<BootloaderDevice, Task> action)
     {
@@ -362,7 +363,7 @@ public class FlashCommandTests
         try
         {
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns(mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateDevice(
                 Usb(0x03EB, 0x2045), Services(mounts: mount))!;
@@ -395,7 +396,7 @@ public class FlashCommandTests
             // Automount completes after the arrival event: the first resolution attempt
             // finds nothing, the retry finds the volume.
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(null, mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns(null, mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateDevice(
                 Usb(0x03EB, 0x2045), Services(mounts: mount))!;
@@ -418,7 +419,7 @@ public class FlashCommandTests
     {
         // The service is present but the volume never appears, so the full retry loop runs dry.
         IMountPointService mount = Substitute.For<IMountPointService>();
-        mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns((string?)null);
+        mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
             Usb(0x03EB, 0x2045), Services(mounts: mount))!;
         bd.PollDelayMs = 1;
@@ -427,7 +428,7 @@ public class FlashCommandTests
 
         await bd.FlashAsync("", "firmware.bin");
 
-        mount.Received(10).FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>());
+        mount.Received(10).FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>());
         Assert.Contains(errors, e => e.StartsWith("Mount point not found!"));
     }
 
@@ -454,7 +455,7 @@ public class FlashCommandTests
         try
         {
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns(mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
                 BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services(mounts: mount));
@@ -478,7 +479,7 @@ public class FlashCommandTests
     public async Task Uf2Device_Flash_VolumeNeverMounts_ReportsError()
     {
         IMountPointService mount = Substitute.For<IMountPointService>();
-        mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns((string?)null);
+        mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
             BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services(mounts: mount));
         bd.PollDelayMs = 1;

@@ -5,4 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Qmk.Usb.Discovery/Qmk.Usb.Discovery.csproj" />
+  </ItemGroup>
 </Project>

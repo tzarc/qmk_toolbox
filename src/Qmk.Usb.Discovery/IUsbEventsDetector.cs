@@ -1,6 +1,5 @@
-using QmkToolbox.Core.Models;
 
-namespace QmkToolbox.Core.Services;
+namespace Qmk.Usb.Discovery;
 
 /// <summary>
 /// Monitors USB device arrival and removal events.
@@ -8,15 +7,15 @@ namespace QmkToolbox.Core.Services;
 public interface IUsbEventsDetector : IDisposable
 {
     /// <summary>Raised when a USB device is connected.</summary>
-    event Action<IUsbDevice> DeviceConnected;
+    event Action<UsbDeviceInfo> DeviceConnected;
 
     /// <summary>
     /// Raised when a USB device is disconnected. Always delivers the identical
-    /// <see cref="IUsbDevice"/> instance previously delivered by <see cref="DeviceConnected"/>;
+    /// <see cref="UsbDeviceInfo"/> instance previously delivered by <see cref="DeviceConnected"/>;
     /// consumers may track devices by reference; all lossy-removal resolution happens inside
     /// the detector.
     /// </summary>
-    event Action<IUsbDevice> DeviceDisconnected;
+    event Action<UsbDeviceInfo> DeviceDisconnected;
 
     /// <summary>When set, receives diagnostic trace messages for USB events. Called from the detector's own thread — callers must marshal if needed.</summary>
     Action<string>? DiagnosticTrace { get; set; }

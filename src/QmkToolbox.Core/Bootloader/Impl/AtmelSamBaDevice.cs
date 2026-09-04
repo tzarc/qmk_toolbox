@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
@@ -9,7 +10,7 @@ internal sealed class AtmelSamBaDevice : BootloaderDevice
     // FlashAsync and ResetAsync await the same Task, so resolution happens at most once.
     private readonly Task<string?> _comPort;
 
-    public AtmelSamBaDevice(IUsbDevice device, BootloaderServices services)
+    public AtmelSamBaDevice(UsbDeviceInfo device, BootloaderServices services)
         : base(device, services)
     {
         Type = BootloaderType.AtmelSamBa;

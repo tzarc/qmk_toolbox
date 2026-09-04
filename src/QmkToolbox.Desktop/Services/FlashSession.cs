@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.ViewModels;
@@ -149,7 +150,7 @@ public partial class FlashSession : ObservableObject
     /// <summary>The in-flight auto-flash, if any — awaitable by tests; the UI never needs it.</summary>
     internal Task? AutoFlashTask { get; private set; }
 
-    private void OnDeviceConnected(IUsbDevice device)
+    private void OnDeviceConnected(UsbDeviceInfo device)
         => _ = _uiInvoker(async () =>
         {
             // Completes synchronously for VID/PID-mapped devices; unmapped mass-storage devices
@@ -177,7 +178,7 @@ public partial class FlashSession : ObservableObject
         }
     }
 
-    private void OnDeviceDisconnected(IUsbDevice device)
+    private void OnDeviceDisconnected(UsbDeviceInfo device)
         => Invoke(() => _orchestrator.OnDeviceDisconnected(device, ShowAllDevices));
 
     // The orchestrator owns the in-flight invariant (FlashOrchestrator.IsBusy); every readiness

@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 
@@ -5,14 +6,14 @@ namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
 /// Abstract base class for all bootloader device implementations.
-/// Wraps an <see cref="IUsbDevice"/> and provides common plumbing for flashing,
+/// Wraps an <see cref="UsbDeviceInfo"/> and provides common plumbing for flashing,
 /// EEPROM operations, reset, and tool invocation.
 /// </summary>
-public abstract class BootloaderDevice(IUsbDevice device, BootloaderServices services)
+public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices services)
 {
     public event Action<BootloaderDevice, string, MessageType>? OutputReceived;
 
-    public IUsbDevice Device { get; } = device;
+    public UsbDeviceInfo Device { get; } = device;
     protected BootloaderServices Services { get; } = services;
 
     public ushort VendorId => Device.VendorId;

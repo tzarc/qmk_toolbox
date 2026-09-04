@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
@@ -5,7 +6,7 @@ namespace QmkToolbox.Core.Bootloader.Impl;
 /// <summary>Atmel DFU / QMK DFU bootloader device (ATmega/AT90USB, via dfu-programmer).</summary>
 internal sealed class AtmelDfuDevice : BootloaderDevice
 {
-    public AtmelDfuDevice(IUsbDevice device, BootloaderServices services, BootloaderType type)
+    public AtmelDfuDevice(UsbDeviceInfo device, BootloaderServices services, BootloaderType type)
         : base(device, services)
     {
         Type = type;

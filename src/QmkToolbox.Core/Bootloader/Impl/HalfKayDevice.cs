@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
@@ -5,7 +6,7 @@ namespace QmkToolbox.Core.Bootloader.Impl;
 /// <summary>HalfKay bootloader device (Teensy/Ergodox EZ, via teensy_loader_cli).</summary>
 internal sealed class HalfKayDevice : BootloaderDevice
 {
-    public HalfKayDevice(IUsbDevice device, BootloaderServices services)
+    public HalfKayDevice(UsbDeviceInfo device, BootloaderServices services)
         : base(device, services)
     {
         Type = BootloaderType.HalfKay;

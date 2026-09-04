@@ -1,4 +1,5 @@
 using NSubstitute;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
@@ -19,11 +20,11 @@ public class FlashOrchestratorTests
     };
 
     // VID/PID are arbitrary: marker-probed devices are outside the VID/PID map by construction.
-    private static IUsbDevice MassStorage(ushort pid = 0x00FF, string path = "path0") =>
-        new UsbDeviceInfo(0x239A, pid, 0, "Test", "Board", "", path, IsMassStorage: true);
+    private static UsbDeviceInfo MassStorage(ushort pid = 0x00FF, string path = "path0") =>
+        new(0x239A, pid, 0, "Test", "Board", "", path, isMassStorage: true);
 
-    private static IUsbDevice Unknown() =>
-        new UsbDeviceInfo(0x1234, 0x5678, 0, "", "", "", "path1");
+    private static UsbDeviceInfo Unknown() =>
+        new(0x1234, 0x5678, 0, "", "", "", "path1");
 
     // ── UF2 volume probe ──────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ public class FlashOrchestratorTests
         try
         {
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), "INFO_UF2.TXT").Returns(mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), "INFO_UF2.TXT").Returns(mountDir);
             FlashOrchestrator orch = NewOrchestrator(mount);
 
             var connected = new TaskCompletionSource<string>();
@@ -74,7 +75,7 @@ public class FlashOrchestratorTests
             // Desktops that don't automount (e.g. KDE) surface the volume only when the
             // user clicks mount — several polls after arrival here stands in for that.
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), "INFO_UF2.TXT")
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), "INFO_UF2.TXT")
                 .Returns(null, null, null, null, mountDir);
             FlashOrchestrator orch = NewOrchestrator(mount);
 
@@ -92,9 +93,9 @@ public class FlashOrchestratorTests
     {
         // NSubstitute auto-returns "" for strings; the probe must see null ("not mounted").
         IMountPointService mount = Substitute.For<IMountPointService>();
-        mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns((string?)null);
+        mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
         FlashOrchestrator orch = NewOrchestrator(mount);
-        IUsbDevice device = MassStorage();
+        UsbDeviceInfo device = MassStorage();
 
         Task<bool> connect = orch.OnDeviceConnectedAsync(device, false);
         await Task.Delay(50);
@@ -116,9 +117,9 @@ public class FlashOrchestratorTests
         try
         {
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), "INFO_UF2.TXT").Returns(mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), "INFO_UF2.TXT").Returns(mountDir);
             FlashOrchestrator orch = NewOrchestrator(mount);
-            IUsbDevice second = MassStorage(pid: 0x0002, path: "path2");
+            UsbDeviceInfo second = MassStorage(pid: 0x0002, path: "path2");
 
             Assert.True(await orch.OnDeviceConnectedAsync(MassStorage(pid: 0x0001, path: "path1"), false));
 
@@ -147,7 +148,7 @@ public class FlashOrchestratorTests
         Assert.False(await orch.OnDeviceConnectedAsync(Unknown(), false));
 
         Assert.False(orch.HasBootloaders);
-        mount.DidNotReceive().FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>());
+        mount.DidNotReceive().FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>());
     }
 
     [Fact]
@@ -160,9 +161,9 @@ public class FlashOrchestratorTests
         try
         {
             IMountPointService mount = Substitute.For<IMountPointService>();
-            mount.FindMountPoint(Arg.Any<IUsbDevice>(), "INFO_UF2.TXT").Returns(mountDir);
+            mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), "INFO_UF2.TXT").Returns(mountDir);
             FlashOrchestrator orch = NewOrchestrator(mount);
-            IUsbDevice device = MassStorage();
+            UsbDeviceInfo device = MassStorage();
             await orch.OnDeviceConnectedAsync(device, false);
             Assert.True(orch.HasBootloaders);
 

@@ -94,7 +94,4 @@
     <PackageReference Include="Semi.Avalonia" />
     <PackageReference Include="System.IO.Ports" />
   </ItemGroup>
-  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('win'))">
-    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-  </PropertyGroup>
 </Project>

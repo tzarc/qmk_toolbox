@@ -1,4 +1,5 @@
 using NSubstitute;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
@@ -17,8 +18,8 @@ public sealed class FlashSessionTests : IDisposable
 {
     private sealed class FakeUsbDetector : IUsbEventsDetector
     {
-        public event Action<IUsbDevice>? DeviceConnected;
-        public event Action<IUsbDevice>? DeviceDisconnected;
+        public event Action<UsbDeviceInfo>? DeviceConnected;
+        public event Action<UsbDeviceInfo>? DeviceDisconnected;
         public Action<string>? DiagnosticTrace { get; set; }
 
         public Action? OnStart;
@@ -35,8 +36,8 @@ public sealed class FlashSessionTests : IDisposable
 
         // Per the IUsbEventsDetector invariant, RaiseDisconnected must be passed the identical
         // instance previously passed to RaiseConnected.
-        public void RaiseConnected(IUsbDevice device) => DeviceConnected?.Invoke(device);
-        public void RaiseDisconnected(IUsbDevice device) => DeviceDisconnected?.Invoke(device);
+        public void RaiseConnected(UsbDeviceInfo device) => DeviceConnected?.Invoke(device);
+        public void RaiseDisconnected(UsbDeviceInfo device) => DeviceDisconnected?.Invoke(device);
     }
 
     private sealed class Harness : IDisposable
@@ -58,7 +59,7 @@ public sealed class FlashSessionTests : IDisposable
             ToolProvider.GetToolPath(Arg.Any<string>()).Returns(ci => ci.Arg<string>());
             ToolProvider.GetResourceFolder().Returns(Path.GetTempPath());
             ISerialPortService serial = Substitute.For<ISerialPortService>();
-            serial.FindSerialPort(Arg.Any<IUsbDevice>()).Returns("ttyACM0");
+            serial.FindSerialPort(Arg.Any<UsbDeviceInfo>()).Returns("ttyACM0");
             Orchestrator = new FlashOrchestrator(new BootloaderServices(ToolProvider)
             {
                 ProcessRunner = new CapturingProcessRunner(),
@@ -106,8 +107,8 @@ public sealed class FlashSessionTests : IDisposable
 
     public void Dispose() => _h.Dispose();
 
-    private static IUsbDevice AtmelDfu() => new UsbDeviceInfo(0x03EB, 0x2FEF, 0, "", "", "", "");
-    private static IUsbDevice Unknown() => new UsbDeviceInfo(0x1234, 0x5678, 0, "", "", "", "");
+    private static UsbDeviceInfo AtmelDfu() => new(0x03EB, 0x2FEF, 0, "", "", "", "");
+    private static UsbDeviceInfo Unknown() => new(0x1234, 0x5678, 0, "", "", "", "");
 
     // ── readiness flags ───────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ public sealed class FlashSessionTests : IDisposable
     [Fact]
     public void DeviceDisconnected_LastBootloader_DisablesActions()
     {
-        IUsbDevice device = AtmelDfu();
+        UsbDeviceInfo device = AtmelDfu();
         _h.Detector.RaiseConnected(device);
         Assert.True(_h.Session.CanFlash);
 
@@ -172,7 +173,7 @@ public sealed class FlashSessionTests : IDisposable
     {
         _h.Session.ShowAllDevices = true;
 
-        IUsbDevice device = Unknown();
+        UsbDeviceInfo device = Unknown();
         _h.Detector.RaiseConnected(device);
         _h.Detector.RaiseDisconnected(device);
 

@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="Qmk.Usb.Discovery/Qmk.Usb.Discovery.csproj" />
+  <Project Path="Qmk.Usb.Discovery.Tests/Qmk.Usb.Discovery.Tests.csproj" />
   <Project Path="QmkToolbox.Core/QmkToolbox.Core.csproj" />
   <Project Path="QmkToolbox.Desktop/QmkToolbox.Desktop.csproj" />
   <Project Path="QmkToolbox.Tests/QmkToolbox.Tests.csproj" />

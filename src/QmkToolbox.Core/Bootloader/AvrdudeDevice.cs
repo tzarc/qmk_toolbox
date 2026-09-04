@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader;
@@ -11,7 +12,7 @@ internal abstract class AvrdudeDevice : BootloaderDevice
     private readonly string _programmer;
 
     protected AvrdudeDevice(
-        IUsbDevice device,
+        UsbDeviceInfo device,
         BootloaderServices services,
         BootloaderType type,
         string name,

@@ -1,14 +1,11 @@
-using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests;
 
 /// <summary>
 /// Drives <see cref="UsbDeviceTracker"/> through the <see cref="IUsbProbe"/> seam: a fake probe
 /// raises raw arrivals/removals and serves the startup sweep. The load-bearing assertions are
-/// the identity invariant (removal delivers the arrival instance) and the sweep/dedup behaviour
-/// that previously existed only on Windows.
+/// the identity invariant (removal delivers the arrival instance) and the sweep/dedup behaviour.
 /// </summary>
 public class UsbDeviceTrackerTests
 {
@@ -34,8 +31,8 @@ public class UsbDeviceTrackerTests
         new(vid, pid, 0, "QMK", "Board", "", path);
 
     private readonly FakeProbe _probe = new();
-    private readonly List<IUsbDevice> _connected = [];
-    private readonly List<IUsbDevice> _disconnected = [];
+    private readonly List<UsbDeviceInfo> _connected = [];
+    private readonly List<UsbDeviceInfo> _disconnected = [];
     private readonly UsbDeviceTracker _tracker;
 
     public UsbDeviceTrackerTests()
@@ -138,7 +135,7 @@ public class UsbDeviceTrackerTests
         UsbDeviceInfo present = Device();
         probe.Present.Add(present);
         var tracker = new UsbDeviceTracker(probe);
-        var connected = new List<IUsbDevice>();
+        var connected = new List<UsbDeviceInfo>();
         tracker.DeviceConnected += connected.Add;
 
         tracker.Start();
@@ -154,7 +151,7 @@ public class UsbDeviceTrackerTests
         UsbDeviceInfo present = Device();
         probe.Present.Add(present);
         var tracker = new UsbDeviceTracker(probe);
-        var connected = new List<IUsbDevice>();
+        var connected = new List<UsbDeviceInfo>();
         tracker.DeviceConnected += connected.Add;
 
         tracker.Start();

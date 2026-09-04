@@ -1,9 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.Linux;
 
 /// <summary>
 /// Linux probe: hotplug via a raw netlink kobject-uevent socket (kernel group: no udevd, no
@@ -18,7 +16,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
 
     private const int AF_NETLINK = 16;
     private const int SOCK_RAW = 3;
-    private const int SOCK_CLOEXEC = 0x80000; // flash tools are child processes — don't leak the fd
+    private const int SOCK_CLOEXEC = 0x80000; // consumers spawn child processes; don't leak the fd
     private const int NETLINK_KOBJECT_UEVENT = 15;
     private const uint KERNEL_EVENT_GROUP = 1;  // group 2 is udevd's processed stream
     private const short POLLIN = 0x001;
@@ -243,7 +241,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
                 if (LinuxUsbSysfs.ReadAttribute(entry, "bDeviceClass") == "09")
                     continue;
 
-                string syspath = ResolveRealPath(entry);
+                string syspath = LinuxUsbSysfs.ResolveRealPath(entry) ?? entry;
                 devices.Add(new UsbDeviceInfo(
                     vid, pid,
                     LinuxUsbSysfs.ReadBcdDevice(syspath),
@@ -261,15 +259,4 @@ internal sealed class LinuxUsbProbe : IUsbProbe
         return devices;
     }
 
-    private static string ResolveRealPath(string path)
-    {
-        try
-        {
-            return new DirectoryInfo(path).ResolveLinkTarget(returnFinalTarget: true)?.FullName ?? path;
-        }
-        catch (IOException)
-        {
-            return path;
-        }
-    }
 }

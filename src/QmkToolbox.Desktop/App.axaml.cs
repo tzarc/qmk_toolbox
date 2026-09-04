@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 using QmkToolbox.Desktop.Views;
@@ -28,17 +29,7 @@ public partial class App : Application
             string[] args = desktop.Args ?? [];
             string filePath = args.Length > 0 ? args[0] : "";
             var toolProvider = new FlashToolProvider();
-            Core.Services.IUsbProbe usbProbe =
-#if WINDOWS
-#pragma warning disable CA1416 // Gated by #if WINDOWS — only compiled for Windows RIDs
-                new WindowsUsbProbe();
-#pragma warning restore CA1416
-#else
-#pragma warning disable CA1416 // Gated by the IsMacOS check — the Mac probe is only constructed on macOS
-                OperatingSystem.IsMacOS() ? new MacUsbProbe() : new LinuxUsbProbe();
-#pragma warning restore CA1416
-#endif
-            var usbDetector = new Core.Services.UsbDeviceTracker(usbProbe);
+            var usbDetector = new UsbDeviceTracker(UsbProbe.CreateForCurrentPlatform());
             var bootloaderServices = new Core.Bootloader.BootloaderServices(toolProvider)
             {
                 SerialPorts = new DesktopSerialPortService(),

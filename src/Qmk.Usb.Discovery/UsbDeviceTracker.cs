@@ -1,6 +1,5 @@
-using QmkToolbox.Core.Models;
 
-namespace QmkToolbox.Core.Services;
+namespace Qmk.Usb.Discovery;
 
 /// <summary>
 /// The platform-independent USB detection module: tracks devices delivered by an
@@ -10,27 +9,36 @@ namespace QmkToolbox.Core.Services;
 /// </summary>
 public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
 {
-    private readonly List<IUsbDevice> _devices = [];
+    private readonly List<UsbDeviceInfo> _devices = [];
     private readonly Lock _devicesLock = new();
 
-    public event Action<IUsbDevice>? DeviceConnected;
-    public event Action<IUsbDevice>? DeviceDisconnected;
+    /// <inheritdoc />
+    public event Action<UsbDeviceInfo>? DeviceConnected;
 
+    /// <inheritdoc />
+    public event Action<UsbDeviceInfo>? DeviceDisconnected;
+
+    /// <inheritdoc />
     public Action<string>? DiagnosticTrace { get; set; }
 
+    /// <summary>
+    /// Subscribes to the probe, starts it, then sweeps the devices already present,
+    /// each delivered via <see cref="DeviceConnected"/> exactly once.
+    /// </summary>
     public void Start()
     {
         probe.Arrived += OnArrived;
         probe.Removed += OnRemoved;
         probe.Start();
-        // The probe's live events cover future arrivals only; a board already sitting in
-        // bootloader mode when the app launches must be swept up explicitly. The sweep runs
+        // The probe's live events cover future arrivals only; devices attached before
+        // monitoring started must be swept up explicitly. The sweep runs
         // after subscription so nothing can slip between sweep and subscription: a device
         // delivered by both is dropped by OnArrived's duplicate-path guard.
         foreach (UsbDeviceInfo device in probe.EnumeratePresent())
             OnArrived(device);
     }
 
+    /// <inheritdoc />
     public void Stop()
     {
         probe.Arrived -= OnArrived;
@@ -38,6 +46,7 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
         probe.Stop();
     }
 
+    /// <summary>Stops monitoring and disposes the probe.</summary>
     public void Dispose()
     {
         Stop();
@@ -64,7 +73,7 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
 
     private void OnRemoved(UsbRemovalHint hint)
     {
-        IUsbDevice? existing = null;
+        UsbDeviceInfo? existing = null;
         bool matchedByPath = false;
         int vidPidCandidates = 0;
 

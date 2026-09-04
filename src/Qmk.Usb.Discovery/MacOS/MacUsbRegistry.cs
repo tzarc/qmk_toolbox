@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.MacOS;
 
 /// <summary>
 /// Reads USB device properties and topology from the macOS IOKit registry: arrival payloads
@@ -94,11 +94,11 @@ internal static class MacUsbRegistry
     /// registry path straight off the entry; the mass-storage flag via the interface query
     /// (with its settle window for late-registering interface nubs).
     /// </summary>
-    internal static Core.Models.UsbDeviceInfo BuildDeviceInfo(IntPtr service)
+    internal static UsbDeviceInfo BuildDeviceInfo(IntPtr service)
     {
         ushort vid = ReadUShortProperty(service, "idVendor");
         ushort pid = ReadUShortProperty(service, "idProduct");
-        return new Core.Models.UsbDeviceInfo(
+        return new UsbDeviceInfo(
             vid, pid,
             ReadUShortProperty(service, "bcdDevice"),
             ReadStringProperty(service, "USB Vendor Name") ?? "",
@@ -193,9 +193,9 @@ internal static class MacUsbRegistry
     /// (bDeviceClass 09) are skipped. The device path is the IOService registry path; when it
     /// differs from the hotplug event's path, removal matching falls back to VID/PID.
     /// </summary>
-    public static List<Core.Models.UsbDeviceInfo> EnumeratePresentDevices()
+    public static List<UsbDeviceInfo> EnumeratePresentDevices()
     {
-        List<Core.Models.UsbDeviceInfo> devices = [];
+        List<UsbDeviceInfo> devices = [];
         try
         {
             // .NET 10 requires macOS 13+, where devices are always IOUSBHostDevice.

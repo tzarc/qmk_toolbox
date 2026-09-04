@@ -1,4 +1,4 @@
-using QmkToolbox.Core.Models;
+using Qmk.Usb.Discovery;
 
 namespace QmkToolbox.Core.Services;
 
@@ -13,5 +13,5 @@ public interface IMountPointService
     /// their root qualify, and a volume provably backed by a different USB device is never
     /// returned; a volume whose ownership cannot be determined is accepted.
     /// </summary>
-    string? FindMountPoint(IUsbDevice device, string markerFile);
+    string? FindMountPoint(UsbDeviceInfo device, string markerFile);
 }

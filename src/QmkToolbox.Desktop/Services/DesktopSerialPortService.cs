@@ -1,7 +1,7 @@
 using System.IO.Ports;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
-using QmkToolbox.Core.Models;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Desktop.Services;
@@ -16,7 +16,7 @@ namespace QmkToolbox.Desktop.Services;
 /// </summary>
 public class DesktopSerialPortService : ISerialPortService
 {
-    public string? FindSerialPort(IUsbDevice device) =>
+    public string? FindSerialPort(UsbDeviceInfo device) =>
         OperatingSystem.IsLinux() ? FindByIdLinux(device) :
         OperatingSystem.IsMacOS() ? FindNewestSerialPortMacOS() :
         OperatingSystem.IsWindows() ? FindByRegistryWindows(device) :
@@ -28,7 +28,7 @@ public class DesktopSerialPortService : ISerialPortService
     /// number in their filename, providing a reliable match without timestamp heuristics.
     /// </summary>
     [SupportedOSPlatform("linux")]
-    private static string? FindByIdLinux(IUsbDevice device)
+    private static string? FindByIdLinux(UsbDeviceInfo device)
     {
         const string byIdDir = "/dev/serial/by-id";
         if (!Directory.Exists(byIdDir))
@@ -83,7 +83,7 @@ public class DesktopSerialPortService : ISerialPortService
     /// happens to exist (modems, debug probes).
     /// </summary>
     [SupportedOSPlatform("windows")]
-    private static string? FindByRegistryWindows(IUsbDevice device)
+    private static string? FindByRegistryWindows(UsbDeviceInfo device)
     {
         try
         {

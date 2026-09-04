@@ -1,10 +1,7 @@
-#if WINDOWS
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.Windows;
 
 // WMI (Win32_PnPEntity event queries) is unsuitable here: "WITHIN n" polling delays events,
 // WMI infrastructure initialisation adds ~7 seconds of cold-start latency in a fresh .NET 10
@@ -186,7 +183,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
             Guid guid = GuidDevInterfaceUsbDevice;
             if (CM_Get_Device_Interface_List_SizeW(out uint len, ref guid, null, CM_GET_DEVICE_INTERFACE_LIST_PRESENT) != CR_SUCCESS || len <= 1)
                 return devices;
-            var buffer = new char[len];
+            char[] buffer = new char[len];
             if (CM_Get_Device_Interface_ListW(ref guid, null, buffer, len, CM_GET_DEVICE_INTERFACE_LIST_PRESENT) != CR_SUCCESS)
                 return devices;
             foreach (string path in new string(buffer).Split('\0', StringSplitOptions.RemoveEmptyEntries))
@@ -221,7 +218,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
         _messageThreadId = GetCurrentThreadId();
 
         // Unique class name avoids conflicts if the process hosts multiple instances.
-        string className = $"QmkToolboxUsbDetector_{Environment.ProcessId}";
+        string className = $"QmkUsbDetector_{Environment.ProcessId}";
         var wndClass = new WNDCLASSEX
         {
             cbSize = Marshal.SizeOf<WNDCLASSEX>(),
@@ -274,7 +271,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
             int eventType = wParam.ToInt32();
             if (eventType is DBT_DEVICEARRIVAL or DBT_DEVICEREMOVECOMPLETE)
             {
-                var hdr = Marshal.PtrToStructure<DEV_BROADCAST_DEVICEINTERFACE>(lParam);
+                DEV_BROADCAST_DEVICEINTERFACE hdr = Marshal.PtrToStructure<DEV_BROADCAST_DEVICEINTERFACE>(lParam);
                 if (hdr.DeviceType == DBT_DEVTYP_DEVICEINTERFACE)
                 {
                     int nameOffset = Marshal.OffsetOf<DEV_BROADCAST_DEVICEINTERFACE>(
@@ -384,7 +381,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
     private static string ReadDevNodeProperty(uint devNode, uint property)
     {
-        var buffer = new char[260];
+        char[] buffer = new char[260];
         uint size = (uint)(buffer.Length * 2);
         return CM_Get_DevNode_Registry_PropertyW(devNode, property, out _, buffer, ref size, 0) == CR_SUCCESS && size > 2
             ? new string(buffer, 0, (int)(size / 2) - 1)
@@ -393,11 +390,10 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
     private static string[] ReadDevNodeMultiSz(uint devNode, uint property)
     {
-        var buffer = new char[1024];
+        char[] buffer = new char[1024];
         uint size = (uint)(buffer.Length * 2);
         return CM_Get_DevNode_Registry_PropertyW(devNode, property, out _, buffer, ref size, 0) != CR_SUCCESS || size < 2
             ? []
             : new string(buffer, 0, (int)(size / 2)).Split('\0', StringSplitOptions.RemoveEmptyEntries);
     }
 }
-#endif

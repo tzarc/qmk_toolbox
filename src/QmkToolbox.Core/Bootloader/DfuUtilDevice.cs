@@ -1,4 +1,4 @@
-using QmkToolbox.Core.Models;
+using Qmk.Usb.Discovery;
 
 namespace QmkToolbox.Core.Bootloader;
 
@@ -10,7 +10,7 @@ internal sealed class DfuUtilDevice : BootloaderDevice
 {
     private readonly DfuUtilBootloader _family;
 
-    public DfuUtilDevice(DfuUtilBootloader family, IUsbDevice device, BootloaderServices services)
+    public DfuUtilDevice(DfuUtilBootloader family, UsbDeviceInfo device, BootloaderServices services)
         : base(device, services)
     {
         _family = family;

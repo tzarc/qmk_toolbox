@@ -1,4 +1,5 @@
 using NSubstitute;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
@@ -8,8 +9,8 @@ namespace QmkToolbox.Tests;
 
 public class BootloaderFactoryTests
 {
-    private static IUsbDevice Usb(ushort vid, ushort pid, ushort rev = 0) =>
-        new UsbDeviceInfo(vid, pid, rev, "", "", "", "");
+    private static UsbDeviceInfo Usb(ushort vid, ushort pid, ushort rev = 0) =>
+        new(vid, pid, rev, "", "", "", "");
 
     // ── GetDeviceType ──────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ public class BootloaderFactoryTests
     public void CreateDevice_ReturnsBootloaderDeviceWithCorrectType(
         ushort vid, ushort pid, ushort rev, BootloaderType expected)
     {
-        IUsbDevice device = Usb(vid, pid, rev);
+        UsbDeviceInfo device = Usb(vid, pid, rev);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));
@@ -119,7 +120,7 @@ public class BootloaderFactoryTests
     [InlineData(0x000F, "Picotool (RP2350)")]
     public void CreateDevice_Picotool_NameReflectsChip(ushort pid, string expectedName)
     {
-        IUsbDevice device = Usb(0x2E8A, pid);
+        UsbDeviceInfo device = Usb(0x2E8A, pid);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));
@@ -134,7 +135,7 @@ public class BootloaderFactoryTests
     public void CreateMassStorageDevice_Uf2_TypeAndNameReflectBoardId(string? boardId, string expectedName)
     {
         // VID/PID are arbitrary: Mass-storage UF2-based devices are matched by marker file, not ID.
-        IUsbDevice device = Usb(0x239A, 0x00FF);
+        UsbDeviceInfo device = Usb(0x239A, 0x00FF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(BootloaderType.Uf2, device, new BootloaderServices(toolProvider), boardId: boardId);
@@ -146,7 +147,7 @@ public class BootloaderFactoryTests
     [Fact]
     public void CreateMassStorageDevice_NonMassStorageType_Throws()
     {
-        IUsbDevice device = Usb(0x239A, 0x00FF);
+        UsbDeviceInfo device = Usb(0x239A, 0x00FF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         Assert.Throws<ArgumentOutOfRangeException>(
@@ -156,7 +157,7 @@ public class BootloaderFactoryTests
     [Fact]
     public void CreateDevice_UnknownVidPid_ReturnsNull()
     {
-        IUsbDevice device = Usb(0xFFFF, 0xFFFF);
+        UsbDeviceInfo device = Usb(0xFFFF, 0xFFFF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         BootloaderDevice? result = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));

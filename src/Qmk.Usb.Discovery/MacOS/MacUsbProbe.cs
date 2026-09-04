@@ -1,9 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.MacOS;
 
 /// <summary>
 /// macOS probe using IOKit matching notifications on a dedicated CFRunLoop thread; no polling

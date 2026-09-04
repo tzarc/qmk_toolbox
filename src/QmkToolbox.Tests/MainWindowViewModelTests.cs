@@ -1,6 +1,6 @@
 using NSubstitute;
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
-using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
@@ -17,16 +17,16 @@ public sealed class MainWindowViewModelTests : IDisposable
 {
     private sealed class FakeUsbDetector : IUsbEventsDetector
     {
-        public event Action<IUsbDevice>? DeviceConnected;
-        public event Action<IUsbDevice>? DeviceDisconnected;
+        public event Action<UsbDeviceInfo>? DeviceConnected;
+        public event Action<UsbDeviceInfo>? DeviceDisconnected;
         public Action<string>? DiagnosticTrace { get; set; }
 
         public void Start() { }
         public void Stop() { }
         public void Dispose() { }
 
-        public void RaiseConnected(IUsbDevice device) => DeviceConnected?.Invoke(device);
-        public void RaiseDisconnected(IUsbDevice device) => DeviceDisconnected?.Invoke(device);
+        public void RaiseConnected(UsbDeviceInfo device) => DeviceConnected?.Invoke(device);
+        public void RaiseDisconnected(UsbDeviceInfo device) => DeviceDisconnected?.Invoke(device);
     }
 
     private readonly FakeUsbDetector _detector = new();

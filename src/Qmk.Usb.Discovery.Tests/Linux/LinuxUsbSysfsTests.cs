@@ -1,7 +1,7 @@
-using QmkToolbox.Desktop.Services;
+using Qmk.Usb.Discovery.Linux;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests.Linux;
 
 /// <summary>
 /// Drives <see cref="LinuxUsbSysfs.HasMassStorageInterface"/> against a fixture-owned fake

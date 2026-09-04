@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
@@ -5,7 +6,7 @@ namespace QmkToolbox.Core.Bootloader.Impl;
 /// <summary>BootloadHID bootloader device (Atmel/PS2AVRGB, via bootloadHID).</summary>
 internal sealed class BootloadHidDevice : BootloaderDevice
 {
-    public BootloadHidDevice(IUsbDevice device, BootloaderServices services)
+    public BootloadHidDevice(UsbDeviceInfo device, BootloaderServices services)
         : base(device, services)
     {
         Type = BootloaderType.BootloadHid;

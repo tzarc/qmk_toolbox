@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
@@ -9,7 +10,7 @@ internal sealed class MassStorageDevice : BootloaderDevice
 
     public string? MountPoint { get; private set; }
 
-    public MassStorageDevice(MassStorageBootloader family, IUsbDevice device, BootloaderServices services, string? boardId = null, string? mountPoint = null)
+    public MassStorageDevice(MassStorageBootloader family, UsbDeviceInfo device, BootloaderServices services, string? boardId = null, string? mountPoint = null)
         : base(device, services)
     {
         _family = family;

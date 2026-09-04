@@ -1,9 +1,8 @@
-using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.Linux;
 
 /// <summary>Reads USB device attributes from a Linux sysfs device node.</summary>
-public static class LinuxUsbSysfs
+internal static class LinuxUsbSysfs
 {
     /// <summary>
     /// Reads the <c>bcdDevice</c> attribute beneath a udev syspath
@@ -50,6 +49,24 @@ public static class LinuxUsbSysfs
         {
         }
         return false;
+    }
+
+    /// <summary>
+    /// Resolves a sysfs symlink to its canonical /sys/devices/… path, or null when the path
+    /// does not exist. A real (non-symlink) directory resolves to itself.
+    /// </summary>
+    internal static string? ResolveRealPath(string path)
+    {
+        try
+        {
+            return new DirectoryInfo(path).ResolveLinkTarget(returnFinalTarget: true)?.FullName is { } resolved
+                ? resolved
+                : Directory.Exists(path) ? Path.GetFullPath(path) : null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
     }
 
     internal static string? ReadAttribute(string dir, string name)

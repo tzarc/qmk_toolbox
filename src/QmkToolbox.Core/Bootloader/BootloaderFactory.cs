@@ -1,3 +1,4 @@
+using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader.Impl;
 using QmkToolbox.Core.Models;
 
@@ -84,7 +85,7 @@ public static class BootloaderFactory
     // (AtmelDfuDevice, LufaHidDevice) receive the already-resolved BootloaderType.
     private const ushort QmkRevisionMarker = 0x0936;
 
-    public static BootloaderDevice? CreateDevice(IUsbDevice device, BootloaderServices services)
+    public static BootloaderDevice? CreateDevice(UsbDeviceInfo device, BootloaderServices services)
     {
         BootloaderType type = GetDeviceType(device.VendorId, device.ProductId, device.RevisionBcd);
         return type switch
@@ -115,7 +116,7 @@ public static class BootloaderFactory
     // mounted volume and creates the device through here.
     public static BootloaderDevice CreateMassStorageDevice(
         BootloaderType type,
-        IUsbDevice device,
+        UsbDeviceInfo device,
         BootloaderServices services,
         string? boardId = null,
         string? mountPoint = null)

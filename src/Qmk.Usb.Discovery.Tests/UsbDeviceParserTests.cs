@@ -1,7 +1,6 @@
-using QmkToolbox.Core.Services;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests;
 
 public class UsbDeviceParserTests
 {

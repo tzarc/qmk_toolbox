@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Qmk.Usb.Discovery</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Package-bound: every public member ships XML docs, so re-enable CS1591 (suppressed repo-wide). -->
+    <NoWarn>$(NoWarn.Replace(';CS1591', ''))</NoWarn>
+    <Description>Cross-platform USB device hotplug detection: native probes (RegisterDeviceNotification, netlink kobject uevents, IOKit matching notifications) behind a shared device tracker with startup sweep and identity-stable removal events.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

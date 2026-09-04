@@ -1,8 +1,7 @@
-using QmkToolbox.Core.Models;
-using QmkToolbox.Desktop.Services;
+using Qmk.Usb.Discovery.Linux;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests.Linux;
 
 /// <summary>
 /// Drives the Linux probe's three seams: the kernel-uevent datagram parser (byte fixtures: no
@@ -22,7 +21,7 @@ public sealed class LinuxUsbProbeTests : IDisposable
     [Fact]
     public void ParseUevent_UsbDeviceAdd_YieldsIdentityAndRevision()
     {
-        // A QMK DFU board carrying the QMK revision marker in PRODUCT's unpadded-hex bcdDevice.
+        // PRODUCT carries vid/pid/bcdDevice as unpadded hex; the revision must survive parsing.
         byte[] datagram = Datagram(
             "add@/devices/pci0000:00/usb3/3-1",
             "ACTION=add", "DEVPATH=/devices/pci0000:00/usb3/3-1",

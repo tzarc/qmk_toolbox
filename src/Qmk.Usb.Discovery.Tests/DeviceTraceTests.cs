@@ -1,8 +1,6 @@
-using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests;
 
 public class DeviceTraceTests
 {

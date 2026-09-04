@@ -1,9 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32.SafeHandles;
-using QmkToolbox.Core.Services;
 
-namespace QmkToolbox.Desktop.Services;
+namespace Qmk.Usb.Discovery.Windows;
 
 /// <summary>
 /// Resolves which USB device a mounted volume belongs to: drive letter → physical disk number →
