@@ -45,6 +45,23 @@ public partial class App : Application
                 MountPoints = new DesktopMountPointService(),
             };
             var orchestrator = new Core.Services.FlashOrchestrator(bootloaderServices);
+            var windowService = new DesktopWindowService();
+
+            // One marshalling sink per stream, owned here: every log/trace producer routes
+            // through these, so UI-thread marshalling is guaranteed at the composition root
+            // rather than by per-caller discipline. The log sink resolves the ViewModel lazily
+            // (it is constructed below); Log routes each message by its type's stream
+            // discipline (see MessageType.IsRawStream).
+            MainWindowViewModel? mainVm = null;
+            void logSink(string message, Core.Models.MessageType type) =>
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => mainVm?.Log(message, type));
+            void traceSink(string message) =>
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => windowService.TraceDebug(message));
+
+            usbDetector.DiagnosticTrace = traceSink;
+            orchestrator.DiagnosticTrace = traceSink;
+            orchestrator.OutputReceived += logSink;
+
             // The session receives its UI invoker at construction, so USB events arriving from
             // the moment Start() is called are always marshalled — there is no window in which
             // listeners run without an invoker.
@@ -52,10 +69,13 @@ public partial class App : Application
                 Avalonia.Threading.Dispatcher.UIThread.InvokeAsync,
                 usbDetector,
                 orchestrator,
-                toolProvider);
-            var windowService = new DesktopWindowService();
+                toolProvider,
+                logSink)
+            {
+                DiagnosticTrace = traceSink,
+            };
             var vm = new MainWindowViewModel(session, toolProvider, new SettingsService(), windowService, ApplyTheme, filePath);
-            session.DiagnosticTrace = windowService.TraceDebug;
+            mainVm = vm;
             _mainWindowViewModel = vm;
             desktop.MainWindow = new MainWindow(windowService) { DataContext = vm };
 

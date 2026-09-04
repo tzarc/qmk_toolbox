@@ -65,8 +65,12 @@ public sealed class FlashSessionTests : IDisposable
                 SerialPorts = serial,
                 MountPoints = Substitute.For<IMountPointService>(),
             });
-            Session = new FlashSession(f => f(), Detector, Orchestrator, ToolProvider);
-            Session.Output += (msg, type) => { lock (_output) { _output.Add((msg, type)); } };
+            // Mirrors the composition root: one log sink receives both the orchestrator's
+            // output and the session's own messages.
+            void logSink(string msg, MessageType type)
+            { lock (_output) { _output.Add((msg, type)); } }
+            Orchestrator.OutputReceived += logSink;
+            Session = new FlashSession(f => f(), Detector, Orchestrator, ToolProvider, logSink);
         }
 
         /// <summary>A real on-disk .hex file, created on first use and deleted on Dispose.</summary>

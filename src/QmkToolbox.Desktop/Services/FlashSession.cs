@@ -9,9 +9,10 @@ namespace QmkToolbox.Desktop.Services;
 /// <summary>
 /// The flashing workflow: firmware selection and history, MCU choice, auto-flash policy, and the
 /// readiness flags derived from the tracked bootloaders. Owns the USB detector's lifecycle and the
-/// orchestrator's events; everything it raises (<see cref="Output"/>, property changes) is already
-/// marshalled to the UI thread via the invoker supplied at construction, so the UI can bind to it
-/// directly and tests can drive it with an immediate invoker.
+/// orchestrator's state events; property changes are marshalled to the UI thread via the invoker
+/// supplied at construction, so the UI can bind directly and tests drive it with an immediate
+/// invoker. Log messages go to the output sink supplied at construction; marshalling them is the
+/// sink's job (see the composition root).
 /// </summary>
 public partial class FlashSession : ObservableObject
 {
@@ -21,6 +22,7 @@ public partial class FlashSession : ObservableObject
     private readonly IUsbEventsDetector _usbDetector;
     private readonly FlashOrchestrator _orchestrator;
     private readonly IFlashToolProvider _toolProvider;
+    private readonly Action<string, MessageType> _output;
 
     [ObservableProperty] private string _firmwarePath = "";
     [ObservableProperty] private string _selectedMcu = "";
@@ -35,30 +37,27 @@ public partial class FlashSession : ObservableObject
     public ObservableCollection<string> FirmwareHistory { get; } = [];
     public ObservableCollection<McuItem> McuList { get; } = [];
 
-    /// <summary>Log output (status, tool stdout/stderr, errors), already marshalled to the UI thread.</summary>
-    public event Action<string, MessageType>? Output;
 
-    /// <summary>Receives diagnostic trace lines from the detector, the orchestrator, and this session.</summary>
+    /// <summary>Receives this session's diagnostic trace lines (readiness-flag transitions).</summary>
     public Action<string>? DiagnosticTrace { get; set; }
 
     public FlashSession(
         Func<Func<Task>, Task> uiInvoker,
         IUsbEventsDetector usbDetector,
         FlashOrchestrator orchestrator,
-        IFlashToolProvider toolProvider)
+        IFlashToolProvider toolProvider,
+        Action<string, MessageType> output)
     {
         _uiInvoker = uiInvoker;
         _usbDetector = usbDetector;
         _orchestrator = orchestrator;
         _toolProvider = toolProvider;
+        _output = output;
 
-        _orchestrator.OutputReceived += (msg, type) => Invoke(() => Output?.Invoke(msg, type));
         _orchestrator.StateChanged += () => Invoke(UpdateCanExecute);
-        _orchestrator.DiagnosticTrace = msg => Invoke(() => DiagnosticTrace?.Invoke(msg));
 
         _usbDetector.DeviceConnected += OnDeviceConnected;
         _usbDetector.DeviceDisconnected += OnDeviceDisconnected;
-        _usbDetector.DiagnosticTrace = msg => Invoke(() => DiagnosticTrace?.Invoke(msg));
     }
 
     private void Invoke(Action action) => _ = _uiInvoker(() => { action(); return Task.CompletedTask; });
@@ -127,7 +126,7 @@ public partial class FlashSession : ObservableObject
     /// <summary>
     /// Extracts flash-tool resources, then starts the USB detector — sequenced so an auto-flash
     /// triggered by an early arrival can't hit missing tool binaries. Both are blocking, so the
-    /// whole sequence runs on a thread pool thread; failures are reported via <see cref="Output"/>.
+    /// whole sequence runs on a thread pool thread; failures are reported via the output sink.
     /// </summary>
     public void Start() => _ = StartAsync();
 
@@ -252,5 +251,5 @@ public partial class FlashSession : ObservableObject
         FirmwarePath = path;
     }
 
-    private void Emit(string message, MessageType type) => Invoke(() => Output?.Invoke(message, type));
+    private void Emit(string message, MessageType type) => _output(message, type);
 }

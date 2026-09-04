@@ -48,7 +48,7 @@ public sealed class MainWindowViewModelTests : IDisposable
             SerialPorts = Substitute.For<ISerialPortService>(),
             MountPoints = Substitute.For<IMountPointService>(),
         });
-        _session = new FlashSession(f => f(), _detector, orchestrator, _toolProvider);
+        _session = new FlashSession(f => f(), _detector, orchestrator, _toolProvider, (_, _) => { });
     }
 
     public void Dispose()

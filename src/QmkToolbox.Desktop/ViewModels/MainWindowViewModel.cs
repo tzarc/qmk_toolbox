@@ -50,8 +50,6 @@ public partial class MainWindowViewModel : LogViewModelBase
         Settings = settingsService;
         Settings.ErrorLogger = LogError;
 
-        // Log routes each message by its type's stream discipline (see MessageType.IsRawStream).
-        Session.Output += Log;
         Session.PropertyChanged += OnSessionPropertyChanged;
 
         ThemeVariant = Settings.Current.ThemeVariant;
