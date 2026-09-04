@@ -4,9 +4,9 @@ using System.Runtime.Versioning;
 namespace QmkToolbox.Desktop.Services;
 
 /// <summary>
-/// Reads USB device properties from the macOS IOKit registry. Usb.Events does not surface
-/// <c>bcdDevice</c> (nor the <c>io_service_t</c> needed to query it), so the registry is
-/// re-queried by VID/PID at arrival time.
+/// Reads USB device properties and topology from the macOS IOKit registry: arrival payloads
+/// straight off a device's <c>io_service_t</c>, the mass-storage interface check,
+/// present-device enumeration for the startup sweep, and volume→device ownership resolution.
 /// </summary>
 [SupportedOSPlatform("macos")]
 internal static class MacUsbRegistry
@@ -90,24 +90,35 @@ internal static class MacUsbRegistry
     }
 
     /// <summary>
-    /// Returns <c>bcdDevice</c> for the first present USB device matching the VID/PID, or 0
-    /// when no match is found. Two identical boards report the same revision in practice, so
-    /// VID/PID matching is sufficient for the QMK-revision-marker check.
+    /// Builds the arrival payload for a USB device service: identity, revision, strings, and
+    /// registry path straight off the entry; the mass-storage flag via the interface query
+    /// (with its settle window for late-registering interface nubs).
     /// </summary>
-    public static ushort ReadBcdDevice(ushort vendorId, ushort productId)
+    internal static Core.Models.UsbDeviceInfo BuildDeviceInfo(IntPtr service)
     {
-        try
-        {
-            // IOUSBHostDevice is the modern class (10.11+); IOUSBDevice covers older stacks.
-            ushort rev = Query("IOUSBHostDevice", vendorId, productId);
-            return rev != 0 ? rev : Query("IOUSBDevice", vendorId, productId);
-        }
-        catch (Exception)
-        {
-            // A failed registry lookup must never break device detection.
-            return 0;
-        }
+        ushort vid = ReadUShortProperty(service, "idVendor");
+        ushort pid = ReadUShortProperty(service, "idProduct");
+        return new Core.Models.UsbDeviceInfo(
+            vid, pid,
+            ReadUShortProperty(service, "bcdDevice"),
+            ReadStringProperty(service, "USB Vendor Name") ?? "",
+            ReadStringProperty(service, "USB Product Name") ?? "",
+            "",
+            RegistryPath(service),
+            HasMassStorageInterface(vid, pid));
     }
+
+    /// <summary>True for hubs (bDeviceClass 09) and entries without a usable VID/PID identity.</summary>
+    internal static bool ShouldSkipDevice(IntPtr service)
+    {
+        ushort vid = ReadUShortProperty(service, "idVendor");
+        ushort pid = ReadUShortProperty(service, "idProduct");
+        return (vid == 0 && pid == 0) || ReadUShortProperty(service, "bDeviceClass") == 0x09;
+    }
+
+    /// <summary>Identity of a (possibly terminated) service, for removal matching.</summary>
+    internal static (ushort VendorId, ushort ProductId, string DevicePath) ReadIdentity(IntPtr service) =>
+        (ReadUShortProperty(service, "idVendor"), ReadUShortProperty(service, "idProduct"), RegistryPath(service));
 
     /// <summary>
     /// Returns true when any USB interface of the device matching the VID/PID reports
@@ -177,42 +188,6 @@ internal static class MacUsbRegistry
         return false;
     }
 
-    private static ushort Query(string className, ushort vendorId, ushort productId)
-    {
-        // IOServiceMatching's returned dictionary is consumed by IOServiceGetMatchingServices.
-        IntPtr matching = IOServiceMatching(className);
-        if (matching == IntPtr.Zero)
-            return 0;
-        if (IOServiceGetMatchingServices(IntPtr.Zero, matching, out IntPtr iterator) != 0 || iterator == IntPtr.Zero)
-            return 0;
-        try
-        {
-            IntPtr service;
-            while ((service = IOIteratorNext(iterator)) != IntPtr.Zero)
-            {
-                try
-                {
-                    if (ReadUShortProperty(service, "idVendor") == vendorId &&
-                        ReadUShortProperty(service, "idProduct") == productId)
-                    {
-                        ushort rev = ReadUShortProperty(service, "bcdDevice");
-                        if (rev != 0)
-                            return rev;
-                    }
-                }
-                finally
-                {
-                    IOObjectRelease(service);
-                }
-            }
-        }
-        finally
-        {
-            IOObjectRelease(iterator);
-        }
-        return 0;
-    }
-
     /// <summary>
     /// Enumerates the USB devices present right now, for the tracker's startup sweep. Hubs
     /// (bDeviceClass 09) are skipped. The device path is the IOService registry path; when it
@@ -236,18 +211,8 @@ internal static class MacUsbRegistry
                 {
                     try
                     {
-                        ushort vid = ReadUShortProperty(service, "idVendor");
-                        ushort pid = ReadUShortProperty(service, "idProduct");
-                        if ((vid == 0 && pid == 0) || ReadUShortProperty(service, "bDeviceClass") == 0x09)
-                            continue;
-                        devices.Add(new Core.Models.UsbDeviceInfo(
-                            vid, pid,
-                            ReadUShortProperty(service, "bcdDevice"),
-                            ReadStringProperty(service, "USB Vendor Name") ?? "",
-                            ReadStringProperty(service, "USB Product Name") ?? "",
-                            "",
-                            RegistryPath(service),
-                            HasMassStorageInterface(vid, pid)));
+                        if (!ShouldSkipDevice(service))
+                            devices.Add(BuildDeviceInfo(service));
                     }
                     finally
                     {

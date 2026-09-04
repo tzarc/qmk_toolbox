@@ -11,24 +11,15 @@ public static class UsbDeviceParser
         RegexOptions.IgnoreCase);
 
     /// <summary>
-    /// Parses a USB ID string whose format varies by platform:
-    /// macOS IOKit reports plain decimal (e.g. "1155" for 0x0483),
-    /// Linux udev uses "0x"-prefixed hex, and Windows uses bare 4-digit hex.
+    /// Parses a USB ID string as hex: bare four-digit (Windows instance IDs, sysfs
+    /// attributes) or "0x"-prefixed (udev properties).
     /// </summary>
     public static bool TryParseUsbId(string? s, out ushort value)
-        => TryParseUsbId(s, OperatingSystem.IsMacOS(), out value);
-
-    public static bool TryParseUsbId(string? s, bool isMacOS, out ushort value)
     {
         value = 0;
-        if (string.IsNullOrEmpty(s))
-            return false;
-        if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            return ushort.TryParse(s.AsSpan(2), NumberStyles.HexNumber, null, out value);
-        if (isMacOS)
-            return ushort.TryParse(s, NumberStyles.None, null, out value);
-        // Windows/Linux bare hex
-        return ushort.TryParse(s, NumberStyles.HexNumber, null, out value);
+        return !string.IsNullOrEmpty(s) && (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+            ? ushort.TryParse(s.AsSpan(2), NumberStyles.HexNumber, null, out value)
+            : ushort.TryParse(s, NumberStyles.HexNumber, null, out value));
     }
 
     public static bool TryParseHwId(string devicePath, out ushort vid, out ushort pid, out ushort rev)

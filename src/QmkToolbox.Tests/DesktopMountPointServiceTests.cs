@@ -80,7 +80,7 @@ public sealed class DesktopMountPointServiceTests : IDisposable
     [FactOnLinux]
     public void VolumeWithUnresolvableOwnership_IsAccepted()
     {
-        // No /sys/class/block entry for the source: ownership unknown, pre-correlation behaviour.
+        // No /sys/class/block entry for the source: ownership unknown, so the volume qualifies.
         string mount = AddVolume("RPI-RP2", "sdz9", ownerSyspath: null);
 
         Assert.Equal(mount, Find(Device()));

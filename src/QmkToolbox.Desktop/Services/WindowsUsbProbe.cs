@@ -6,15 +6,12 @@ using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Desktop.Services;
 
-// Usb.Events is not used on Windows. Its Windows backend subscribes to Win32_PnPEntity via a WMI
-// event query using "WITHIN 2", meaning events are polled every 2 seconds. Beyond the polling delay,
-// WMI infrastructure initialisation on the first query in a fresh .NET 10 process takes ~7 seconds,
-// making device detection feel broken on first plug-in. Usb.Events also drives WMI setup through
-// reflection and COM interop, which is incompatible with PublishTrimmed — it required rooting
-// Usb.Events and System.Management to suppress trim warnings, and BuiltInComInteropSupport=true
-// to satisfy the COM layer. RegisterDeviceNotification is a kernel-mode callback — the driver stack
-// delivers arrival and removal events to the window procedure synchronously with no polling,
-// no cold-start overhead, and no trim incompatibilities.
+// WMI (Win32_PnPEntity event queries) is unsuitable here: "WITHIN n" polling delays events,
+// WMI infrastructure initialisation adds ~7 seconds of cold-start latency in a fresh .NET 10
+// process, and its reflection/COM plumbing is incompatible with PublishTrimmed.
+// RegisterDeviceNotification is a kernel-mode callback; the driver stack delivers arrival and
+// removal events to the window procedure synchronously with no polling, no cold-start
+// overhead, and no trim incompatibilities.
 
 /// <summary>
 /// Windows probe using RegisterDeviceNotification via a message-only window. Avoids WMI entirely;

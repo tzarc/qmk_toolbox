@@ -234,8 +234,8 @@ internal sealed class LinuxUsbProbe : IUsbProbe
                 return devices;
             foreach (string entry in Directory.EnumerateDirectories(sysfsRoot))
             {
-                if (!UsbDeviceParser.TryParseUsbId(LinuxUsbSysfs.ReadAttribute(entry, "idVendor"), isMacOS: false, out ushort vid) ||
-                    !UsbDeviceParser.TryParseUsbId(LinuxUsbSysfs.ReadAttribute(entry, "idProduct"), isMacOS: false, out ushort pid))
+                if (!UsbDeviceParser.TryParseUsbId(LinuxUsbSysfs.ReadAttribute(entry, "idVendor"), out ushort vid) ||
+                    !UsbDeviceParser.TryParseUsbId(LinuxUsbSysfs.ReadAttribute(entry, "idProduct"), out ushort pid))
                 {
                     continue;
                 }

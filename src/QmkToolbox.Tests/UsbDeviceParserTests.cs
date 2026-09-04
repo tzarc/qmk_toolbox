@@ -14,20 +14,9 @@ public class UsbDeviceParserTests
     [InlineData("0483", 0x0483)]   // Windows/Linux: bare 4-digit hex
     [InlineData("DF11", 0xDF11)]   // Windows/Linux: bare hex with letters
     [InlineData("FFFF", 0xFFFF)]   // Windows/Linux: max bare hex
-    public void TryParseUsbId_NonMacOS_ParsesHex(string input, ushort expected)
+    public void TryParseUsbId_ParsesHex(string input, ushort expected)
     {
-        bool ok = UsbDeviceParser.TryParseUsbId(input, isMacOS: false, out ushort value);
-        Assert.True(ok);
-        Assert.Equal(expected, value);
-    }
-
-    [Theory]
-    [InlineData("1155", 0x0483)]   // macOS IOKit decimal: 1155d == 0x0483
-    [InlineData("65535", 0xFFFF)]  // macOS IOKit decimal: max ushort
-    [InlineData("0", 0x0000)]      // macOS IOKit decimal: zero
-    public void TryParseUsbId_MacOS_ParsesDecimal(string input, ushort expected)
-    {
-        bool ok = UsbDeviceParser.TryParseUsbId(input, isMacOS: true, out ushort value);
+        bool ok = UsbDeviceParser.TryParseUsbId(input, out ushort value);
         Assert.True(ok);
         Assert.Equal(expected, value);
     }
@@ -36,14 +25,14 @@ public class UsbDeviceParserTests
     [InlineData(null)]
     [InlineData("")]
     public void TryParseUsbId_NullOrEmpty_ReturnsFalse(string? input) =>
-        Assert.False(UsbDeviceParser.TryParseUsbId(input, isMacOS: false, out _));
+        Assert.False(UsbDeviceParser.TryParseUsbId(input, out _));
 
     [Theory]
     [InlineData("ZZZZ")]   // not valid hex
     [InlineData("0xGGGG")] // invalid after 0x prefix
     [InlineData("10000")]  // overflows ushort (hex) — 65536
     public void TryParseUsbId_Invalid_ReturnsFalse(string input) =>
-        Assert.False(UsbDeviceParser.TryParseUsbId(input, isMacOS: false, out _));
+        Assert.False(UsbDeviceParser.TryParseUsbId(input, out _));
 
     // ── TryParseHwId ──────────────────────────────────────────────────────────
 
