@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:QmkToolbox.Desktop.ViewModels"
+        xmlns:conv="using:QmkToolbox.Desktop.Converters"
         x:Class="QmkToolbox.Desktop.Views.KeyTesterWindow"
         x:DataType="vm:KeyTesterViewModel"
         x:CompileBindings="True"
@@ -22,9 +23,44 @@
             <Button Content="Reset" Command="{Binding ResetCommand}" />
         </StackPanel>
 
-        <!-- Keyboard canvas — populated in code-behind -->
+        <!-- Keys are absolutely positioned from the ViewModel's layout table; colours come
+             from KeyStateConverters, so state and theme changes restyle with no code-behind. -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <Canvas Name="KeyCanvas" Width="1040" Height="278" Margin="8" Background="Transparent" />
+            <ItemsControl ItemsSource="{Binding Keys}" Width="1040" Height="278" Margin="8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.Styles>
+                    <Style Selector="ItemsControl > ContentPresenter" x:DataType="vm:KeyViewModel">
+                        <Setter Property="Canvas.Left" Value="{Binding X}" />
+                        <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                    </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:KeyViewModel">
+                        <Border Width="{Binding Width}" Height="{Binding Height}"
+                                BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
+                            <Border.Background>
+                                <MultiBinding Converter="{x:Static conv:KeyStateConverters.Background}">
+                                    <Binding Path="State" />
+                                    <Binding Path="$parent[Window].ActualThemeVariant" />
+                                </MultiBinding>
+                            </Border.Background>
+                            <TextBlock Text="{Binding Label}" FontSize="10" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Foreground>
+                                    <MultiBinding Converter="{x:Static conv:KeyStateConverters.Foreground}">
+                                        <Binding Path="State" />
+                                        <Binding Path="$parent[Window].ActualThemeVariant" />
+                                    </MultiBinding>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
     </DockPanel>
 </Window>
