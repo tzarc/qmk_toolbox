@@ -108,7 +108,7 @@ public class BootloaderFactoryTests
         IUsbDevice device = Usb(vid, pid, rev);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
-        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, toolProvider);
+        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));
 
         Assert.NotNull(bd);
         Assert.Equal(expected, bd!.Type);
@@ -122,7 +122,7 @@ public class BootloaderFactoryTests
         IUsbDevice device = Usb(0x2E8A, pid);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
-        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, toolProvider);
+        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));
 
         Assert.NotNull(bd);
         Assert.Equal(expectedName, bd!.Name);
@@ -137,7 +137,7 @@ public class BootloaderFactoryTests
         IUsbDevice device = Usb(0x239A, 0x00FF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
-        BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(BootloaderType.Uf2, device, toolProvider, boardId: boardId);
+        BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(BootloaderType.Uf2, device, new BootloaderServices(toolProvider), boardId: boardId);
 
         Assert.Equal(BootloaderType.Uf2, bd.Type);
         Assert.Equal(expectedName, bd.Name);
@@ -150,7 +150,7 @@ public class BootloaderFactoryTests
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => BootloaderFactory.CreateMassStorageDevice(BootloaderType.AtmelDfu, device, toolProvider));
+            () => BootloaderFactory.CreateMassStorageDevice(BootloaderType.AtmelDfu, device, new BootloaderServices(toolProvider)));
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class BootloaderFactoryTests
         IUsbDevice device = Usb(0xFFFF, 0xFFFF);
         IFlashToolProvider toolProvider = Substitute.For<IFlashToolProvider>();
 
-        BootloaderDevice? result = BootloaderFactory.CreateDevice(device, toolProvider);
+        BootloaderDevice? result = BootloaderFactory.CreateDevice(device, new BootloaderServices(toolProvider));
 
         Assert.Null(result);
     }

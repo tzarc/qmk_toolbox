@@ -9,10 +9,9 @@ namespace QmkToolbox.Tests;
 /// <summary>
 /// Verifies the CLI command strings produced by each bootloader device class.
 ///
-/// Strategy: IFlashToolProvider.GetToolPath() returns "/bin/true" so the child
-/// process starts and exits immediately without side-effects.  The full command
-/// string ("{toolName} {args}") is captured via the OutputReceived delegate,
-/// which FlashService emits as MessageType.Command before launching the process.
+/// Strategy: a <see cref="CapturingProcessRunner"/> in the device's BootloaderServices
+/// records every launched command ("{tool} {args}") without forking a child process;
+/// GetToolPath resolves to the bare tool name so the captured line matches the invocation.
 /// </summary>
 public class FlashCommandTests
 {
@@ -24,10 +23,21 @@ public class FlashCommandTests
     private static IFlashToolProvider MockToolProvider()
     {
         IFlashToolProvider p = Substitute.For<IFlashToolProvider>();
-        p.GetToolPath(Arg.Any<string>()).Returns("/bin/true");
+        p.GetToolPath(Arg.Any<string>()).Returns(ci => ci.Arg<string>());
         p.GetResourceFolder().Returns(Path.GetTempPath());
         return p;
     }
+
+    private static BootloaderServices Services(
+        ISerialPortService? serial = null,
+        IMountPointService? mounts = null,
+        IProcessRunner? runner = null) =>
+        new(MockToolProvider())
+        {
+            ProcessRunner = runner ?? new CapturingProcessRunner(),
+            SerialPorts = serial,
+            MountPoints = mounts,
+        };
 
     private static ISerialPortService MockSerialPort()
     {
@@ -44,18 +54,16 @@ public class FlashCommandTests
         return s;
     }
 
-    /// <summary>Creates a device via the factory and collects MessageType.Command messages.</summary>
+    /// <summary>Creates a device via the factory and collects the commands its runner launched.</summary>
     private static async Task<List<string>> Commands(
         IUsbDevice usb,
-        IFlashToolProvider tool,
         ISerialPortService? serial,
         Func<BootloaderDevice, Task> action)
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(usb, tool, serial)!;
-        var cmds = new List<string>();
-        bd.OutputReceived += (_, data, type) => { if (type == MessageType.Command) cmds.Add(data); };
+        var runner = new CapturingProcessRunner();
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(usb, Services(serial, runner: runner))!;
         await action(bd);
-        return cmds;
+        return runner.Commands;
     }
 
     // ── AtmelDfuDevice ────────────────────────────────────────────────────────
@@ -64,7 +72,7 @@ public class FlashCommandTests
     public async Task AtmelDfuDevice_Flash_ThreeSequentialCommands()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null,
+            Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
         Assert.Equal(3, cmds.Count);
@@ -77,7 +85,7 @@ public class FlashCommandTests
     public async Task AtmelDfuDevice_FlashEeprom_IncludesErase()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null,
+            Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
         Assert.Equal(2, cmds.Count);
@@ -89,7 +97,7 @@ public class FlashCommandTests
     public async Task QmkDfuDevice_FlashEeprom_NoErase()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x2FEF, 0x0936), MockToolProvider(), null,
+            Usb(0x03EB, 0x2FEF, 0x0936), null,
             bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
         Assert.Single(cmds);
@@ -99,7 +107,7 @@ public class FlashCommandTests
     [Fact]
     public async Task AtmelDfuDevice_FlashEeprom_RejectsUnsupportedFormat()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x2FEF, 0), MockToolProvider())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x2FEF, 0), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEepromAsync("at90usb1286", "firmware.uf2"));
         Assert.Contains(".eep", ex.Message);
@@ -109,7 +117,7 @@ public class FlashCommandTests
     public async Task AtmelDfuDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x2FEF, 0), MockToolProvider(), null,
+            Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.ResetAsync("at90usb1286"));
 
         Assert.Single(cmds);
@@ -126,7 +134,7 @@ public class FlashCommandTests
     public async Task DfuUtilDevice_Flash_Bin(ushort vid, ushort pid, string deviceId)
     {
         List<string> cmds = await Commands(
-            Usb(vid, pid), MockToolProvider(), null,
+            Usb(vid, pid), null,
             bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
@@ -140,7 +148,7 @@ public class FlashCommandTests
     [InlineData(0x0483, 0xDF11)] // Stm32Dfu (STMicroelectronics)
     public async Task DfuUtilDevice_Flash_NonBin_IsRejected(ushort vid, ushort pid)
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(vid, pid), MockToolProvider())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(vid, pid), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.hex"));
         Assert.Contains(".bin", ex.Message);
@@ -154,7 +162,7 @@ public class FlashCommandTests
     public async Task DfuUtilDevice_Reset(ushort vid, ushort pid, string deviceId)
     {
         List<string> cmds = await Commands(
-            Usb(vid, pid), MockToolProvider(), null,
+            Usb(vid, pid), null,
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
@@ -167,7 +175,7 @@ public class FlashCommandTests
     public async Task AtmelSamBaDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x6124), MockToolProvider(), MockSerialPort(),
+            Usb(0x03EB, 0x6124), MockSerialPort(),
             bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
@@ -178,7 +186,7 @@ public class FlashCommandTests
     public async Task AtmelSamBaDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x6124), MockToolProvider(), MockSerialPort(),
+            Usb(0x03EB, 0x6124), MockSerialPort(),
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
@@ -188,7 +196,7 @@ public class FlashCommandTests
     [Fact]
     public async Task AtmelSamBaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), MockToolProvider(), MockNoSerialPort(), null)!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), Services(serial: MockNoSerialPort()))!;
         bd.PollDelayMs = 1;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("", "test.bin"));
     }
@@ -199,7 +207,7 @@ public class FlashCommandTests
     public async Task AvrIspDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x16C0, 0x0483), MockToolProvider(), MockSerialPort(),
+            Usb(0x16C0, 0x0483), MockSerialPort(),
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
@@ -211,7 +219,7 @@ public class FlashCommandTests
     [Fact]
     public async Task BootloadHidDevice_Flash_RejectsUnsupportedFormat()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x16C0, 0x05DF), MockToolProvider())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x16C0, 0x05DF), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.uf2"));
         Assert.Contains(".hex", ex.Message);
@@ -221,7 +229,7 @@ public class FlashCommandTests
     public async Task BootloadHidDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x16C0, 0x05DF), MockToolProvider(), null,
+            Usb(0x16C0, 0x05DF), null,
             bd => bd.FlashAsync("", "test.hex"));
 
         Assert.Single(cmds);
@@ -232,7 +240,7 @@ public class FlashCommandTests
     public async Task BootloadHidDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x16C0, 0x05DF), MockToolProvider(), null,
+            Usb(0x16C0, 0x05DF), null,
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
@@ -245,7 +253,7 @@ public class FlashCommandTests
     public async Task CaterinaDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort(),
+            Usb(0x1209, 0x2302), MockSerialPort(),
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
@@ -256,7 +264,7 @@ public class FlashCommandTests
     public async Task CaterinaDevice_FlashEeprom()
     {
         List<string> cmds = await Commands(
-            Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort(),
+            Usb(0x1209, 0x2302), MockSerialPort(),
             bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
         Assert.Single(cmds);
@@ -266,7 +274,7 @@ public class FlashCommandTests
     [Fact]
     public async Task CaterinaDevice_FlashEeprom_RejectsUnsupportedFormat()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), MockToolProvider(), MockSerialPort())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), Services(serial: MockSerialPort()))!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashEepromAsync("atmega32u4", "firmware.uf2"));
         Assert.Contains(".eep", ex.Message);
@@ -275,7 +283,7 @@ public class FlashCommandTests
     [Fact]
     public async Task CaterinaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), MockToolProvider(), MockNoSerialPort(), null)!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), Services(serial: MockNoSerialPort()))!;
         bd.PollDelayMs = 1;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("atmega32u4", "test.hex"));
     }
@@ -286,7 +294,7 @@ public class FlashCommandTests
     public async Task HalfKayDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x16C0, 0x0478), MockToolProvider(), null,
+            Usb(0x16C0, 0x0478), null,
             bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
         Assert.Single(cmds);
@@ -297,7 +305,7 @@ public class FlashCommandTests
     public async Task HalfKayDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x16C0, 0x0478), MockToolProvider(), null,
+            Usb(0x16C0, 0x0478), null,
             bd => bd.ResetAsync("at90usb1286"));
 
         Assert.Single(cmds);
@@ -310,7 +318,7 @@ public class FlashCommandTests
     public async Task KiibohdDfuDevice_Flash_Bin()
     {
         List<string> cmds = await Commands(
-            Usb(0x1C11, 0xB007), MockToolProvider(), null,
+            Usb(0x1C11, 0xB007), null,
             bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
@@ -321,7 +329,7 @@ public class FlashCommandTests
     public async Task KiibohdDfuDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x1C11, 0xB007), MockToolProvider(), null,
+            Usb(0x1C11, 0xB007), null,
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
@@ -334,7 +342,7 @@ public class FlashCommandTests
     public async Task LufaHidDevice_Flash()
     {
         List<string> cmds = await Commands(
-            Usb(0x03EB, 0x2067, 0), MockToolProvider(), null,
+            Usb(0x03EB, 0x2067, 0), null,
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
@@ -357,7 +365,7 @@ public class FlashCommandTests
             mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateDevice(
-                Usb(0x03EB, 0x2045), MockToolProvider(), null, mount)!;
+                Usb(0x03EB, 0x2045), Services(mounts: mount))!;
 
             await bd.FlashAsync("", src);
 
@@ -390,7 +398,7 @@ public class FlashCommandTests
             mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(null, mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateDevice(
-                Usb(0x03EB, 0x2045), MockToolProvider(), null, mount)!;
+                Usb(0x03EB, 0x2045), Services(mounts: mount))!;
 
             await bd.FlashAsync("", src);
 
@@ -412,7 +420,7 @@ public class FlashCommandTests
         IMountPointService mount = Substitute.For<IMountPointService>();
         mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
-            Usb(0x03EB, 0x2045), MockToolProvider(), null, mount)!;
+            Usb(0x03EB, 0x2045), Services(mounts: mount))!;
         bd.PollDelayMs = 1;
         var errors = new List<string>();
         bd.OutputReceived += (_, data, type) => { if (type == MessageType.Error) errors.Add(data); };
@@ -427,7 +435,7 @@ public class FlashCommandTests
     public async Task LufaMsDevice_Flash_RejectsNonBinFile()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
-            Usb(0x03EB, 0x2045), MockToolProvider(), null, null)!;
+            Usb(0x03EB, 0x2045), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "firmware.hex"));
         Assert.Contains(".bin", ex.Message);
@@ -449,7 +457,7 @@ public class FlashCommandTests
             mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns(mountDir);
 
             BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
-                BootloaderType.Uf2, Usb(0x239A, 0x00FF), MockToolProvider(), mount);
+                BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services(mounts: mount));
 
             await bd.FlashAsync("", src);
 
@@ -472,7 +480,7 @@ public class FlashCommandTests
         IMountPointService mount = Substitute.For<IMountPointService>();
         mount.FindMountPoint(Arg.Any<IUsbDevice>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
-            BootloaderType.Uf2, Usb(0x239A, 0x00FF), MockToolProvider(), mount);
+            BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services(mounts: mount));
         bd.PollDelayMs = 1;
         var errors = new List<string>();
         bd.OutputReceived += (_, data, type) => { if (type == MessageType.Error) errors.Add(data); };
@@ -486,7 +494,7 @@ public class FlashCommandTests
     public async Task Uf2Device_Flash_RejectsNonUf2File()
     {
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
-            BootloaderType.Uf2, Usb(0x239A, 0x00FF), MockToolProvider());
+            BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services());
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "firmware.bin"));
         Assert.Contains(".uf2", ex.Message);
@@ -498,7 +506,7 @@ public class FlashCommandTests
     public async Task Stm32DuinoDevice_Flash_Bin()
     {
         List<string> cmds = await Commands(
-            Usb(0x1EAF, 0x0003), MockToolProvider(), null,
+            Usb(0x1EAF, 0x0003), null,
             bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
@@ -513,7 +521,7 @@ public class FlashCommandTests
     public async Task AvrdudeIspDevice_Flash(ushort vid, ushort pid, string programmer)
     {
         List<string> cmds = await Commands(
-            Usb(vid, pid), MockToolProvider(), null,
+            Usb(vid, pid), null,
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
         Assert.Single(cmds);
@@ -526,7 +534,7 @@ public class FlashCommandTests
     public async Task AvrdudeIspDevice_FlashEeprom(ushort vid, ushort pid, string programmer)
     {
         List<string> cmds = await Commands(
-            Usb(vid, pid), MockToolProvider(), null,
+            Usb(vid, pid), null,
             bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
         Assert.Single(cmds);
@@ -541,7 +549,7 @@ public class FlashCommandTests
     public async Task PicotoolDevice_Flash_AcceptedFormats(string filename)
     {
         List<string> cmds = await Commands(
-            Usb(0x2E8A, 0x0003), MockToolProvider(), null,
+            Usb(0x2E8A, 0x0003), null,
             bd => bd.FlashAsync("", filename));
 
         Assert.Equal(2, cmds.Count);
@@ -552,7 +560,7 @@ public class FlashCommandTests
     [Fact]
     public async Task PicotoolDevice_Flash_RejectsHex()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x2E8A, 0x0003), MockToolProvider())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x2E8A, 0x0003), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.hex"));
         Assert.Contains(".uf2", ex.Message);
@@ -562,7 +570,7 @@ public class FlashCommandTests
     public async Task PicotoolDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x2E8A, 0x0003), MockToolProvider(), null,
+            Usb(0x2E8A, 0x0003), null,
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);
@@ -574,7 +582,7 @@ public class FlashCommandTests
     [Fact]
     public async Task Wb32DfuDevice_Flash_RejectsUnsupportedFormat()
     {
-        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x342D, 0xDFA0), MockToolProvider())!;
+        BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x342D, 0xDFA0), Services())!;
 
         UnsupportedFileFormatException ex = await Assert.ThrowsAsync<UnsupportedFileFormatException>(() => bd.FlashAsync("", "test.uf2"));
         Assert.Contains(".bin", ex.Message);
@@ -584,7 +592,7 @@ public class FlashCommandTests
     public async Task Wb32DfuDevice_Flash_Bin()
     {
         List<string> cmds = await Commands(
-            Usb(0x342D, 0xDFA0), MockToolProvider(), null,
+            Usb(0x342D, 0xDFA0), null,
             bd => bd.FlashAsync("", "test.bin"));
 
         Assert.Single(cmds);
@@ -595,7 +603,7 @@ public class FlashCommandTests
     public async Task Wb32DfuDevice_Flash_Hex()
     {
         List<string> cmds = await Commands(
-            Usb(0x342D, 0xDFA0), MockToolProvider(), null,
+            Usb(0x342D, 0xDFA0), null,
             bd => bd.FlashAsync("", "test.hex"));
 
         Assert.Single(cmds);
@@ -606,7 +614,7 @@ public class FlashCommandTests
     public async Task Wb32DfuDevice_Reset()
     {
         List<string> cmds = await Commands(
-            Usb(0x342D, 0xDFA0), MockToolProvider(), null,
+            Usb(0x342D, 0xDFA0), null,
             bd => bd.ResetAsync(""));
 
         Assert.Single(cmds);

@@ -8,14 +8,12 @@ namespace QmkToolbox.Core.Bootloader;
 /// Wraps an <see cref="IUsbDevice"/> and provides common plumbing for flashing,
 /// EEPROM operations, reset, and tool invocation.
 /// </summary>
-public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider toolProvider, ISerialPortService? serialPortService = null, IMountPointService? mountPointService = null)
+public abstract class BootloaderDevice(IUsbDevice device, BootloaderServices services)
 {
     public event Action<BootloaderDevice, string, MessageType>? OutputReceived;
 
     public IUsbDevice Device { get; } = device;
-    protected IFlashToolProvider ToolProvider { get; } = toolProvider;
-    protected ISerialPortService? SerialPortService { get; } = serialPortService;
-    protected IMountPointService? MountPointService { get; } = mountPointService;
+    protected BootloaderServices Services { get; } = services;
 
     public ushort VendorId => Device.VendorId;
     public ushort ProductId => Device.ProductId;
@@ -49,7 +47,8 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
     public virtual Task ResetAsync(string mcu) => Task.CompletedTask;
 
     protected Task<int> RunToolAsync(string toolName, params string[] args) =>
-        FlashService.RunToolAsync(toolName, args, ToolProvider, PrintMessage);
+        FlashService.RunToolAsync(toolName, args, Services.ToolProvider, PrintMessage,
+            Services.ProcessRunner, Services.TimeProvider);
 
     protected void PrintMessage(string message, MessageType type) =>
         OutputReceived?.Invoke(this, message, type);
@@ -84,10 +83,10 @@ public abstract class BootloaderDevice(IUsbDevice device, IFlashToolProvider too
     }
 
     protected Task<string?> FindComPortAsync() =>
-        SerialPortService == null ? Task.FromResult<string?>(null) : PollAsync(() => SerialPortService.FindSerialPort(Device));
+        Services.SerialPorts is not { } serial ? Task.FromResult<string?>(null) : PollAsync(() => serial.FindSerialPort(Device));
 
     protected Task<string?> FindMountPointAsync(string markerFile) =>
-        MountPointService == null ? Task.FromResult<string?>(null) : PollAsync(() => MountPointService.FindMountPoint(Device, markerFile));
+        Services.MountPoints is not { } mounts ? Task.FromResult<string?>(null) : PollAsync(() => mounts.FindMountPoint(Device, markerFile));
 
     /// <summary>
     /// Returns <paramref name="comPort"/> if non-null, or throws <see cref="ComPortNotFoundException"/>.

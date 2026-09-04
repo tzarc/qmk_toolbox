@@ -112,6 +112,21 @@ internal sealed class FakeProcessRunner(IRunningProcess? process = null, Excepti
         startException != null ? throw startException : process!;
 }
 
+/// <summary>
+/// Records every launched command as "file arg1 arg2 …" and hands back an instantly-exiting
+/// fake process, so command-construction tests never fork a real child.
+/// </summary>
+internal sealed class CapturingProcessRunner : IProcessRunner
+{
+    public List<string> Commands { get; } = [];
+
+    public IRunningProcess Start(string fileName, string workingDir, IReadOnlyList<string> args)
+    {
+        Commands.Add(string.Join(' ', [fileName, .. args]));
+        return new FakeRunningProcess();
+    }
+}
+
 internal sealed class FakeRunningProcess(
     string stdout = "", string stderr = "", int exitCode = 0, bool hang = false, bool stdoutThrows = false)
     : IRunningProcess

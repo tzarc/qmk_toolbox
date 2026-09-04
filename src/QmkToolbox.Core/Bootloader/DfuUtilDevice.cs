@@ -1,5 +1,4 @@
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader;
 
@@ -23,14 +22,14 @@ internal abstract class DfuUtilDevice : BootloaderDevice
     /// or null if reset is not supported.</param>
     protected DfuUtilDevice(
         IUsbDevice device,
-        IFlashToolProvider toolProvider,
+        BootloaderServices services,
         BootloaderType type,
         string name,
         int altSetting,
         string deviceId,
         string[]? flashSuffix,
         string[]? resetSuffix)
-        : base(device, toolProvider)
+        : base(device, services)
     {
         Type = type;
         Name = name;

@@ -1,13 +1,12 @@
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
 
 /// <summary>WB32 DFU bootloader device (WestBerryTech, via wb32-dfu-updater_cli).</summary>
 internal sealed class Wb32DfuDevice : BootloaderDevice
 {
-    public Wb32DfuDevice(IUsbDevice device, IFlashToolProvider toolProvider)
-        : base(device, toolProvider)
+    public Wb32DfuDevice(IUsbDevice device, BootloaderServices services)
+        : base(device, services)
     {
         Type = BootloaderType.Wb32Dfu;
         Name = "WB32 DFU";

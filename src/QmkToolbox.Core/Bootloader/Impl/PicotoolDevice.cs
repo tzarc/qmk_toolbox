@@ -1,13 +1,12 @@
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
 
 /// <summary>Raspberry Pi BOOTSEL bootloader device (via picotool).</summary>
 internal sealed class PicotoolDevice : BootloaderDevice
 {
-    public PicotoolDevice(IUsbDevice device, IFlashToolProvider toolProvider)
-        : base(device, toolProvider)
+    public PicotoolDevice(IUsbDevice device, BootloaderServices services)
+        : base(device, services)
     {
         string model = device.ProductId switch
         {

@@ -4,10 +4,7 @@ using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Core.Services;
 
-public class FlashOrchestrator(
-    IFlashToolProvider toolProvider,
-    ISerialPortService serialPortService,
-    IMountPointService mountPointService)
+public class FlashOrchestrator(BootloaderServices services)
 {
     private static readonly bool IsWindows = OperatingSystem.IsWindows();
 
@@ -47,7 +44,7 @@ public class FlashOrchestrator(
     /// </summary>
     public async Task<bool> OnDeviceConnectedAsync(IUsbDevice device, bool showAllDevices)
     {
-        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, toolProvider, serialPortService, mountPointService);
+        BootloaderDevice? bd = BootloaderFactory.CreateDevice(device, services);
         if (bd == null)
         {
             // Report unknown devices right away: the volume probe below can run for the
@@ -88,7 +85,7 @@ public class FlashOrchestrator(
     /// </summary>
     private async Task<BootloaderDevice?> TryCreateMassStorageDeviceAsync(IUsbDevice device)
     {
-        if (!device.IsMassStorage)
+        if (!device.IsMassStorage || services.MountPoints is not { } mountPoints)
             return null;
         DiagnosticTrace?.Invoke(
             $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> mass storage, probing for" +
@@ -101,14 +98,14 @@ public class FlashOrchestrator(
             {
                 foreach (MassStorageBootloader family in MassStorageBootloader.Probeable)
                 {
-                    string? mount = mountPointService.FindMountPoint(device, family.MarkerFile);
+                    string? mount = mountPoints.FindMountPoint(device, family.MarkerFile);
                     if (mount == null || IsMountClaimed(mount))
                         continue;
                     string? boardId = family.BoardIdReader?.Invoke(Path.Combine(mount, family.MarkerFile));
                     DiagnosticTrace?.Invoke(
                         $"[ORCH+] {DeviceTrace.VidPidRev(device)} -> {family.Name} volume at \"{mount}\"" +
                         (boardId == null ? "" : $" (Board-ID: {boardId})"));
-                    return BootloaderFactory.CreateMassStorageDevice(family.Type, device, toolProvider, mountPointService, boardId, mount);
+                    return BootloaderFactory.CreateMassStorageDevice(family.Type, device, services, boardId, mount);
                 }
                 await Task.Delay(VolumeProbeDelayMs, cancellation.Token);
             }

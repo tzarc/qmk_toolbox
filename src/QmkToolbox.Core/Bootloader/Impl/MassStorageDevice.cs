@@ -1,5 +1,4 @@
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader.Impl;
 
@@ -10,8 +9,8 @@ internal sealed class MassStorageDevice : BootloaderDevice
 
     public string? MountPoint { get; private set; }
 
-    public MassStorageDevice(MassStorageBootloader family, IUsbDevice device, IFlashToolProvider toolProvider, IMountPointService? mountPointService = null, string? boardId = null, string? mountPoint = null)
-        : base(device, toolProvider, mountPointService: mountPointService)
+    public MassStorageDevice(MassStorageBootloader family, IUsbDevice device, BootloaderServices services, string? boardId = null, string? mountPoint = null)
+        : base(device, services)
     {
         _family = family;
         Type = family.Type;

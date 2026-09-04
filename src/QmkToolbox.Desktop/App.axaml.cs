@@ -36,10 +36,12 @@ public partial class App : Application
 #else
                 new UnixUsbEventsDetector();
 #endif
-            var orchestrator = new Core.Services.FlashOrchestrator(
-                toolProvider,
-                new DesktopSerialPortService(),
-                new DesktopMountPointService());
+            var bootloaderServices = new Core.Bootloader.BootloaderServices(toolProvider)
+            {
+                SerialPorts = new DesktopSerialPortService(),
+                MountPoints = new DesktopMountPointService(),
+            };
+            var orchestrator = new Core.Services.FlashOrchestrator(bootloaderServices);
             // The session receives its UI invoker at construction, so USB events arriving from
             // the moment Start() is called are always marshalled — there is no window in which
             // listeners run without an invoker.

@@ -1,5 +1,4 @@
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader;
 
@@ -13,15 +12,14 @@ internal abstract class AvrdudeDevice : BootloaderDevice
 
     protected AvrdudeDevice(
         IUsbDevice device,
-        IFlashToolProvider toolProvider,
-        ISerialPortService? serialPortService,
+        BootloaderServices services,
         BootloaderType type,
         string name,
         string programmer,
         string preferredDriver,
         bool requiresComPort,
         bool isEepromFlashable)
-        : base(device, toolProvider, serialPortService)
+        : base(device, services)
     {
         Type = type;
         Name = name;

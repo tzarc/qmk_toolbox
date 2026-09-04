@@ -1,6 +1,5 @@
 using QmkToolbox.Core.Bootloader.Impl;
 using QmkToolbox.Core.Models;
-using QmkToolbox.Core.Services;
 
 namespace QmkToolbox.Core.Bootloader;
 
@@ -85,33 +84,29 @@ public static class BootloaderFactory
     // (AtmelDfuDevice, LufaHidDevice) receive the already-resolved BootloaderType.
     private const ushort QmkRevisionMarker = 0x0936;
 
-    public static BootloaderDevice? CreateDevice(
-        IUsbDevice device,
-        IFlashToolProvider toolProvider,
-        ISerialPortService? serialPortService = null,
-        IMountPointService? mountPointService = null)
+    public static BootloaderDevice? CreateDevice(IUsbDevice device, BootloaderServices services)
     {
         BootloaderType type = GetDeviceType(device.VendorId, device.ProductId, device.RevisionBcd);
         return type switch
         {
-            BootloaderType.Apm32Dfu => new Apm32DfuDevice(device, toolProvider),
-            BootloaderType.At32Dfu => new At32DfuDevice(device, toolProvider),
-            BootloaderType.AtmelDfu or BootloaderType.QmkDfu => new AtmelDfuDevice(device, toolProvider, serialPortService, type),
-            BootloaderType.AtmelSamBa => new AtmelSamBaDevice(device, toolProvider, serialPortService),
-            BootloaderType.AvrIsp => new AvrIspDevice(device, toolProvider, serialPortService),
-            BootloaderType.BootloadHid => new BootloadHidDevice(device, toolProvider),
-            BootloaderType.Caterina => new CaterinaDevice(device, toolProvider, serialPortService),
-            BootloaderType.Gd32VDfu => new Gd32VDfuDevice(device, toolProvider),
-            BootloaderType.HalfKay => new HalfKayDevice(device, toolProvider),
-            BootloaderType.KiibohdDfu => new KiibohdDfuDevice(device, toolProvider),
-            BootloaderType.LufaHid or BootloaderType.QmkHid => new LufaHidDevice(device, toolProvider, type),
-            BootloaderType.LufaMs => CreateMassStorageDevice(type, device, toolProvider, mountPointService),
-            BootloaderType.Stm32Dfu => new Stm32DfuDevice(device, toolProvider),
-            BootloaderType.Stm32Duino => new Stm32DuinoDevice(device, toolProvider),
-            BootloaderType.UsbAsp => new UsbAspDevice(device, toolProvider),
-            BootloaderType.UsbTinyIsp => new UsbTinyIspDevice(device, toolProvider),
-            BootloaderType.Wb32Dfu => new Wb32DfuDevice(device, toolProvider),
-            BootloaderType.Picotool => new PicotoolDevice(device, toolProvider),
+            BootloaderType.Apm32Dfu => new Apm32DfuDevice(device, services),
+            BootloaderType.At32Dfu => new At32DfuDevice(device, services),
+            BootloaderType.AtmelDfu or BootloaderType.QmkDfu => new AtmelDfuDevice(device, services, type),
+            BootloaderType.AtmelSamBa => new AtmelSamBaDevice(device, services),
+            BootloaderType.AvrIsp => new AvrIspDevice(device, services),
+            BootloaderType.BootloadHid => new BootloadHidDevice(device, services),
+            BootloaderType.Caterina => new CaterinaDevice(device, services),
+            BootloaderType.Gd32VDfu => new Gd32VDfuDevice(device, services),
+            BootloaderType.HalfKay => new HalfKayDevice(device, services),
+            BootloaderType.KiibohdDfu => new KiibohdDfuDevice(device, services),
+            BootloaderType.LufaHid or BootloaderType.QmkHid => new LufaHidDevice(device, services, type),
+            BootloaderType.LufaMs => CreateMassStorageDevice(type, device, services),
+            BootloaderType.Stm32Dfu => new Stm32DfuDevice(device, services),
+            BootloaderType.Stm32Duino => new Stm32DuinoDevice(device, services),
+            BootloaderType.UsbAsp => new UsbAspDevice(device, services),
+            BootloaderType.UsbTinyIsp => new UsbTinyIspDevice(device, services),
+            BootloaderType.Wb32Dfu => new Wb32DfuDevice(device, services),
+            BootloaderType.Picotool => new PicotoolDevice(device, services),
             BootloaderType.None => null,
             _ => throw new ArgumentOutOfRangeException(nameof(BootloaderType), type, "No device implementation for this bootloader type"),
         };
@@ -124,14 +119,13 @@ public static class BootloaderFactory
     public static BootloaderDevice CreateMassStorageDevice(
         BootloaderType type,
         IUsbDevice device,
-        IFlashToolProvider toolProvider,
-        IMountPointService? mountPointService = null,
+        BootloaderServices services,
         string? boardId = null,
         string? mountPoint = null)
     {
         MassStorageBootloader family = MassStorageBootloader.All.FirstOrDefault(f => f.Type == type)
             ?? throw new ArgumentOutOfRangeException(nameof(type), type, "Not a mass-storage bootloader type");
-        return new MassStorageDevice(family, device, toolProvider, mountPointService, boardId, mountPoint);
+        return new MassStorageDevice(family, device, services, boardId, mountPoint);
     }
 
     public static BootloaderType GetDeviceType(ushort vendorId, ushort productId, ushort revisionBcd)

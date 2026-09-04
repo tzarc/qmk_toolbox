@@ -1,4 +1,5 @@
 using NSubstitute;
+using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using Xunit;
@@ -8,9 +9,11 @@ namespace QmkToolbox.Tests;
 public class FlashOrchestratorTests
 {
     private static FlashOrchestrator NewOrchestrator(IMountPointService? mount = null) => new(
-        Substitute.For<IFlashToolProvider>(),
-        Substitute.For<ISerialPortService>(),
-        mount ?? Substitute.For<IMountPointService>())
+        new BootloaderServices(Substitute.For<IFlashToolProvider>())
+        {
+            SerialPorts = Substitute.For<ISerialPortService>(),
+            MountPoints = mount ?? Substitute.For<IMountPointService>(),
+        })
     {
         VolumeProbeDelayMs = 1,
     };

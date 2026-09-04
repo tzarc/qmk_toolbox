@@ -1,4 +1,5 @@
 using NSubstitute;
+using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
@@ -8,8 +9,8 @@ namespace QmkToolbox.Tests;
 
 /// <summary>
 /// Drives FlashSession through its interface: a fake USB detector raises events, the real
-/// FlashOrchestrator runs over mocked tool/serial/mount seams (GetToolPath returns "/bin/true"
-/// so child processes exit harmlessly), and an immediate invoker stands in for the UI thread.
+/// FlashOrchestrator runs over mocked tool/serial/mount seams and a capturing process runner
+/// (no child processes fork), and an immediate invoker stands in for the UI thread.
 /// The per-test harness owns the temp firmware file and deletes it on Dispose.
 /// </summary>
 public sealed class FlashSessionTests : IDisposable
@@ -52,11 +53,16 @@ public sealed class FlashSessionTests : IDisposable
         public Harness()
         {
             ToolProvider = Substitute.For<IFlashToolProvider>();
-            ToolProvider.GetToolPath(Arg.Any<string>()).Returns("/bin/true");
+            ToolProvider.GetToolPath(Arg.Any<string>()).Returns(ci => ci.Arg<string>());
             ToolProvider.GetResourceFolder().Returns(Path.GetTempPath());
             ISerialPortService serial = Substitute.For<ISerialPortService>();
             serial.FindSerialPort(Arg.Any<IUsbDevice>()).Returns("ttyACM0");
-            Orchestrator = new FlashOrchestrator(ToolProvider, serial, Substitute.For<IMountPointService>());
+            Orchestrator = new FlashOrchestrator(new BootloaderServices(ToolProvider)
+            {
+                ProcessRunner = new CapturingProcessRunner(),
+                SerialPorts = serial,
+                MountPoints = Substitute.For<IMountPointService>(),
+            });
             Session = new FlashSession(f => f(), Detector, Orchestrator, ToolProvider);
             Session.Output += (msg, type) => { lock (_output) { _output.Add((msg, type)); } };
         }
