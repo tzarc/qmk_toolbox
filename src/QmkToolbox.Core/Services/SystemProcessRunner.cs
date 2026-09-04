@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace QmkToolbox.Core.Services;
 
 /// <summary>
-/// The production <see cref="IProcessRunner"/>, backed by <see cref="Process"/>. Stateless —
+/// The production <see cref="IProcessRunner"/>, backed by <see cref="Process"/>. Stateless;
 /// use the single <see cref="Shared"/> instance.
 /// </summary>
 public sealed class SystemProcessRunner : IProcessRunner

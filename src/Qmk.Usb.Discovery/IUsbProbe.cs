@@ -33,7 +33,7 @@ public interface IUsbProbe : IDisposable
 
     /// <summary>
     /// Starts delivering events. Throws when the platform's notification mechanism cannot be
-    /// set up; USB detection would be dead for the whole session, so the failure must surface.
+    /// set up, because a silent failure would leave detection dead for the whole session.
     /// </summary>
     void Start();
 

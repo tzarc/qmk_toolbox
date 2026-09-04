@@ -7,7 +7,7 @@ internal static class LinuxUsbSysfs
     /// <summary>
     /// Reads the <c>bcdDevice</c> attribute beneath a udev syspath
     /// (e.g. <c>/sys/devices/.../usb1/1-2/bcdDevice</c>). Returns 0 when the attribute is
-    /// absent or unreadable — a missing revision must never break device detection.
+    /// absent or unreadable; a missing revision must never break detection.
     /// </summary>
     public static ushort ReadBcdDevice(string syspath) =>
         UsbDeviceParser.TryParseBcdDevice(ReadAttribute(syspath, "bcdDevice"), out ushort rev) ? rev : (ushort)0;

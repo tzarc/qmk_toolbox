@@ -9,8 +9,8 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Exercises <see cref="FlashService.RunToolAsync"/>'s own logic — raw chunk pumping, exit-code
-/// return, start-failure, and timeout/kill — through the <see cref="IProcessRunner"/> seam and a
+/// Exercises <see cref="FlashService.RunToolAsync"/>'s own logic (raw chunk pumping, exit-code
+/// return, start-failure, and timeout/kill) through the <see cref="IProcessRunner"/> seam and a
 /// fake clock, with no real child process.
 /// </summary>
 public class FlashServiceProcessTests

@@ -73,7 +73,7 @@ public class FlashOrchestratorTests
         try
         {
             // Desktops that don't automount (e.g. KDE) surface the volume only when the
-            // user clicks mount — several polls after arrival here stands in for that.
+            // user clicks mount; several polls after arrival stand in for that.
             IMountPointService mount = Substitute.For<IMountPointService>();
             mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), "INFO_UF2.TXT")
                 .Returns(null, null, null, null, mountDir);

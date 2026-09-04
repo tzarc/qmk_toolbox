@@ -4,7 +4,7 @@ namespace QmkToolbox.Desktop.Services;
 
 /// <summary>
 /// Raises HID device hotplug and console-report events. Events fire on the listener's own
-/// thread — consumers must marshal to the UI thread. Disposing stops listening and releases
+/// thread; marshal to the UI thread. Disposing stops listening and releases
 /// all tracked devices.
 /// </summary>
 public interface IHidListener : IDisposable

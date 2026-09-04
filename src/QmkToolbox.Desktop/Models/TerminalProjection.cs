@@ -6,7 +6,7 @@ namespace QmkToolbox.Desktop.Models;
 /// <summary>
 /// Projects a <see cref="TerminalBuffer"/> into a flat list of <see cref="TerminalRun"/> ready
 /// for a view to render. This is the single place that resolves line prefixes, splits URLs out
-/// of segments, and assigns absolute text offsets — so the recurring selection / URL / offset
+/// of segments, and assigns absolute text offsets, so the recurring selection / URL / offset
 /// logic is pure and unit-testable, and the view is a thin run-to-inline adapter.
 /// </summary>
 public static class TerminalProjection

@@ -8,10 +8,7 @@ namespace Qmk.Usb.Discovery;
 
 /// <summary>
 /// Resolves whether a mounted volume is backed by a given USB device, for example to stop an
-/// unrelated removable drive being mistaken for a device's own volume. Each platform walks its
-/// own chain from the mount point to the owning USB device (drive → disk → parent devnode on
-/// Windows, statfs → IOMedia → registry parents on macOS, mount source → sysfs block-device
-/// ancestry on Linux); none of that reaches the interface.
+/// unrelated removable drive being mistaken for a device's own volume.
 /// </summary>
 public static class UsbVolumeOwner
 {

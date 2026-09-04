@@ -10,7 +10,7 @@ using QmkToolbox.Desktop.ViewModels;
 
 namespace QmkToolbox.Desktop.Views;
 
-/// <summary>Main application window — hosts firmware selection, flashing controls, and the log panel.</summary>
+/// <summary>Main application window: hosts firmware selection, flashing controls, and the log panel.</summary>
 public partial class MainWindow : Window
 {
     private NativeMenuItem? _autoFlashItem;

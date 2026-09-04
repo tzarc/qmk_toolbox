@@ -11,15 +11,15 @@ public class FlashOrchestrator(BootloaderServices services)
 
     private readonly List<BootloaderDevice> _bootloaders = [];
 
-    // Pending volume probes — one per unknown mass-storage device (mostly not bootloaders;
-    // e.g. thumb drives), watching for a marker volume to appear — so a disconnect can end
+    // Pending volume probes, one per unknown mass-storage device (mostly not bootloaders;
+    // e.g. thumb drives), watching for a marker volume to appear, so a disconnect can end
     // its device's probe. Like IsBusy, mutated only on the UI thread: every caller marshals
     // to it, and the probe's awaits must keep the captured context (no ConfigureAwait(false))
     // so the finally that removes the entry resumes there too.
     private readonly List<(UsbDeviceInfo Device, CancellationTokenSource Cancellation)> _volumeProbes = [];
 
     // Every unknown mass-storage device is polled for a marker volume for as long as it
-    // stays connected — desktops like KDE mount removable drives only when the user asks,
+    // stays connected; desktops like KDE mount removable drives only when the user asks,
     // which can be minutes after the USB arrival. Init-only so tests can shrink the cadence.
     public int VolumeProbeDelayMs { get; init; } = 250;
 
@@ -80,7 +80,7 @@ public class FlashOrchestrator(BootloaderServices services)
     /// Polls a mass-storage device outside the VID/PID map for a volume carrying one of the
     /// probeable families' marker files (<see cref="MassStorageBootloader.Probeable"/>) until
     /// one appears or the device is removed. Marker-probed bootloaders carry per-board
-    /// VID/PIDs, so the marker is the only general way to recognise them — and the volume
+    /// VID/PIDs, so the marker is the only general way to recognise them, and the volume
     /// appears only when the OS (or the user, on desktops that don't automount) mounts the
     /// drive.
     /// </summary>
@@ -125,7 +125,7 @@ public class FlashOrchestrator(BootloaderServices services)
     }
 
     // A marker volume already backing a registered mass-storage device can't be claimed
-    // again — with several unknown devices probing at once (e.g. a thumb drive alongside a
+    // again; with several unknown devices probing at once (e.g. a thumb drive alongside a
     // keyboard), only one may register per volume.
     private bool IsMountClaimed(string mount) =>
         _bootloaders.Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
@@ -163,7 +163,7 @@ public class FlashOrchestrator(BootloaderServices services)
             else if (_bootloaders.Count > 0)
             {
                 DiagnosticTrace(
-                    $"{prefix} -> *** no match  (bootloaders:{_bootloaders.Count} – possible phantom entry)");
+                    $"{prefix} -> *** no match  (bootloaders:{_bootloaders.Count} - possible phantom entry)");
             }
             else
             {
@@ -178,7 +178,7 @@ public class FlashOrchestrator(BootloaderServices services)
     /// Runs <paramref name="operation"/> as the single in-flight flash / reset / EEPROM /
     /// resource-maintenance operation, returning <see langword="true"/> if it ran or
     /// <see langword="false"/> without running when one is already in progress.
-    /// <see cref="IsBusy"/> is UI-thread-affine — every caller marshals to the UI thread, so the
+    /// <see cref="IsBusy"/> is UI-thread-affine: every caller marshals to the UI thread, so the
     /// check-then-set before the first await is atomic and needs no lock.
     /// </summary>
     public async Task<bool> RunExclusiveAsync(Func<Task> operation)

@@ -29,7 +29,7 @@ public class UsbDeviceParserTests
     [Theory]
     [InlineData("ZZZZ")]   // not valid hex
     [InlineData("0xGGGG")] // invalid after 0x prefix
-    [InlineData("10000")]  // overflows ushort (hex) — 65536
+    [InlineData("10000")]  // overflows ushort (hex): 65536
     public void TryParseUsbId_Invalid_ReturnsFalse(string input) =>
         Assert.False(UsbDeviceParser.TryParseUsbId(input, out _));
 

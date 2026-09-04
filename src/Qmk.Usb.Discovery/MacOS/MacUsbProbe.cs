@@ -4,8 +4,8 @@ using System.Runtime.Versioning;
 namespace Qmk.Usb.Discovery.MacOS;
 
 /// <summary>
-/// macOS probe using IOKit matching notifications on a dedicated CFRunLoop thread; no polling
-/// and no external watcher library. Arrivals are enriched straight off the arriving
+/// macOS probe using IOKit matching notifications on a dedicated CFRunLoop thread, with no
+/// polling and no external watcher library. Arrivals are enriched straight off the arriving
 /// io_service_t (identity, revision, strings, registry path); terminations carry identity and
 /// path for the tracker's removal matching. The initial notification drain delivers devices
 /// already present at registration; the startup sweep overlaps it and the tracker's
@@ -64,7 +64,7 @@ internal sealed class MacUsbProbe : IUsbProbe
 
     public StringComparison PathComparison => StringComparison.Ordinal;
 
-    // Kept as fields: the delegates must outlive the unmanaged notification registrations.
+    // Kept as fields; the delegates must outlive the unmanaged notification registrations.
     private IOServiceMatchingCallback? _arrivalCallback;
     private IOServiceMatchingCallback? _terminationCallback;
     private Thread? _runLoopThread;
@@ -112,7 +112,7 @@ internal sealed class MacUsbProbe : IUsbProbe
         IntPtr mode = CFStringCreateWithCString(IntPtr.Zero, "kCFRunLoopDefaultMode", KCfStringEncodingUtf8);
         CFRunLoopAddSource(_runLoop, IONotificationPortGetRunLoopSource(_port), mode);
         // Draining arms the notifications; the arrival drain also delivers devices already
-        // present at registration, completed before Start() returns so the tracker's sweep
+        // present at registration; it completes before Start() returns, so the tracker's sweep
         // runs against an armed subscription.
         DrainArrivals(_arrivalIterator);
         DrainTerminations(_terminationIterator);

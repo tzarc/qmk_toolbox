@@ -6,11 +6,11 @@ namespace QmkToolbox.Desktop.Models;
 /// <summary>
 /// Everything the log needs to know to render one <see cref="MessageType"/>: its stream
 /// discipline, leading prefix, and per-theme colours. Colours are plain <see cref="Color"/>
-/// structs — no brushes — so the pure terminal layers can read prefixes without touching
+/// structs, with no brushes, so the pure terminal layers can read prefixes without touching
 /// the view; <c>MessageTypeStyles</c> derives cached brushes from this table.
 /// </summary>
 /// <param name="IsRawStream">
-/// True for types carrying a raw byte stream (tool stdout/stderr, HID console output) —
+/// True for types carrying a raw byte stream (tool stdout/stderr, HID console output),
 /// written to the log verbatim so progress bars and partial lines render live. False for
 /// discrete, line-oriented messages (status, errors, command echo).
 /// </param>
@@ -25,7 +25,7 @@ public sealed record MessageTypeDescriptor(
 
 /// <summary>
 /// The single place a message type's rendering is defined. Adding a <see cref="MessageType"/>
-/// value means adding a row here — the exhaustiveness test fails otherwise.
+/// value means adding a row here; the exhaustiveness test fails otherwise.
 /// </summary>
 public static class MessageTypeDescriptors
 {

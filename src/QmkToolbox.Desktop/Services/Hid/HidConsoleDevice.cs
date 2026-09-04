@@ -54,7 +54,7 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
                 if (bytesRead <= 0)
                     continue;
 
-                // HID reports are null-padded — truncate at first null byte.
+                // HID reports are null-padded; truncate at the first null byte.
                 int validBytes = bytesRead;
                 for (int i = 0; i < bytesRead; i++)
                 {
@@ -71,7 +71,7 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
         }
         catch (Exception ex) when (ex is HidException or IOException or ObjectDisposedException)
         {
-            // Device disconnected or read error — stop gracefully
+            // Device disconnected or read error; stop gracefully
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
         }
         catch (AggregateException)
         {
-            // ReadLoop faulted/cancelled — nothing left to wait on.
+            // ReadLoop faulted/cancelled; nothing left to wait on.
         }
         _cts?.Dispose();
         _cts = null;

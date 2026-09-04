@@ -3,7 +3,7 @@ using Xunit;
 
 namespace QmkToolbox.Tests;
 
-// xUnit v2 has no built-in conditional skip — a custom FactAttribute subclass
+// xUnit v2 has no built-in conditional skip; a custom FactAttribute subclass
 // sets Skip when the condition is false, making skipped tests visible in the runner
 // rather than silently passing.
 public class FactOnLinuxAttribute : FactAttribute

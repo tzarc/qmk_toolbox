@@ -4,9 +4,8 @@ namespace Qmk.Usb.Discovery.Tests.Linux;
 
 /// <summary>
 /// Drives the Linux volume-ownership resolution against a fixture-owned fake /proc/mounts and
-/// /sys/class/block tree whose symlinks encode which USB device backs each volume: the
-/// coverage for the cross-binding bug where an unrelated storage device's probe claimed
-/// another device's marker volume.
+/// /sys/class/block tree whose symlinks encode which USB device backs each volume. The
+/// load-bearing case is a volume that belongs to a different device than the one asking.
 /// </summary>
 public sealed class UsbVolumeOwnerTests : IDisposable
 {
@@ -89,7 +88,7 @@ public sealed class UsbVolumeOwnerTests : IDisposable
     [FactOnLinux]
     public void NonDeviceSource_Unknown()
     {
-        // e.g. a tmpfs mount; no block device to resolve.
+        // e.g. a tmpfs mount has no block device to resolve.
         string mount = AddVolume("RAMDISK", "tmpfs", ownerSyspath: null, source: "");
 
         Assert.Null(BelongsTo(mount, Device()));

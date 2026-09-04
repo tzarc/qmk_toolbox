@@ -4,9 +4,9 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Drives <see cref="SettingsService"/> through its entry points — construct (loads),
+/// Drives <see cref="SettingsService"/> through its entry points: construct (loads),
 /// mutate <see cref="SettingsService.Current"/>, <see cref="SettingsService.Save"/>,
-/// reconstruct (reloads) — against a temp settings path owned by the fixture.
+/// reconstruct (reloads), against a temp settings path owned by the fixture.
 /// </summary>
 public sealed class SettingsServiceTests : IDisposable
 {

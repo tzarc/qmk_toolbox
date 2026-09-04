@@ -20,8 +20,8 @@ public enum TerminalRunKind
 
 /// <summary>
 /// A single contiguous piece of rendered terminal output with its absolute offset in the
-/// flattened text. The projection computes every offset — including the one consumed by each
-/// <see cref="TerminalRunKind.LineBreak"/> — so text-selection and URL hit-testing agree on
+/// flattened text. The projection computes every offset, including the one consumed by each
+/// <see cref="TerminalRunKind.LineBreak"/>, so text-selection and URL hit-testing agree on
 /// positions without the view re-deriving them.
 /// </summary>
 /// <param name="Text">The run's characters. For <see cref="TerminalRunKind.LineBreak"/> this is "\n".</param>
@@ -38,7 +38,7 @@ public readonly record struct TerminalRun(
 
 public static class TerminalRunExtensions
 {
-    /// <summary>Total length of the flattened text — the exclusive end offset of the last run.</summary>
+    /// <summary>Total length of the flattened text: the exclusive end offset of the last run.</summary>
     public static int TotalLength(this IReadOnlyList<TerminalRun> runs) =>
         runs.Count == 0 ? 0 : runs[^1].Start + runs[^1].Text.Length;
 }

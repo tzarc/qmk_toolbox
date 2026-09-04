@@ -29,9 +29,9 @@ public abstract partial class LogViewModelBase : ObservableObject
     // Writes to the log, routing on the message type's stream discipline (see
     // MessageType.IsRawStream):
     //  - Raw types (tool stdout/stderr, HID console) go straight to the buffer, which interprets
-    //    '\r'/'\n' like a terminal and invents no line breaks — Log("#") three times renders "###".
-    //  - Line types (status, errors, command echo) are discrete: they start at column 0 — breaking
-    //    a partial raw-stream line if one is pending — and end the line.
+    //    '\r'/'\n' like a terminal and invents no line breaks: Log("#") three times renders "###".
+    //  - Line types (status, errors, command echo) are discrete: they start at column 0, breaking
+    //    a partial raw-stream line if one is pending, and end the line.
     public void Log(string text, MessageType type)
     {
         if (type.IsRawStream())

@@ -2,13 +2,16 @@
 namespace Qmk.Usb.Discovery;
 
 /// <summary>
-/// The platform-independent USB detection module: tracks devices delivered by an
-/// <see cref="IUsbProbe"/>, deduplicates arrivals, sweeps already-present devices at
-/// <see cref="Start"/>, and resolves lossy removals back to the tracked arrival, so that
-/// <see cref="IUsbEventsDetector"/>'s identity invariant holds on every platform.
+/// Detects USB device arrivals and removals. Subscribe to <see cref="DeviceConnected"/> and
+/// <see cref="DeviceDisconnected"/>, then call <see cref="Start"/>; devices already attached
+/// are reported too. Removals always deliver the instance that arrived, so devices can be
+/// tracked by reference. A custom <see cref="IUsbProbe"/> may replace the platform default.
 /// </summary>
 public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
 {
+    /// <summary>Creates a tracker over the current platform's probe.</summary>
+    public UsbDeviceTracker() : this(UsbProbe.CreateForCurrentPlatform()) { }
+
     private readonly List<UsbDeviceInfo> _devices = [];
     private readonly Lock _devicesLock = new();
 
@@ -22,8 +25,8 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
     public Action<string>? DiagnosticTrace { get; set; }
 
     /// <summary>
-    /// Subscribes to the probe, starts it, then sweeps the devices already present,
-    /// each delivered via <see cref="DeviceConnected"/> exactly once.
+    /// Starts monitoring. Devices already attached are delivered through
+    /// <see cref="DeviceConnected"/> exactly once, then live events follow.
     /// </summary>
     public void Start()
     {
@@ -32,7 +35,7 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
         probe.Start();
         // The probe's live events cover future arrivals only; devices attached before
         // monitoring started must be swept up explicitly. The sweep runs
-        // after subscription so nothing can slip between sweep and subscription: a device
+        // after subscription so nothing can slip between sweep and subscription; a device
         // delivered by both is dropped by OnArrived's duplicate-path guard.
         foreach (UsbDeviceInfo device in probe.EnumeratePresent())
             OnArrived(device);

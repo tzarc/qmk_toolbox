@@ -16,7 +16,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
 
     private const int AF_NETLINK = 16;
     private const int SOCK_RAW = 3;
-    private const int SOCK_CLOEXEC = 0x80000; // consumers spawn child processes; don't leak the fd
+    private const int SOCK_CLOEXEC = 0x80000; // consumers spawn child processes; do not leak the fd
     private const int NETLINK_KOBJECT_UEVENT = 15;
     private const uint KERNEL_EVENT_GROUP = 1;  // group 2 is udevd's processed stream
     private const short POLLIN = 0x001;
@@ -27,7 +27,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
     {
         public ushort Family;
         public ushort Pad;
-        public uint Pid;    // 0 — the kernel assigns a unique port id
+        public uint Pid;    // 0: the kernel assigns a unique port id
         public uint Groups;
     }
 
@@ -135,8 +135,8 @@ internal sealed class LinuxUsbProbe : IUsbProbe
     internal readonly record struct UsbUevent(bool IsAdd, string DevPath, ushort Vid, ushort Pid, ushort Rev);
 
     /// <summary>
-    /// Parses a kernel uevent datagram, null-separated KEY=VALUE pairs after an
-    /// "action@devpath" header, into a USB device add/remove event, or null for anything else
+    /// Parses a kernel uevent datagram (null-separated KEY=VALUE pairs after an
+    /// "action@devpath" header) into a USB device add/remove event, or null for anything else
     /// (other subsystems, interface events, other actions, udevd's "libudev"-tagged stream).
     /// <c>PRODUCT=</c> is "vid/pid/bcdDevice" in unpadded hex, e.g. "2e8a/3/100".
     /// </summary>

@@ -60,7 +60,7 @@ public class HidApiListener : IHidListener
 
         lock (_deviceLock)
         {
-            // Disconnected — key on (path, usagePage, usage) so two collections sharing
+            // Disconnected: key on (path, usagePage, usage) so two collections sharing
             // the same hidraw path (Linux multi-collection devices) are tracked independently
             var currentKeys = current.Select(d => (d.Path, d.UsagePage, d.Usage)).ToHashSet();
             disconnected = [.. _devices.Where(d => !currentKeys.Contains((d.DevicePath, d.UsagePage, d.Usage)))];
@@ -104,7 +104,7 @@ public class HidApiListener : IHidListener
         }
         catch (AggregateException)
         {
-            // Poll loop ended via cancellation/fault — nothing left to wait on.
+            // Poll loop ended via cancellation/fault; nothing left to wait on.
         }
         lock (_deviceLock)
         {

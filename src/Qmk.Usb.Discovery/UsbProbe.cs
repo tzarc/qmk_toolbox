@@ -5,7 +5,7 @@ using Qmk.Usb.Discovery.Windows;
 namespace Qmk.Usb.Discovery;
 
 /// <summary>
-/// Creates the current platform's <see cref="IUsbProbe"/>: the raw event source an
+/// Creates the current platform's <see cref="IUsbProbe"/>, the raw event source an
 /// <see cref="UsbDeviceTracker"/> runs over.
 /// </summary>
 public static class UsbProbe

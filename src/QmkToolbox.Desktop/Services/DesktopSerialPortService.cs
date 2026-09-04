@@ -65,7 +65,7 @@ public class DesktopSerialPortService : ISerialPortService
     [SupportedOSPlatform("macos")]
     private static string? FindNewestSerialPortMacOS()
     {
-        // Sort by device node creation time (descending) — newest first
+        // Sort by device node creation time (descending), newest first
         return SerialPort.GetPortNames()
             .Select(p => new FileInfo(p))
             .Where(fi => fi.Exists)
@@ -78,7 +78,7 @@ public class DesktopSerialPortService : ISerialPortService
     /// Looks up the COM port assigned to a USB device by walking the Windows
     /// registry at HKLM\SYSTEM\CurrentControlSet\Enum\USB\VID_xxxx&amp;PID_xxxx.
     /// Each child key contains a "Device Parameters" sub-key with a "PortName"
-    /// value (e.g. "COM12"). Returns null when the lookup fails — guessing an
+    /// value (e.g. "COM12"). Returns null when the lookup fails; guessing an
     /// unrelated port would point avrdude/mdloader at whatever serial device
     /// happens to exist (modems, debug probes).
     /// </summary>

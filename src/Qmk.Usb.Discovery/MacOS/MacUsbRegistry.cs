@@ -60,7 +60,7 @@ internal static class MacUsbRegistry
     private static extern void CFRelease(IntPtr cf);
 
     // macOS statfs: the 64-bit-inode variant is the plain symbol on arm64 but carries the
-    // $INODE64 suffix on x86_64; both RIDs ship from the same source, so pick at runtime.
+    // $INODE64 suffix on x86_64; both RIDs build from the same source, so pick at runtime.
     [DllImport("libSystem", EntryPoint = "statfs", CharSet = CharSet.Ansi)]
     private static extern int StatfsArm64(string path, ref StatfsBuf buf);
 

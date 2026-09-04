@@ -442,7 +442,7 @@ public class FlashCommandTests
         Assert.Contains(".bin", ex.Message);
     }
 
-    // ── Uf2Device (VID/PID arbitrary; UF2 devices are matched by marker, not ID) ──
+    // ── Uf2Device (VID/PID arbitrary: UF2 devices are matched by marker, not ID) ──
 
     [Fact]
     public async Task Uf2Device_Flash_CopiesFileToVolume()

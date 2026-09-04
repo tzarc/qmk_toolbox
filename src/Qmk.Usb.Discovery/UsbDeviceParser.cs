@@ -40,7 +40,7 @@ internal static class UsbDeviceParser
     }
 
     /// <summary>
-    /// Scans a hardware-ID list (Windows <c>CM_DRP_HARDWAREID</c> multi-sz — e.g.
+    /// Scans a hardware-ID list (Windows <c>CM_DRP_HARDWAREID</c> multi-sz, e.g.
     /// <c>USB\VID_03EB&amp;PID_2FF4&amp;REV_0936</c>, <c>USB\VID_03EB&amp;PID_2FF4</c>)
     /// for the first entry carrying a non-zero <c>REV_</c> value. Device instance IDs never
     /// contain <c>REV_</c>; only hardware IDs do.
@@ -77,7 +77,7 @@ internal static class UsbDeviceParser
     }
 
     /// <summary>
-    /// Parses a Linux sysfs <c>bcdDevice</c> attribute value — four hex digits with a trailing
+    /// Parses a Linux sysfs <c>bcdDevice</c> attribute value: four hex digits with a trailing
     /// newline (e.g. <c>"0936\n"</c> for revision 9.36).
     /// </summary>
     public static bool TryParseBcdDevice(string? text, out ushort rev)

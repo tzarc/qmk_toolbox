@@ -63,7 +63,7 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
             throw new UnsupportedFileFormatException(extensions);
     }
 
-    // Poll cadence for serial-port/mount resolution: a test seam like
+    // Poll cadence for serial-port/mount resolution, a test seam like
     // FlashOrchestrator.VolumeProbeDelayMs; production always uses the default.
     public int PollDelayMs { get; set; } = 250;
 

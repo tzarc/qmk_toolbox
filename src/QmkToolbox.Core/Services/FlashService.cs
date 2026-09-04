@@ -9,8 +9,8 @@ public static class FlashService
 
     /// <summary>
     /// Launches a flash tool as a child process and returns its exit code.
-    /// stdout/stderr are forwarded as raw text chunks as they arrive — embedded '\r'/'\n'
-    /// intact, no line assembly — so a terminal-style consumer can render progress bars
+    /// stdout/stderr are forwarded as raw text chunks as they arrive, embedded '\r'/'\n'
+    /// intact with no line assembly, so a terminal-style consumer can render progress bars
     /// and partial lines immediately.
     /// </summary>
     /// <param name="toolName">Name of the tool binary (without path or extension).</param>
@@ -83,7 +83,7 @@ public static class FlashService
 
     /// <summary>
     /// Formats a tool name and arguments for display in the log (MessageType.Command).
-    /// Not used for process invocation — actual execution uses ProcessStartInfo.ArgumentList.
+    /// Not used for process invocation; actual execution uses ProcessStartInfo.ArgumentList.
     /// </summary>
     private static string FormatCommandLine(string toolName, string[] args) =>
         string.Join(' ', [toolName, .. args.Select(a =>

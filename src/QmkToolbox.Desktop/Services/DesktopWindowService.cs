@@ -59,7 +59,7 @@ public sealed class DesktopWindowService : IWindowService
         ShowSingleton(() => new KeyTesterWindow { DataContext = new KeyTesterViewModel() });
 
     // HidApiListener calls Hid.Init() on Start() and Hid.Exit() on Dispose().
-    // Its lifecycle is scoped to the console window — created here and disposed
+    // Its lifecycle is scoped to the console window: created here and disposed
     // when the window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
     public void ShowHidConsole() =>
         ShowSingleton(() => new HidConsoleWindow { DataContext = new HidConsoleViewModel(new HidApiListener()) });

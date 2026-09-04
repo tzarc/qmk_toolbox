@@ -84,7 +84,7 @@ public class TerminalBuffer
             if (offset + seg.Text.Length > Col)
             {
                 // Overwrite the character at Col within an existing segment, keeping that
-                // segment's colour (in-place overwrites — e.g. progress bars — reuse the
+                // segment's colour (in-place overwrites, e.g. progress bars, reuse the
                 // original type, so splitting the run for a colour change isn't worth it).
                 var sb = new StringBuilder(seg.Text);
                 sb[Col - offset] = ch;
@@ -95,8 +95,8 @@ public class TerminalBuffer
         }
 
         // At or past the end: extend the trailing same-type segment so a line stays a few
-        // contiguous runs (not one run per character), which keeps URL detection — and the
-        // rendered inline count — sane.
+        // contiguous runs (not one run per character), which keeps URL detection and the
+        // rendered inline count sane.
         int last = segments.Count - 1;
         if (last >= 0 && segments[last].Type == type)
             segments[last] = segments[last] with { Text = segments[last].Text + ch };

@@ -4,7 +4,7 @@ namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
 /// A mass-storage bootloader family, flashed by copying the firmware file onto a mounted
-/// volume identified by its marker file. Adding a family is one row below — plus a
+/// volume identified by its marker file. Adding a family is one row below, plus a
 /// <see cref="BootloaderFactory"/> DeviceMap entry when it has a fixed VID/PID, or
 /// <see cref="ProbeOnUnknownDevice"/> when it can only be recognised by its marker.
 /// </summary>

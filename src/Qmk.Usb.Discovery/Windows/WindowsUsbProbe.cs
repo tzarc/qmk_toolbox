@@ -6,12 +6,12 @@ namespace Qmk.Usb.Discovery.Windows;
 // WMI (Win32_PnPEntity event queries) is unsuitable here: "WITHIN n" polling delays events,
 // WMI infrastructure initialisation adds ~7 seconds of cold-start latency in a fresh .NET 10
 // process, and its reflection/COM plumbing is incompatible with PublishTrimmed.
-// RegisterDeviceNotification is a kernel-mode callback; the driver stack delivers arrival and
+// RegisterDeviceNotification is a kernel-mode callback: the driver stack delivers arrival and
 // removal events to the window procedure synchronously with no polling, no cold-start
 // overhead, and no trim incompatibilities.
 
 /// <summary>
-/// Windows probe using RegisterDeviceNotification via a message-only window. Avoids WMI entirely;
+/// Windows probe using RegisterDeviceNotification via a message-only window. Avoids WMI entirely:
 /// events arrive synchronously via WndProc with no polling latency. Removal hints carry the
 /// interface path only: Windows interface paths are canonical and always present, so the tracker
 /// never needs a VID/PID fallback.
@@ -32,11 +32,11 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     private int _notifyError;
     private uint _messageThreadId;
     private readonly ManualResetEventSlim _hwndReady = new(false);
-    // Kept as a field — delegate must outlive the unmanaged window class registration.
+    // Kept as a field; the delegate must outlive the unmanaged window class registration.
     private WndProcDelegate? _wndProcDelegate;
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
-    // GUID_DEVINTERFACE_USB_DEVICE — fires only for root USB device nodes, not composite children.
+    // GUID_DEVINTERFACE_USB_DEVICE: fires only for root USB device nodes, not composite children.
     private static readonly Guid GuidDevInterfaceUsbDevice =
         new("A5DCBF10-6530-11D2-901F-00C04FB951ED");
 
@@ -172,7 +172,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     /// <summary>
     /// The devices with a present USB device interface. The tracker calls this after
     /// <see cref="Start"/>, so the notification window already exists and nothing can slip
-    /// between sweep and subscription: a device delivered by both is dropped by the tracker's
+    /// between sweep and subscription; a device delivered by both is dropped by the tracker's
     /// duplicate-path guard.
     /// </summary>
     public IEnumerable<UsbDeviceInfo> EnumeratePresent()
@@ -228,7 +228,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
         };
         RegisterClassExW(ref wndClass);
 
-        // HWND_MESSAGE (-3): message-only window — no taskbar entry, no screen real estate.
+        // HWND_MESSAGE (-3): message-only window with no taskbar entry and no screen presence.
         _hwnd = CreateWindowExW(0, className, null, 0, 0, 0, 0, 0,
             new IntPtr(-3), IntPtr.Zero, GetModuleHandleW(null), IntPtr.Zero);
 
@@ -314,7 +314,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
         if (CM_Locate_DevNodeW(out uint devNode, instanceId, 0) == CR_SUCCESS)
         {
-            // Instance IDs never carry REV_; the hardware-ID list (REG_MULTI_SZ) does —
+            // Instance IDs never carry REV_; the hardware-ID list (REG_MULTI_SZ) does,
             // e.g. USB\VID_03EB&PID_2FF4&REV_0936.
             if (rev == 0 &&
                 UsbDeviceParser.TryParseRevisionFromHardwareIds(ReadDevNodeMultiSz(devNode, CM_DRP_HARDWAREID), out ushort hwRev))
@@ -325,7 +325,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
             manufacturer = ReadDevNodeProperty(devNode, CM_DRP_MFG);
             string service = ReadDevNodeProperty(devNode, CM_DRP_SERVICE);
             isMassStorage = IsMassStorageService(service);
-            // usbccgp is the USB composite device driver — surface the most relevant child interface instead.
+            // usbccgp is the USB composite device driver; surface the most relevant child interface instead.
             if (string.Equals(service, "usbccgp", StringComparison.OrdinalIgnoreCase))
             {
                 List<string> services = CollectChildServices(devNode);

@@ -125,7 +125,7 @@ public partial class FlashSession : ObservableObject
     }
 
     /// <summary>
-    /// Extracts flash-tool resources, then starts the USB detector — sequenced so an auto-flash
+    /// Extracts flash-tool resources, then starts the USB detector, sequenced so an auto-flash
     /// triggered by an early arrival can't hit missing tool binaries. Both are blocking, so the
     /// whole sequence runs on a thread pool thread; failures are reported via the output sink.
     /// </summary>
@@ -147,7 +147,7 @@ public partial class FlashSession : ObservableObject
         _usbDetector.Dispose();
     }
 
-    /// <summary>The in-flight auto-flash, if any — awaitable by tests; the UI never needs it.</summary>
+    /// <summary>The in-flight auto-flash, if any, awaitable by tests; the UI never needs it.</summary>
     internal Task? AutoFlashTask { get; private set; }
 
     private void OnDeviceConnected(UsbDeviceInfo device)

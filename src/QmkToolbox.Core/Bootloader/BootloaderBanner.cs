@@ -4,7 +4,7 @@ namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
 /// The startup-banner catalogue of supported bootloaders and ISP flashers. Each row names the
-/// <see cref="BootloaderType"/>s it covers so a test can prove every type is listed: adding a
+/// <see cref="BootloaderType"/>s it covers so a test can prove every type is listed; adding a
 /// bootloader without a banner row fails the exhaustiveness test instead of silently drifting.
 /// </summary>
 public static class BootloaderBanner

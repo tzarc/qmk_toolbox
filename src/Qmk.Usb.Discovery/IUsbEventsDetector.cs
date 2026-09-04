@@ -17,7 +17,7 @@ public interface IUsbEventsDetector : IDisposable
     /// </summary>
     event Action<UsbDeviceInfo> DeviceDisconnected;
 
-    /// <summary>When set, receives diagnostic trace messages for USB events. Called from the detector's own thread — callers must marshal if needed.</summary>
+    /// <summary>When set, receives diagnostic trace messages for USB events. Called from the detector's own thread; marshal if needed.</summary>
     Action<string>? DiagnosticTrace { get; set; }
 
     /// <summary>Starts monitoring for USB device events.</summary>

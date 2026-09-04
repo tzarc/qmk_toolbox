@@ -15,7 +15,7 @@ internal static class LogBrushes
 }
 
 /// <summary>
-/// Brush lookups derived mechanically from <see cref="MessageTypeDescriptors"/> — no per-type
+/// Brush lookups derived mechanically from <see cref="MessageTypeDescriptors"/>, with no per-type
 /// knowledge lives here, so a new <see cref="MessageType"/> only needs its descriptor row.
 /// </summary>
 internal static class MessageTypeStyles
