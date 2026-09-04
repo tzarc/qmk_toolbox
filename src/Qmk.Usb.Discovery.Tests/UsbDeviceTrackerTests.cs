@@ -163,6 +163,23 @@ public class UsbDeviceTrackerTests
     // ── lifecycle ─────────────────────────────────────────────────────────────
 
     [Fact]
+    public void StopThenStart_ReportsPresentDevicesAgain()
+    {
+        var probe = new FakeProbe();
+        probe.Present.Add(Device());
+        var tracker = new UsbDeviceTracker(probe);
+        var connected = new List<UsbDeviceInfo>();
+        tracker.DeviceConnected += connected.Add;
+        tracker.Start();
+        tracker.Stop();
+
+        tracker.Start();
+
+        Assert.Equal(2, connected.Count);
+    }
+
+
+    [Fact]
     public void Stop_UnsubscribesFromProbe()
     {
         _tracker.Stop();

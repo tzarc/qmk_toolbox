@@ -41,12 +41,19 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
             OnArrived(device);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Stops monitoring and forgets the tracked devices; a later <see cref="Start"/> reports
+    /// the devices present again.
+    /// </summary>
     public void Stop()
     {
         probe.Arrived -= OnArrived;
         probe.Removed -= OnRemoved;
         probe.Stop();
+        lock (_devicesLock)
+        {
+            _devices.Clear();
+        }
     }
 
     /// <summary>Stops monitoring and disposes the probe.</summary>
