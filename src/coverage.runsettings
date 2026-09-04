@@ -3,7 +3,7 @@
      Excluded so the coverage number reflects code the test suite can actually reach:
      Views and App/Program/DesktopWindowService are Avalonia glue only exercisable by
      a running app, and generated code (CompiledAvaloniaXaml, MVVM source generators)
-     is noise. Everything else in Desktop counts — platform adapters at 0% are real,
+     is noise. Everything else in Desktop counts: platform adapters at 0% are real,
      currently untested code, not exclusions. -->
 <RunSettings>
   <DataCollectionRunSettings>

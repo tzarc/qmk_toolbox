@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# make-macos-dmg.sh — Build a DMG disk image from the existing .app bundle.
+# make-macos-dmg.sh: Build a DMG disk image from the existing .app bundle.
 #
 # Kept separate from make-macos-app.sh (like make-macos-pkg.sh) so it runs
-# against whatever bundle is present — in particular the *signed* bundle when
+# against whatever bundle is present, in particular the *signed* bundle when
 # signing runs between building and packaging.
 #
 # Input:  publish-osx-dmg/QMK Toolbox.app  (from make-macos-app.sh)

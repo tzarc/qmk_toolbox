@@ -1,9 +1,9 @@
-; QMK Toolbox — Inno Setup installer script
+; QMK Toolbox: Inno Setup installer script
 ;
 ; Defines passed from make-win-installer.sh:
-;   /DSourceDir=<path>  — directory containing qmk_toolbox.exe
-;   /DOutputDir=<path>  — directory to write qmk_toolbox_install.exe into
-;   /DIconFile=<path>   — path to output.ico
+;   /DSourceDir=<path>  - directory containing qmk_toolbox.exe
+;   /DOutputDir=<path>  - directory to write qmk_toolbox_install.exe into
+;   /DIconFile=<path>   - path to output.ico
 
 #define MyAppName      "QMK Toolbox"
 #define MyAppVersion   "0.5.0"

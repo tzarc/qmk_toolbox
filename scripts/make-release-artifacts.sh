@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make-release-artifacts.sh — Assemble all release artifacts from existing publish-<rid>/ outputs.
+# make-release-artifacts.sh: Assemble all release artifacts from existing publish-<rid>/ outputs.
 #
 # Expects publish-* directories to already exist (run publish-all.sh first).
 # Clears and recreates artifacts/, then:

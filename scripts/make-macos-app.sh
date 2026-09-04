@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make-macos-app.sh — Wrap a dotnet publish output into a macOS .app bundle and
+# make-macos-app.sh: Wrap a dotnet publish output into a macOS .app bundle and
 # zip it. The ZIP is produced here (alongside the bundle build).
 #
 # When signing, the bundle is code-signed in place *after* it is built, so the

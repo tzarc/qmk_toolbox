@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make-macos-pkg.sh — Build a macOS product-archive .pkg from the existing .app bundle
+# make-macos-pkg.sh: Build a macOS product-archive .pkg from the existing .app bundle
 #
 # Input:  publish-osx-dmg/QMK Toolbox.app  (from make-macos-app.sh)
 # Output: artifacts/QMK Toolbox.pkg
@@ -70,7 +70,7 @@ cat > "${BUILD}/component/PackageInfo" << PKGINFO
 PKGINFO
 
 # The component package must be a DIRECTORY inside the outer xar, not a
-# nested xar file — macOS Installer reads Payload/Bom/PackageInfo directly.
+# nested xar file; macOS Installer reads Payload/Bom/PackageInfo directly.
 COMP_DIR="${BUILD}/product/${BUNDLE_ID}.component.pkg"
 mkdir -p "${COMP_DIR}"
 cp "${BUILD}/component/Bom"         "${COMP_DIR}/Bom"

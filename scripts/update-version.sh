@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# update-version.sh — Update the app version across all relevant source files.
+# update-version.sh: Update the app version across all relevant source files.
 #
 # Usage: ./scripts/update-version.sh <new-version>
 # Example: ./scripts/update-version.sh 0.9.9

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# publish-all.sh — Run dotnet publish for every supported platform RID.
+# publish-all.sh: Run dotnet publish for every supported platform RID.
 #
 # When all five platforms are built (the default), also runs lipo to produce
 # the osx-universal binary from the osx-x64 and osx-arm64 outputs.

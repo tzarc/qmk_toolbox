@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build.sh — Build the QmkToolbox solution inside Docker.
+# build.sh: Build the QmkToolbox solution inside Docker.
 #
 # Usage:  ./scripts/build.sh [extra dotnet-build args...]
 #         e.g. ./scripts/build.sh --configuration Release   (as CI does)

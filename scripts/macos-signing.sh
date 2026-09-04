@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# macos-signing.sh — code signing / notarization for QMK Toolbox using rcodesign.
+# macos-signing.sh: code signing / notarization for QMK Toolbox using rcodesign.
 #
 # The bundled flash tools under resources/flashutils/osx are embedded *inside*
 # the single-file executable at publish time, so they must be signed BEFORE the
@@ -36,7 +36,7 @@
 
 set -eEuo pipefail
 
-# Owner-only for everything we create — most of it is private key material.
+# Owner-only for everything we create; most of it is private key material.
 umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

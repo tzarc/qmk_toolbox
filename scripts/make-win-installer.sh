@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make-win-installer.sh — Build the Windows installer using Inno Setup (Wine/Docker)
+# make-win-installer.sh: Build the Windows installer using Inno Setup (Wine/Docker)
 #
 # Input:  publish-win-x64/qmk_toolbox.exe  (from publish-all.sh)
 # Output: artifacts/qmk_toolbox_install.exe
@@ -26,7 +26,7 @@ echo "=== Building Windows installer (Inno Setup) ==="
 
 # The amake/innosetup container runs as xclient (uid 1000). On GitHub Actions
 # the runner uid differs, so bind-mounting a host directory for output fails
-# with "Access denied" — the container can't write to a directory it doesn't own.
+# with "Access denied": the container can't write to a directory it doesn't own.
 # Avoid bind-mounted output entirely: let Inno Setup write to the container's own
 # filesystem, then extract the result with `docker cp`.
 CONTAINER_NAME="qmk-innosetup-$$"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-tests.sh — Run the QmkToolbox test suite inside Docker.
+# run-tests.sh: Run the QmkToolbox test suite inside Docker.
 #
 # Coverage (cobertura) is collected via coverlet using src/coverage.runsettings and
 # rendered with ReportGenerator into coveragereport/ at the repo root (gitignored):

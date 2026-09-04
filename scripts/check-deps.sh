@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-deps.sh — Report outdated NuGet packages and dotnet tools, or upgrade them.
+# check-deps.sh: Report outdated NuGet packages and dotnet tools, or upgrade them.
 #
 # Usage:
 #   ./scripts/check-deps.sh            # check only
@@ -36,7 +36,7 @@ echo "=== dotnet tools ==="
 TOOLS_MANIFEST="$REPO_ROOT/.config/dotnet-tools.json"
 NUGET_API="https://api.nuget.org/v3-flatcontainer"
 
-# latest_stable <package-id> — prints the highest non-prerelease version
+# latest_stable <package-id>: prints the highest non-prerelease version
 latest_stable() {
     local id="${1,,}"  # NuGet IDs are case-insensitive; API wants lowercase
     curl -fsSL "$NUGET_API/$id/index.json" \

@@ -16,7 +16,7 @@
     </Window.KeyBindings>
 
     <DockPanel>
-        <!-- In-window menu bar — hidden on macOS where NativeMenu.Menu takes over. -->
+        <!-- In-window menu bar, hidden on macOS where NativeMenu.Menu takes over. -->
         <Menu DockPanel.Dock="Top" IsVisible="{OnPlatform Default=True, macOS=False}">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open..." Command="{Binding OpenFileCommand}" InputGesture="Ctrl+O" />

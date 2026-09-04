@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fetch-tools.sh — Download release binaries from four upstream repositories and
+# fetch-tools.sh: Download release binaries from four upstream repositories and
 # place them in the repository's resources/ tree:
 #
 #   qmk_flashutils        flash tool binaries (avrdude, dfu-util, etc.) for all platforms
@@ -78,7 +78,7 @@ for RID in "${!PLATFORMS[@]}"; do
     rm -f "${TOOLS_DIR}"/dfu-prefix "${TOOLS_DIR}"/dfu-prefix.exe \
           "${TOOLS_DIR}"/dfu-suffix "${TOOLS_DIR}"/dfu-suffix.exe
 
-    # hidapi native library — extract to a temp dir then rename to the name
+    # hidapi native library: extract to a temp dir then rename to the name
     # HidApi.Net 1.x actually searches for on this platform.
     echo "  qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst -> ${HIDAPI_DIR}"
     HIDAPI_ARCHIVE="$(fetch_archive "qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
