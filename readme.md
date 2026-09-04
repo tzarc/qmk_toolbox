@@ -24,6 +24,7 @@ QMK Toolbox supports the following bootloaders:
  - LUFA/QMK HID via [hid_bootloader_cli](https://github.com/abcminiuser/lufa)
  - Raspberry Pi RP2040/RP2350 (BOOTSEL) via [picotool](https://github.com/raspberrypi/picotool)
  - RISC-V DFU (GD32V) via [dfu-util](http://dfu-util.sourceforge.net/)
+ - [UF2](https://github.com/microsoft/uf2) Mass Storage
  - WB32 DFU via [wb32-dfu-updater_cli](https://github.com/WestberryTech/wb32-dfu-updater)
 
 And the following ISP flashers:

@@ -32,5 +32,5 @@ mkdir -p "${ARTIFACTS_DIR}"
 # Windows installer
 [ -f "${REPO_ROOT}/publish-win-x64/qmk_toolbox.exe" ] && "${REPO_ROOT}/scripts/make-win-installer.sh"
 
-# macOS .pkg installer
-[ -f "${REPO_ROOT}/publish-osx-universal/qmk_toolbox" ] && "${REPO_ROOT}/scripts/make-macos-pkg.sh"
+# macOS .pkg installer. `|| true` so a partial build (no universal binary) still exits 0.
+[ -f "${REPO_ROOT}/publish-osx-universal/qmk_toolbox" ] && "${REPO_ROOT}/scripts/make-macos-pkg.sh" || true

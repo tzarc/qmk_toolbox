@@ -20,9 +20,6 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
     private CancellationTokenSource? _cts;
     private Task? _pollTask;
 
-    /// <summary>Poll cadence; hidapi has no hotplug callbacks. Init-only so tests can shrink it.</summary>
-    public int PollIntervalMs { get; init; } = 500;
-
     public HidDeviceTracker() : this(new HidApiProbe()) { }
 
     public void Start()
@@ -40,7 +37,8 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
                 {
                     try
                     {
-                        await Task.Delay(PollIntervalMs, token).ConfigureAwait(false);
+                        // Poll cadence; hidapi has no hotplug callbacks.
+                        await Task.Delay(500, token).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) { break; }
                     Poll();
@@ -52,8 +50,6 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
             }
         }, token);
     }
-
-    public void Stop() => _cts?.Cancel();
 
     // One enumerate-and-diff pass; internal so tests drive polls deterministically.
     internal void Poll()
@@ -99,7 +95,7 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
 
     public void Dispose()
     {
-        Stop();
+        _cts?.Cancel();
         try
         {
             _pollTask?.Wait(TimeSpan.FromSeconds(2));
