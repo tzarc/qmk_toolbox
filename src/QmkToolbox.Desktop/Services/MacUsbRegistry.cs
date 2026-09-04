@@ -39,6 +39,12 @@ internal static class MacUsbRegistry
     private static extern bool CFNumberGetValue(IntPtr number, int theType, out int value);
 
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
+    private static extern bool CFStringGetCString(IntPtr theString, byte[] buffer, long bufferSize, uint encoding);
+
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    private static extern int IORegistryEntryGetPath(IntPtr entry, string plane, byte[] path);
+
+    [DllImport(CoreFoundationLib, ExactSpelling = true)]
     private static extern void CFRelease(IntPtr cf);
 
     /// <summary>
@@ -163,6 +169,98 @@ internal static class MacUsbRegistry
             IOObjectRelease(iterator);
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Enumerates the USB devices present right now, for the tracker's startup sweep. Hubs
+    /// (bDeviceClass 09) are skipped. The device path is the IOService registry path; when it
+    /// differs from the hotplug event's path, removal matching falls back to VID/PID.
+    /// </summary>
+    public static List<Core.Models.UsbDeviceInfo> EnumeratePresentDevices()
+    {
+        List<Core.Models.UsbDeviceInfo> devices = [];
+        try
+        {
+            // .NET 10 requires macOS 13+, where devices are always IOUSBHostDevice.
+            IntPtr matching = IOServiceMatching("IOUSBHostDevice");
+            if (matching == IntPtr.Zero)
+                return devices;
+            if (IOServiceGetMatchingServices(IntPtr.Zero, matching, out IntPtr iterator) != 0 || iterator == IntPtr.Zero)
+                return devices;
+            try
+            {
+                IntPtr service;
+                while ((service = IOIteratorNext(iterator)) != IntPtr.Zero)
+                {
+                    try
+                    {
+                        ushort vid = ReadUShortProperty(service, "idVendor");
+                        ushort pid = ReadUShortProperty(service, "idProduct");
+                        if ((vid == 0 && pid == 0) || ReadUShortProperty(service, "bDeviceClass") == 0x09)
+                            continue;
+                        devices.Add(new Core.Models.UsbDeviceInfo(
+                            vid, pid,
+                            ReadUShortProperty(service, "bcdDevice"),
+                            ReadStringProperty(service, "USB Vendor Name") ?? "",
+                            ReadStringProperty(service, "USB Product Name") ?? "",
+                            "",
+                            RegistryPath(service),
+                            HasMassStorageInterface(vid, pid)));
+                    }
+                    finally
+                    {
+                        IOObjectRelease(service);
+                    }
+                }
+            }
+            finally
+            {
+                IOObjectRelease(iterator);
+            }
+        }
+        catch (Exception)
+        {
+            // A failed sweep must never break startup; hotplug events still work.
+        }
+        return devices;
+    }
+
+    private static string RegistryPath(IntPtr service)
+    {
+        byte[] buffer = new byte[512]; // io_string_t
+        if (IORegistryEntryGetPath(service, "IOService", buffer) != 0)
+            return "";
+        int len = Array.IndexOf(buffer, (byte)0);
+        return System.Text.Encoding.UTF8.GetString(buffer, 0, len < 0 ? buffer.Length : len);
+    }
+
+    private static string? ReadStringProperty(IntPtr service, string key)
+    {
+        IntPtr cfKey = CFStringCreateWithCString(IntPtr.Zero, key, KCfStringEncodingUtf8);
+        if (cfKey == IntPtr.Zero)
+            return null;
+        try
+        {
+            IntPtr value = IORegistryEntryCreateCFProperty(service, cfKey, IntPtr.Zero, 0);
+            if (value == IntPtr.Zero)
+                return null;
+            try
+            {
+                byte[] buffer = new byte[256];
+                if (!CFStringGetCString(value, buffer, buffer.Length, KCfStringEncodingUtf8))
+                    return null;
+                int len = Array.IndexOf(buffer, (byte)0);
+                return System.Text.Encoding.UTF8.GetString(buffer, 0, len < 0 ? buffer.Length : len);
+            }
+            finally
+            {
+                CFRelease(value);
+            }
+        }
+        finally
+        {
+            CFRelease(cfKey);
+        }
     }
 
     private static ushort ReadUShortProperty(IntPtr service, string key)

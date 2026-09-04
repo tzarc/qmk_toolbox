@@ -129,30 +129,17 @@ public class FlashOrchestrator(BootloaderServices services)
     private bool IsMountClaimed(string mount) =>
         _bootloaders.Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
 
-    private void CancelVolumeProbe(IUsbDevice device)
-    {
-        // Path first, VID/PID fallback — mirrors the bootloader matching in OnDeviceDisconnected.
-        (IUsbDevice Device, CancellationTokenSource Cancellation) probe = default;
-        if (!string.IsNullOrEmpty(device.DevicePath))
-            probe = _volumeProbes.FirstOrDefault(p => p.Device.DevicePath == device.DevicePath);
-        if (probe.Cancellation == null)
-            probe = _volumeProbes.FirstOrDefault(p => p.Device.VendorId == device.VendorId && p.Device.ProductId == device.ProductId);
-        probe.Cancellation?.Cancel();
-    }
+    // The detector guarantees a removal delivers the identical IUsbDevice instance it announced
+    // at arrival (see IUsbEventsDetector.DeviceDisconnected), so matching is reference identity;
+    // no path/VID-PID re-matching here.
+    private void CancelVolumeProbe(IUsbDevice device) =>
+        _volumeProbes.FirstOrDefault(p => ReferenceEquals(p.Device, device)).Cancellation?.Cancel();
 
     public void OnDeviceDisconnected(IUsbDevice device, bool showAllDevices)
     {
         CancelVolumeProbe(device);
 
-        bool matchedByPath = false;
-        BootloaderDevice? bd = null;
-        if (!string.IsNullOrEmpty(device.DevicePath))
-        {
-            bd = _bootloaders.FirstOrDefault(b => b.DevicePath == device.DevicePath);
-            if (bd != null)
-                matchedByPath = true;
-        }
-        bd ??= _bootloaders.FirstOrDefault(b => b.VendorId == device.VendorId && b.ProductId == device.ProductId);
+        BootloaderDevice? bd = _bootloaders.FirstOrDefault(b => ReferenceEquals(b.Device, device));
 
         if (bd != null)
         {
@@ -170,8 +157,7 @@ public class FlashOrchestrator(BootloaderServices services)
             string prefix = $"[ORCH-] {DeviceTrace.VidPid(device)} path:{DeviceTrace.Path(device.DevicePath)}";
             if (bd != null)
             {
-                DiagnosticTrace(
-                    $"{prefix} -> matched by {(matchedByPath ? "path" : "VID/PID")}  (bootloaders:{_bootloaders.Count})");
+                DiagnosticTrace($"{prefix} -> matched  (bootloaders:{_bootloaders.Count})");
             }
             else if (_bootloaders.Count > 0)
             {

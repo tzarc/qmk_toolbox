@@ -52,7 +52,7 @@ public static class LinuxUsbSysfs
         return false;
     }
 
-    private static string? ReadAttribute(string dir, string name)
+    internal static string? ReadAttribute(string dir, string name)
     {
         try
         {

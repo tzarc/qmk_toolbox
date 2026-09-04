@@ -33,6 +33,8 @@ public sealed class FlashSessionTests : IDisposable
         public void Stop() { }
         public void Dispose() { }
 
+        // Per the IUsbEventsDetector invariant, RaiseDisconnected must be passed the identical
+        // instance previously passed to RaiseConnected.
         public void RaiseConnected(IUsbDevice device) => DeviceConnected?.Invoke(device);
         public void RaiseDisconnected(IUsbDevice device) => DeviceDisconnected?.Invoke(device);
     }
@@ -121,10 +123,11 @@ public sealed class FlashSessionTests : IDisposable
     [Fact]
     public void DeviceDisconnected_LastBootloader_DisablesActions()
     {
-        _h.Detector.RaiseConnected(AtmelDfu());
+        IUsbDevice device = AtmelDfu();
+        _h.Detector.RaiseConnected(device);
         Assert.True(_h.Session.CanFlash);
 
-        _h.Detector.RaiseDisconnected(AtmelDfu());
+        _h.Detector.RaiseDisconnected(device);
 
         Assert.False(_h.Session.CanFlash);
         Assert.False(_h.Session.CanReset);
@@ -165,8 +168,9 @@ public sealed class FlashSessionTests : IDisposable
     {
         _h.Session.ShowAllDevices = true;
 
-        _h.Detector.RaiseConnected(Unknown());
-        _h.Detector.RaiseDisconnected(Unknown());
+        IUsbDevice device = Unknown();
+        _h.Detector.RaiseConnected(device);
+        _h.Detector.RaiseDisconnected(device);
 
         Assert.True(_h.HasOutput("USB device connected"));
         Assert.True(_h.HasOutput("USB device disconnected"));

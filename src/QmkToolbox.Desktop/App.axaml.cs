@@ -34,7 +34,11 @@ public partial class App : Application
                 new WindowsUsbEventsDetector();
 #pragma warning restore CA1416
 #else
-                new UnixUsbEventsDetector();
+#pragma warning disable CA1416 // Gated by the IsMacOS check — the Mac probe is only constructed on macOS
+                new Core.Services.UsbDeviceTracker(OperatingSystem.IsMacOS()
+                    ? new MacUsbProbe()
+                    : new LinuxUsbProbe());
+#pragma warning restore CA1416
 #endif
             var bootloaderServices = new Core.Bootloader.BootloaderServices(toolProvider)
             {
