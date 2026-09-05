@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Qmk.Usb.Discovery;
@@ -82,28 +81,10 @@ public partial class App : Application
             MainWindowHost.Attach(mainWindow, vm, windowService);
             desktop.MainWindow = mainWindow;
 
-            // Builds the native app menu for non-macOS platforms (Windows, Linux).
-            // On macOS the NSMenuBar reads NativeMenu.Menu from the Application during
-            // Initialize(), before this method runs, so SetMenu() below has no effect on
-            // the macOS app menu; the AXAML-declared NativeMenu.Menu is what appears
-            // there. Skip the About item on macOS to avoid a misleading dead entry;
-            // the functional macOS handler is AppAbout_OnClick, wired in App.axaml.
-            var appMenu = new NativeMenu();
-            if (!OperatingSystem.IsMacOS())
-            {
-                appMenu.Add(new NativeMenuItem("About QMK Toolbox") { Command = vm.OpenAboutCommand });
-                appMenu.Add(new NativeMenuItemSeparator());
-            }
-            appMenu.Add(new NativeMenuItem("Quit QMK Toolbox")
-            {
-                Command = vm.ExitCommand,
-                Gesture = new KeyGesture(Key.Q, KeyModifiers.Meta)
-            });
-            var appRootMenu = new NativeMenu
-            {
-                new NativeMenuItem("QMK Toolbox") { Menu = appMenu }
-            };
-            NativeMenu.SetMenu(this, appRootMenu);
+            // Serves Windows and Linux; on macOS the NSMenuBar reads NativeMenu.Menu from the
+            // Application during Initialize(), before this method runs, so this SetMenu has no
+            // effect on the macOS app menu (see AppMenu.BuildApplicationMenu).
+            NativeMenu.SetMenu(this, AppMenu.BuildApplicationMenu(vm, OperatingSystem.IsMacOS()));
         }
 
         base.OnFrameworkInitializationCompleted();

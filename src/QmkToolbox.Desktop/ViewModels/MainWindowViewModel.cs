@@ -25,8 +25,8 @@ public partial class MainWindowViewModel : LogViewModelBase
     [ObservableProperty] private string _confirmMessage = "";
     private TaskCompletionSource<bool>? _confirmTcs;
 
-    public bool IsWindows { get; } = OperatingSystem.IsWindows();
-    public bool IsLinux { get; } = OperatingSystem.IsLinux();
+    public bool IsWindows { get; }
+    public bool IsLinux { get; }
 
     public FlashSession Session { get; }
     public SettingsService Settings { get; }
@@ -43,9 +43,13 @@ public partial class MainWindowViewModel : LogViewModelBase
         Action<string> themeApplier,
         Func<Func<Task>, Task> uiInvoker,
         Func<string, Task> setClipboardText,
-        string filePath = "")
+        string filePath = "",
+        bool? isWindows = null,
+        bool? isLinux = null)
         : base(uiInvoker, setClipboardText)
     {
+        IsWindows = isWindows ?? OperatingSystem.IsWindows();
+        IsLinux = isLinux ?? OperatingSystem.IsLinux();
         Session = session;
         _toolProvider = toolProvider;
         _windowService = windowService;
@@ -104,12 +108,12 @@ public partial class MainWindowViewModel : LogViewModelBase
         if (!Settings.Current.FirstStart)
             return;
 
-        if (OperatingSystem.IsWindows())
+        if (IsWindows)
         {
             if (await ShowConfirmAsync("Windows Driver Installation", "Would you like to install Windows drivers for QMK-supported bootloaders?"))
                 InstallDrivers();
         }
-        else if (OperatingSystem.IsLinux())
+        else if (IsLinux)
         {
             if (await ShowConfirmAsync("Linux udev Rules", "Would you like to install Linux udev rules for QMK-supported bootloaders and HID devices?"))
                 await InstallUdevRules();

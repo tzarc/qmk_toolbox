@@ -111,6 +111,24 @@ public sealed class AppMenuTests : IDisposable
     }
 
     [Fact]
+    public void ApplicationMenu_NonMacOS_HasAboutAndQuit()
+    {
+        NativeMenu menu = AppMenu.BuildApplicationMenu(_vm, isMacOS: false);
+
+        Assert.Same(_vm.OpenAboutCommand, Find(menu, "About QMK Toolbox").Command);
+        Assert.Same(_vm.ExitCommand, Find(menu, "Quit QMK Toolbox").Command);
+    }
+
+    [Fact]
+    public void ApplicationMenu_MacOS_HasQuitButNoAbout()
+    {
+        NativeMenu menu = AppMenu.BuildApplicationMenu(_vm, isMacOS: true);
+
+        Assert.Null(FindOrNull(menu, "About QMK Toolbox"));
+        Assert.Same(_vm.ExitCommand, Find(menu, "Quit QMK Toolbox").Command);
+    }
+
+    [Fact]
     public void ThemeRadios_TrackTheSelectedVariant()
     {
         NativeMenu menu = AppMenu.Build(_vm);

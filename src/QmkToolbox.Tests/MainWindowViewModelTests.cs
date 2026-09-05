@@ -59,8 +59,8 @@ public sealed class MainWindowViewModelTests : IDisposable
             File.Delete(_settingsPath);
     }
 
-    private MainWindowViewModel NewVm(string filePath = "") =>
-        new(_session, _toolProvider, _settings, _windowService, _appliedThemes.Add, f => f(), _ => Task.CompletedTask, filePath);
+    private MainWindowViewModel NewVm(string filePath = "", bool isWindows = false, bool isLinux = false) =>
+        new(_session, _toolProvider, _settings, _windowService, _appliedThemes.Add, f => f(), _ => Task.CompletedTask, filePath, isWindows, isLinux);
 
     // ── theme ─────────────────────────────────────────────────────────────────
 
@@ -151,11 +151,11 @@ public sealed class MainWindowViewModelTests : IDisposable
 
     // ── first-start setup ─────────────────────────────────────────────────────
 
-    [FactOnLinux] // RunFirstStartSetupAsync's confirm prompt is OS-specific (udev rules on Linux)
-    public async Task FirstStart_ConfirmDeclined_CompletesAndClearsFirstStartFlag()
+    [Fact]
+    public async Task FirstStart_Linux_PromptsForUdevRules_DeclineClearsFlag()
     {
         _settings.Current.FirstStart = true;
-        MainWindowViewModel vm = NewVm();
+        MainWindowViewModel vm = NewVm(isLinux: true);
 
         Task setup = vm.RunFirstStartSetupAsync();
         Assert.True(vm.IsConfirmVisible);
@@ -163,6 +163,34 @@ public sealed class MainWindowViewModelTests : IDisposable
 
         vm.ConfirmNoCommand.Execute(null);
         await setup;
+
+        Assert.False(vm.IsConfirmVisible);
+        Assert.False(_settings.Current.FirstStart);
+    }
+
+    [Fact]
+    public async Task FirstStart_Windows_PromptsForDriverInstall_DeclineClearsFlag()
+    {
+        _settings.Current.FirstStart = true;
+        MainWindowViewModel vm = NewVm(isWindows: true);
+
+        Task setup = vm.RunFirstStartSetupAsync();
+        Assert.True(vm.IsConfirmVisible);
+        Assert.Equal("Windows Driver Installation", vm.ConfirmTitle);
+
+        vm.ConfirmNoCommand.Execute(null);
+        await setup;
+
+        Assert.False(_settings.Current.FirstStart);
+    }
+
+    [Fact]
+    public async Task FirstStart_MacOS_NoPrompt_StillClearsFlag()
+    {
+        _settings.Current.FirstStart = true;
+        MainWindowViewModel vm = NewVm();
+
+        await vm.RunFirstStartSetupAsync();
 
         Assert.False(vm.IsConfirmVisible);
         Assert.False(_settings.Current.FirstStart);

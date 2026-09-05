@@ -75,6 +75,28 @@ public static class AppMenu
         ];
     }
 
+    /// <summary>
+    /// Builds the application-level menu (the bold "QMK Toolbox" entry). On macOS the About
+    /// item is skipped: the NSMenuBar takes it from the AXAML-declared NativeMenu.Menu, which
+    /// loads during Initialize() and routes through AppAbout_OnClick; a programmatic entry
+    /// there would be dead.
+    /// </summary>
+    public static NativeMenu BuildApplicationMenu(MainWindowViewModel vm, bool isMacOS)
+    {
+        var appMenu = new NativeMenu();
+        if (!isMacOS)
+        {
+            appMenu.Add(new NativeMenuItem("About QMK Toolbox") { Command = vm.OpenAboutCommand });
+            appMenu.Add(new NativeMenuItemSeparator());
+        }
+        appMenu.Add(new NativeMenuItem("Quit QMK Toolbox")
+        {
+            Command = vm.ExitCommand,
+            Gesture = new KeyGesture(Key.Q, KeyModifiers.Meta)
+        });
+        return [new NativeMenuItem("QMK Toolbox") { Menu = appMenu }];
+    }
+
     private static NativeMenuItem CheckBox(
         string header, ICommand command, INotifyPropertyChanged source, string propertyName, Func<bool> isChecked)
     {
