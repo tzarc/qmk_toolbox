@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.ViewModels;
@@ -61,10 +62,12 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     // The listener's lifecycle is scoped to the console window: created here and disposed
     // when the window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
     public void ShowHidConsole() =>
-        ShowSingleton(() => new HidConsoleWindow
+        ShowSingleton(() =>
         {
-            DataContext = new HidConsoleViewModel(
-                hidListenerFactory(), Avalonia.Threading.Dispatcher.UIThread.InvokeAsync)
+            var window = new HidConsoleWindow();
+            window.DataContext = new HidConsoleViewModel(
+                hidListenerFactory(), Avalonia.Threading.Dispatcher.UIThread.InvokeAsync, ClipboardOf(window));
+            return window;
         });
 
     public void ShowAbout()
@@ -74,7 +77,17 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     }
 
     public void ShowDebugLog() =>
-        ShowSingleton(() => new DebugLogWindow { DataContext = new DebugLogViewModel() });
+        ShowSingleton(() =>
+        {
+            var window = new DebugLogWindow();
+            window.DataContext = new DebugLogViewModel(
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync, ClipboardOf(window));
+            return window;
+        });
+
+    // Lazy: copy commands resolve the clipboard when they run, long after the window exists.
+    private static Func<string, Task> ClipboardOf(Window window) =>
+        text => window.Clipboard?.SetTextAsync(text) ?? Task.CompletedTask;
 
     /// <summary>Appends a diagnostic trace line to the Debug Log window. No-op when the window is not open.</summary>
     public void TraceDebug(string message)

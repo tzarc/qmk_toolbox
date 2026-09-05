@@ -1,7 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input.Platform;
-using Avalonia.Threading;
 using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
@@ -29,13 +27,7 @@ internal static class MainWindowHost
                 window.Position = pos;
 
             NativeMenu.SetMenu(window, AppMenu.Build(vm));
-
-            // The session marshals USB events itself (invoker supplied at construction); this
-            // invoker only serves the ViewModel's own background callbacks (e.g. udev install).
-            vm.SetUiInvoker(Dispatcher.UIThread.InvokeAsync);
             windowService.AttachWindow(window);
-            if (window.Clipboard is { } clipboard)
-                vm.SetClipboardFunc(clipboard.SetTextAsync);
             vm.Session.Start();
             await vm.RunFirstStartSetupAsync();
         };

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Qmk.Usb.Discovery;
 using QmkToolbox.Desktop.Services;
@@ -67,10 +68,17 @@ public partial class App : Application
             {
                 DiagnosticTrace = traceSink,
             };
-            var vm = new MainWindowViewModel(session, toolProvider, new SettingsService(), windowService, ApplyTheme, filePath);
+            // The clipboard delegate closes over the window constructed just below; it is
+            // invoked only by copy commands, long after the window exists.
+            MainWindow? mainWindow = null;
+            var vm = new MainWindowViewModel(
+                session, toolProvider, new SettingsService(), windowService, ApplyTheme,
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync,
+                text => mainWindow?.Clipboard?.SetTextAsync(text) ?? Task.CompletedTask,
+                filePath);
             mainVm = vm;
             _mainWindowViewModel = vm;
-            var mainWindow = new MainWindow { DataContext = vm };
+            mainWindow = new MainWindow { DataContext = vm };
             MainWindowHost.Attach(mainWindow, vm, windowService);
             desktop.MainWindow = mainWindow;
 

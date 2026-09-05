@@ -41,7 +41,10 @@ public partial class MainWindowViewModel : LogViewModelBase
         SettingsService settingsService,
         IWindowService windowService,
         Action<string> themeApplier,
+        Func<Func<Task>, Task> uiInvoker,
+        Func<string, Task> setClipboardText,
         string filePath = "")
+        : base(uiInvoker, setClipboardText)
     {
         Session = session;
         _toolProvider = toolProvider;

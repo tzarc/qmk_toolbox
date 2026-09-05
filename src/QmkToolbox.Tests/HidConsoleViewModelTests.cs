@@ -8,7 +8,7 @@ namespace QmkToolbox.Tests;
 
 /// <summary>
 /// Drives HidConsoleViewModel through the IHidListener seam with a fake adapter. The ViewModel
-/// runs with no UI invoker, so event handling executes synchronously. Devices are keyed by
+/// runs with an immediate invoker, so event handling executes synchronously. Devices are keyed by
 /// DevicePath, so two identical keyboards (same label) stay distinct.
 /// </summary>
 public class HidConsoleViewModelTests
@@ -48,7 +48,7 @@ public class HidConsoleViewModelTests
     private static (HidConsoleViewModel Vm, FakeHidListener Listener) NewConsole()
     {
         var listener = new FakeHidListener();
-        var vm = new HidConsoleViewModel(listener);
+        var vm = new HidConsoleViewModel(listener, f => f(), _ => Task.CompletedTask);
         return (vm, listener);
     }
 

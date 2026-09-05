@@ -5,32 +5,19 @@ using QmkToolbox.Desktop.Models;
 
 namespace QmkToolbox.Desktop.ViewModels;
 
-public abstract partial class LogViewModelBase : ObservableObject
+/// <summary>
+/// Base for viewmodels that own a terminal buffer. The UI-thread marshaller and the clipboard
+/// writer arrive at construction, so a log-producing callback can never run before they exist.
+/// </summary>
+public abstract partial class LogViewModelBase(
+    Func<Func<Task>, Task> uiInvoker, Func<string, Task> setClipboardText) : ObservableObject
 {
     public TerminalBuffer Buffer { get; } = new();
 
     private const int MaxLogLines = 10_000;
 
-    private Func<string, Task>? _setClipboardText;
-
-    protected Func<Func<Task>, Task>? UiInvoker { get; private set; }
-
-    /// <summary>
-    /// Supplies the UI-thread marshaller used by <see cref="Invoke"/>. ViewModels fed from
-    /// background threads must receive the invoker at construction (see HidConsoleViewModel);
-    /// this set-later path is only for viewmodels whose background callbacks cannot fire
-    /// before their window opens and supplies it (MainWindowViewModel's udev-install logging).
-    /// </summary>
-    public void SetUiInvoker(Func<Func<Task>, Task> invoker) => UiInvoker = invoker;
-    public void SetClipboardFunc(Func<string, Task> func) => _setClipboardText = func;
-
-    protected void Invoke(Action action)
-    {
-        if (UiInvoker != null)
-            _ = UiInvoker(() => { action(); return Task.CompletedTask; });
-        else
-            action();
-    }
+    protected void Invoke(Action action) =>
+        _ = uiInvoker(() => { action(); return Task.CompletedTask; });
 
     // Writes to the log, routing on the message type's stream discipline (see
     // MessageType.IsRawStream):
@@ -51,9 +38,5 @@ public abstract partial class LogViewModelBase : ObservableObject
     private void Clear() => Buffer.Clear();
 
     [RelayCommand]
-    private async Task CopyAll()
-    {
-        if (_setClipboardText != null)
-            await _setClipboardText(TerminalProjection.ToText(Buffer));
-    }
+    private async Task CopyAll() => await setClipboardText(TerminalProjection.ToText(Buffer));
 }

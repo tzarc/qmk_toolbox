@@ -60,7 +60,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     private MainWindowViewModel NewVm(string filePath = "") =>
-        new(_session, _toolProvider, _settings, _windowService, _appliedThemes.Add, filePath);
+        new(_session, _toolProvider, _settings, _windowService, _appliedThemes.Add, f => f(), _ => Task.CompletedTask, filePath);
 
     // ── theme ─────────────────────────────────────────────────────────────────
 
@@ -178,7 +178,7 @@ public sealed class MainWindowViewModelTests : IDisposable
         NewVm().SaveSettings(new WindowBounds(100, 200, 800, 600));
 
         var reloaded = new SettingsService(_settingsPath);
-        var vm = new MainWindowViewModel(_session, _toolProvider, reloaded, _windowService, _appliedThemes.Add);
+        var vm = new MainWindowViewModel(_session, _toolProvider, reloaded, _windowService, _appliedThemes.Add, f => f(), _ => Task.CompletedTask);
         (Size? size, PixelPoint? position) = vm.RestoredBounds([Screen]);
 
         Assert.Equal(new Size(800, 600), size);

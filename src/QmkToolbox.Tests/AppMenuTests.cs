@@ -28,7 +28,7 @@ public sealed class AppMenuTests : IDisposable
             f => f(), Substitute.For<IUsbEventsDetector>(), orchestrator, toolProvider, (_, _) => { });
         _vm = new MainWindowViewModel(
             session, toolProvider, new SettingsService(_settingsPath),
-            Substitute.For<IWindowService>(), _ => { });
+            Substitute.For<IWindowService>(), _ => { }, f => f(), _ => Task.CompletedTask);
     }
 
     public void Dispose()

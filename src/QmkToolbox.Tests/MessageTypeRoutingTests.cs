@@ -71,5 +71,5 @@ public class MessageTypeRoutingTests
         Assert.Equal("ab\nX", TerminalText.Flatten(vm.Buffer));
     }
 
-    private sealed class TestLog : LogViewModelBase;
+    private sealed class TestLog() : LogViewModelBase(f => f(), _ => Task.CompletedTask);
 }

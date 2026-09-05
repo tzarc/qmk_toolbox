@@ -2,7 +2,9 @@ using QmkToolbox.Core.Models;
 
 namespace QmkToolbox.Desktop.ViewModels;
 
-public partial class DebugLogViewModel : LogViewModelBase
+public partial class DebugLogViewModel(
+    Func<Func<Task>, Task> uiInvoker, Func<string, Task> setClipboardText)
+    : LogViewModelBase(uiInvoker, setClipboardText)
 {
     // Callers arrive already marshalled via the composition-root trace sink (App.axaml.cs),
     // so no marshalling happens here. Debug is a line type, so Log ends the line itself and

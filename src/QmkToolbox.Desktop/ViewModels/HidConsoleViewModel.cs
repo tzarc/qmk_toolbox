@@ -25,12 +25,10 @@ public partial class HidConsoleViewModel : LogViewModelBase, IDisposable
 
     private readonly IHidListener _hidListener;
 
-    // The listener can raise events as soon as Start() runs, before the console window has
-    // opened, so the UI invoker must arrive here rather than through the set-later path.
-    public HidConsoleViewModel(IHidListener hidListener, Func<Func<Task>, Task>? uiInvoker = null)
+    public HidConsoleViewModel(
+        IHidListener hidListener, Func<Func<Task>, Task> uiInvoker, Func<string, Task> setClipboardText)
+        : base(uiInvoker, setClipboardText)
     {
-        if (uiInvoker != null)
-            SetUiInvoker(uiInvoker);
         _hidListener = hidListener;
         _hidListener.HidDeviceConnected += OnDeviceConnected;
         _hidListener.HidDeviceDisconnected += OnDeviceDisconnected;
