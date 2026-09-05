@@ -35,6 +35,7 @@ public class FlashCommandTests
         IProcessRunner? runner = null) =>
         new(MockToolProvider())
         {
+            PollDelayMs = 1,
             ProcessRunner = runner ?? new CapturingProcessRunner(),
             SerialPorts = serial,
             MountPoints = mounts,
@@ -198,7 +199,6 @@ public class FlashCommandTests
     public async Task AtmelSamBaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), Services(serial: MockNoSerialPort()))!;
-        bd.PollDelayMs = 1;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("", "test.bin"));
     }
 
@@ -285,7 +285,6 @@ public class FlashCommandTests
     public async Task CaterinaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), Services(serial: MockNoSerialPort()))!;
-        bd.PollDelayMs = 1;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("atmega32u4", "test.hex"));
     }
 
@@ -422,7 +421,6 @@ public class FlashCommandTests
         mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
             Usb(0x03EB, 0x2045), Services(mounts: mount))!;
-        bd.PollDelayMs = 1;
         var errors = new List<string>();
         bd.OutputReceived += (_, data, type) => { if (type == MessageType.Error) errors.Add(data); };
 
@@ -482,7 +480,6 @@ public class FlashCommandTests
         mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
             BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services(mounts: mount));
-        bd.PollDelayMs = 1;
         var errors = new List<string>();
         bd.OutputReceived += (_, data, type) => { if (type == MessageType.Error) errors.Add(data); };
 

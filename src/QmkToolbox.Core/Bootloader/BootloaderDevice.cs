@@ -9,7 +9,7 @@ namespace QmkToolbox.Core.Bootloader;
 /// Wraps an <see cref="UsbDeviceInfo"/> and provides common plumbing for flashing,
 /// EEPROM operations, reset, and tool invocation.
 /// </summary>
-public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices services)
+public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices services, bool resolvesComPort = false)
 {
     public event Action<BootloaderDevice, string, MessageType>? OutputReceived;
 
@@ -27,11 +27,8 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
     public BootloaderType Type { get; init; }
     public string Name { get; init; } = "";
 
-    /// <summary>
-    /// Background serial-port resolution for devices that expose one; doubles as the
-    /// readiness signal (<see cref="WhenReadyAsync"/>) and the <c>[port]</c> display suffix.
-    /// </summary>
-    protected Task<string?>? ComPortTask { get; set; }
+    /// <summary>Background port resolution when constructed with <c>resolvesComPort</c>; null otherwise.</summary>
+    protected Task<string?>? ComPortTask { get; } = resolvesComPort ? PollAsync(() => services.SerialPorts?.FindSerialPort(device), services.PollDelayMs) : null;
 
     public override string ToString() =>
         ComPortTask is { IsCompletedSuccessfully: true }
@@ -63,13 +60,9 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
             throw new UnsupportedFileFormatException(extensions);
     }
 
-    // Poll cadence for serial-port/mount resolution, a test seam like
-    // FlashOrchestrator.VolumeProbeDelayMs; production always uses the default.
-    public int PollDelayMs { get; set; } = 250;
-
     // Serial ports (Caterina et al.) and mass-storage volumes both appear some time after
     // the USB arrival event; poll with short delays so the resource has time to appear.
-    private async Task<string?> PollAsync(Func<string?> resolve)
+    private static async Task<string?> PollAsync(Func<string?> resolve, int delayMs)
     {
         const int attempts = 10;
         for (int i = 0; i < attempts; i++)
@@ -78,16 +71,13 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
             if (result != null)
                 return result;
             if (i < attempts - 1)
-                await Task.Delay(PollDelayMs).ConfigureAwait(false);
+                await Task.Delay(delayMs).ConfigureAwait(false);
         }
         return null;
     }
 
-    protected Task<string?> FindComPortAsync() =>
-        Services.SerialPorts is not { } serial ? Task.FromResult<string?>(null) : PollAsync(() => serial.FindSerialPort(Device));
-
     protected Task<string?> FindMountPointAsync(string markerFile) =>
-        Services.MountPoints is not { } mounts ? Task.FromResult<string?>(null) : PollAsync(() => mounts.FindMountPoint(Device, markerFile));
+        Services.MountPoints is not { } mounts ? Task.FromResult<string?>(null) : PollAsync(() => mounts.FindMountPoint(Device, markerFile), Services.PollDelayMs);
 
     /// <summary>
     /// Returns <paramref name="comPort"/> if non-null, or throws <see cref="ComPortNotFoundException"/>.

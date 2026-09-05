@@ -6,31 +6,25 @@ namespace QmkToolbox.Core.Bootloader.Impl;
 /// <summary>Atmel SAM-BA bootloader device (Massdrop, via mdloader).</summary>
 internal sealed class AtmelSamBaDevice : BootloaderDevice
 {
-    // Port resolution starts immediately on device connect and runs in the background.
-    // FlashAsync and ResetAsync await the same Task, so resolution happens at most once.
-    private readonly Task<string?> _comPort;
-
     public AtmelSamBaDevice(UsbDeviceInfo device, BootloaderServices services)
-        : base(device, services)
+        : base(device, services, resolvesComPort: true)
     {
         Type = BootloaderType.AtmelSamBa;
         Name = "Atmel SAM-BA";
         PreferredDriver = "usbser";
         IsResettable = true;
-        _comPort = FindComPortAsync();
-        ComPortTask = _comPort;
     }
 
     public override async Task FlashAsync(string mcu, string file)
     {
         ValidateFileExtension(file, ".bin");
-        string port = RequireComPort(await _comPort.ConfigureAwait(false));
+        string port = RequireComPort(ComPortTask is { } t ? await t.ConfigureAwait(false) : null);
         await RunToolAsync("mdloader", "-p", port, "-D", file, "--restart");
     }
 
     public override async Task ResetAsync(string mcu)
     {
-        string port = RequireComPort(await _comPort.ConfigureAwait(false));
+        string port = RequireComPort(ComPortTask is { } t ? await t.ConfigureAwait(false) : null);
         await RunToolAsync("mdloader", "-p", port, "--restart");
     }
 }

@@ -20,16 +20,13 @@ internal abstract class AvrdudeDevice : BootloaderDevice
         string preferredDriver,
         bool requiresComPort,
         bool isEepromFlashable)
-        : base(device, services)
+        : base(device, services, requiresComPort)
     {
         Type = type;
         Name = name;
         PreferredDriver = preferredDriver;
         IsEepromFlashable = isEepromFlashable;
         _programmer = programmer;
-        // Port resolution starts immediately on device connect and runs in the background;
-        // all operations await the same Task, so resolution happens at most once.
-        ComPortTask = requiresComPort ? FindComPortAsync() : null;
     }
 
     private async Task RunAsync(string mcu, string target, string file)

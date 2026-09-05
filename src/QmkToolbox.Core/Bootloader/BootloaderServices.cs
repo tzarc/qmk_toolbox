@@ -16,6 +16,9 @@ public sealed record BootloaderServices(IFlashToolProvider ToolProvider)
     /// <summary>Clock for the flash-tool timeout; a fake triggers it deterministically.</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
 
+    /// <summary>Delay between serial-port and mount-point resolution attempts.</summary>
+    public int PollDelayMs { get; init; } = 250;
+
     public ISerialPortService? SerialPorts { get; init; }
 
     public IMountPointService? MountPoints { get; init; }
