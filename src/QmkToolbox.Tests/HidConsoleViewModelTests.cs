@@ -110,7 +110,7 @@ public class HidConsoleViewModelTests
 
     // The ComboBox clears its selection when the selected item is removed, and that null
     // arrives through the two-way binding after this handler runs; the selection must
-    // therefore already be off the entry by the time it leaves the collection.
+    // already be off the entry before it leaves the collection.
     [Fact]
     public void DeviceDisconnected_SelectionResetsBeforeTheEntryIsRemoved()
     {

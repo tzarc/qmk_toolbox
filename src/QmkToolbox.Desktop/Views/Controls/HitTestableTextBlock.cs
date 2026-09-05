@@ -8,8 +8,8 @@ internal class HitTestableTextBlock : SelectableTextBlock
 {
     // Avalonia style type selectors match the exact runtime type, so the theme's
     // "SelectableTextBlock" style (which supplies SelectionBrush/SelectionForegroundBrush)
-    // never reaches this subclass; selection would happen but render invisibly. Point the
-    // style key back at the base type so the theme's selection styling applies.
+    // never reaches this subclass; without keying back to the base type, selection would
+    // happen but render invisibly.
     protected override Type StyleKeyOverride => typeof(SelectableTextBlock);
 
     public new TextLayout? TextLayout => base.TextLayout;

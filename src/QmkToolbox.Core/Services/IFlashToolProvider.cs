@@ -1,7 +1,7 @@
 namespace QmkToolbox.Core.Services;
 
 /// <summary>
-/// Manages the extraction and resolution of bundled flash tool binaries and data files.
+/// Extracts bundled flash tool binaries and data files and resolves their paths.
 /// </summary>
 public interface IFlashToolProvider
 {
@@ -17,11 +17,11 @@ public interface IFlashToolProvider
     /// <summary>
     /// Ensures the resource folder is present and up to date.
     /// If the installed manifest's commit date differs from the embedded one, the folder is
-    /// wiped and fully re-extracted; otherwise any missing individual files are filled in.
+    /// wiped and fully re-extracted; otherwise only the missing files are re-extracted.
     /// </summary>
     void EnsureResourceFolder();
 
-    /// <summary>Clears the resource folder and fully re-extracts all bundled resources.</summary>
+    /// <summary>Clears the resource folder and re-extracts all bundled resources.</summary>
     void ClearAndReExtract();
 
     /// <summary>One human-readable line describing the installed resource versions, for the startup banner.</summary>

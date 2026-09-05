@@ -12,7 +12,6 @@ public class FlashToolProvider(string? resourceFolder = null, Assembly? resource
 {
     private const string ResourcePrefix = "QmkToolbox.Desktop.Resources";
 
-    // Both parameters are test seams (cf. SettingsService's path); production uses the defaults.
     private readonly Assembly _resources = resourceAssembly ?? typeof(FlashToolProvider).Assembly;
     private readonly string _resourceFolder = resourceFolder ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -31,9 +30,9 @@ public class FlashToolProvider(string? resourceFolder = null, Assembly? resource
 
     /// <summary>
     /// Ensures the resource folder exists and all bundled resources are present.
-    /// If any installed manifest's COMMIT_DATE does not match its embedded one,
-    /// the folder is wiped and fully re-extracted. Otherwise, <see cref="ExtractAllResources"/>
-    /// fills any individually missing files (cheap: skips files that exist).
+    /// If any installed manifest's COMMIT_DATE differs from its embedded copy, wipes the
+    /// folder and re-extracts everything. Otherwise <see cref="ExtractAllResources"/>
+    /// fills in missing files (cheap: it skips files that exist).
     /// </summary>
     public void EnsureResourceFolder()
     {
@@ -87,7 +86,7 @@ public class FlashToolProvider(string? resourceFolder = null, Assembly? resource
 
     /// <summary>
     /// Returns true when every embedded release manifest's COMMIT_DATE matches its
-    /// installed copy; the resource folder is then already current.
+    /// installed copy; the resource folder is then current.
     /// </summary>
     private bool IsUpToDate(string folder) =>
         _resources.GetManifestResourceNames()

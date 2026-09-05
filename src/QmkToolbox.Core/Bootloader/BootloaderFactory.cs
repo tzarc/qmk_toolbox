@@ -80,9 +80,9 @@ public static class BootloaderFactory
         [(0x2E8A, 0x000F)] = BootloaderType.Picotool, // RP2350 BOOTSEL
     };
 
-    // The QMK revision marker distinguishes QMK-flavoured bootloaders sharing stock VID/PIDs.
-    // GetDeviceType is the single place that checks it; the dual-identity device constructors
-    // (AtmelDfuDevice, LufaHidDevice) receive the already-resolved BootloaderType.
+    // A revision of 0x0936 marks QMK builds of bootloaders that reuse stock VID/PIDs.
+    // Only GetDeviceType checks it; AtmelDfuDevice and LufaHidDevice receive the
+    // already-resolved BootloaderType.
     private const ushort QmkRevisionMarker = 0x0936;
 
     public static BootloaderDevice? CreateDevice(UsbDeviceInfo device, BootloaderServices services)
@@ -110,10 +110,9 @@ public static class BootloaderFactory
         };
     }
 
-    // Mass-storage bootloader families are one MassStorageBootloader row each. Families with
-    // a fixed VID/PID (LUFA MS) arrive here through the map above; marker-probed families
-    // (UF2) carry per-board VID/PIDs, so FlashOrchestrator detects them by marker file on a
-    // mounted volume and creates the device through here.
+    // Fixed-VID/PID families (LUFA MS) arrive through DeviceMap; UF2 boards carry
+    // per-board VID/PIDs, so FlashOrchestrator detects them by marker file on a
+    // mounted volume and creates the device here.
     public static BootloaderDevice CreateMassStorageDevice(
         BootloaderType type,
         UsbDeviceInfo device,

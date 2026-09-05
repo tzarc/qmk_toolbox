@@ -7,8 +7,8 @@ namespace Qmk.Usb.Discovery.Windows;
 /// <summary>
 /// Resolves which USB device a mounted volume belongs to: drive letter → physical disk number →
 /// disk devnode → cfgmgr32 parent chain up to the owning <c>USB\VID_…</c> device instance.
-/// Returns null whenever any step cannot be answered; the caller treats unknown ownership as
-/// acceptable rather than rejecting a working volume.
+/// Returns null when any step fails; the caller treats unknown ownership as acceptable rather
+/// than rejecting a working volume.
 /// </summary>
 [SupportedOSPlatform("windows")]
 internal static class WindowsVolumeOwner

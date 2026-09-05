@@ -19,13 +19,13 @@ detector.Start();
 detector.Stop();
 ```
 
-`Start()` first delivers every device already connected, then live arrivals and removals. It throws if monitoring cannot be started; surface that failure, because detection would otherwise be silently dead.
+`Start()` first delivers every device already connected, then live arrivals and removals. It throws if monitoring cannot start; surface that failure, because detection would otherwise be silently dead.
 
 ## Working with devices
 
 - `DeviceConnected` delivers a `UsbDeviceInfo` snapshot: VID/PID, `bcdDevice` revision, manufacturer and product strings, the platform's device path, the OS driver name where available, and whether the device exposes a mass-storage interface.
-- `DeviceDisconnected` always delivers the identical instance previously delivered by `DeviceConnected`, so key your state by reference and compare devices with plain `==`. Each device is reported once, and USB hubs are filtered out.
-- Events are raised on the detection thread, not your UI thread, so marshal in your handler.
+- `DeviceDisconnected` always delivers the identical instance previously delivered by `DeviceConnected`, so key your state by reference and compare devices with plain `==`. The detector reports each device once and filters out USB hubs.
+- The detector raises events on its own thread, not your UI thread, so marshal in your handler.
 - Assign `DiagnosticTrace` to stream the detector's diagnostic lines (`[USB+]`/`[USB-]`) when troubleshooting.
 
 ## Volume ownership

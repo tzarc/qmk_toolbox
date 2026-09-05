@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # publish-all.sh: Run dotnet publish for every supported platform RID.
 #
-# When all five platforms are built (the default), also runs lipo to produce
-# the osx-universal binary from the osx-x64 and osx-arm64 outputs.
-# Pass one or more RIDs to build only those targets (skips the lipo step).
+# Builds all five RIDs by default; pass one or more RIDs to build only those.
+# When both macOS targets are built, runs lipo to combine the osx-x64 and
+# osx-arm64 outputs into the osx-universal binary.
 #
 # Usage:  ./scripts/publish-all.sh [RID...]
 # Example: ./scripts/publish-all.sh linux-x64 win-x64
@@ -16,7 +16,7 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 ALL_BUILD_TARGETS="linux-x64 linux-arm64 osx-x64 osx-arm64 win-x64"
 REQUESTED_BUILD_TARGETS="${@:-$ALL_BUILD_TARGETS}"
 
-# If we're not root, then use -u to run the container with the same UID and GID as the current user, so that the generated files are owned by the current user instead of root.
+# Run the container as the invoking user; otherwise the publish output is root-owned.
 if [ "$(id -u)" -ne 0 ]; then
     DOCKER_RUN_USER="-u $(id -u):$(id -g)"
 else
@@ -35,10 +35,9 @@ for RID in $REQUESTED_BUILD_TARGETS; do
         dotnet publish -o ../../publish-${RID} -r ${RID} -c Release
 done
 
-# If both macOS targets were built, then run lipo to produce the universal binary.
 if [[ -d "${REPO_ROOT}/publish-osx-x64" && -d "${REPO_ROOT}/publish-osx-arm64" ]]; then
     # The publish output is a single self-contained executable (PublishSingleFile=true),
-    # so we only need to lipo the one binary to create the universal build.
+    # so lipo only needs the one binary.
     mkdir -p "${REPO_ROOT}/publish-osx-universal"
     docker run --rm \
         -v "${REPO_ROOT}":/app \

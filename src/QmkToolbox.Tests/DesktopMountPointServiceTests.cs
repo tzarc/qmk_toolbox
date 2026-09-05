@@ -5,10 +5,10 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Drives the Linux mount-point scan against a fixture-owned fake /proc/mounts table and volume
-/// directories: marker filtering, mount-root filtering, and newest-mount-wins. Fixture volumes
-/// have no resolvable block device, so ownership is unknown and never filters; the ownership
-/// policy itself is covered by Qmk.Usb.Discovery's own tests.
+/// Covers the Linux mount-point scan over a fake /proc/mounts table and volume directories:
+/// marker filtering, mount-root filtering, and newest-mount-wins. Fixture volumes have no
+/// resolvable block device, so ownership is unknown and never filters; Qmk.Usb.Discovery's
+/// tests cover the ownership policy.
 /// </summary>
 public sealed class DesktopMountPointServiceTests : IDisposable
 {
@@ -71,7 +71,7 @@ public sealed class DesktopMountPointServiceTests : IDisposable
     [FactOnLinux]
     public void VolumeOutsideMountRoots_IsIgnored()
     {
-        // Registered in the table under a path the scan does not accept.
+        // The mount table entry points outside the accepted roots.
         string mountPoint = Path.Combine(_root, "elsewhere", "RPI-RP2");
         Directory.CreateDirectory(mountPoint);
         File.WriteAllText(Path.Combine(mountPoint, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");

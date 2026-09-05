@@ -10,10 +10,10 @@ namespace QmkToolbox.Desktop.Services;
 /// <summary>
 /// The flashing workflow: firmware selection and history, MCU choice, auto-flash policy, and the
 /// readiness flags derived from the tracked bootloaders. Owns the USB detector's lifecycle and the
-/// orchestrator's state events; property changes are marshalled to the UI thread via the invoker
-/// supplied at construction, so the UI can bind directly and tests drive it with an immediate
-/// invoker. Log messages go to the output sink supplied at construction; marshalling them is the
-/// sink's job (see the composition root).
+/// orchestrator's state events. The invoker supplied at construction marshals property changes to
+/// the UI thread, so the UI binds directly and tests supply an immediate invoker. Log messages go
+/// to the output sink supplied at construction; marshalling them is the sink's job (see the
+/// composition root).
 /// </summary>
 public partial class FlashSession : ObservableObject
 {
@@ -125,9 +125,9 @@ public partial class FlashSession : ObservableObject
     }
 
     /// <summary>
-    /// Extracts flash-tool resources, then starts the USB detector, sequenced so an auto-flash
-    /// triggered by an early arrival can't hit missing tool binaries. Both are blocking, so the
-    /// whole sequence runs on a thread pool thread; failures are reported via the output sink.
+    /// Extracts flash-tool resources, then starts the USB detector, in that order so an auto-flash
+    /// triggered by an early arrival can't hit missing tool binaries. Both calls block, so the
+    /// sequence runs on a thread pool thread; failures go to the output sink.
     /// </summary>
     public void Start() => _ = StartAsync();
 
@@ -155,7 +155,7 @@ public partial class FlashSession : ObservableObject
         {
             // Completes synchronously for VID/PID-mapped devices; unmapped mass-storage devices
             // resolve only after the volume probe, so auto-flash waits until the volume is
-            // actually mounted.
+            // mounted.
             bool bootloaderAdded = await _orchestrator.OnDeviceConnectedAsync(device, ShowAllDevices);
             if (!bootloaderAdded || !AutoFlashEnabled)
                 return;
@@ -235,9 +235,9 @@ public partial class FlashSession : ObservableObject
     private Task FlashEepromAsync(string eepFile, string startMessage, string completeMessage) =>
         _orchestrator.FlashEepromAsync(SelectedMcu, _toolProvider.GetDataFilePath(eepFile), startMessage, completeMessage);
 
-    // ClearAndReExtract is a synchronous blocking method; Task.Run keeps it off the UI thread,
-    // and routing through the orchestrator's gate serialises it with flashing so it can't delete
-    // tool binaries mid-flash (and is refused while a flash is running).
+    // ClearAndReExtract blocks; Task.Run keeps it off the UI thread. The orchestrator's gate
+    // serialises it with flashing, so it can't delete tool binaries mid-flash and is refused
+    // while a flash runs.
     public Task ClearResourcesAsync() =>
         _orchestrator.RunExclusiveAsync(() => Task.Run(_toolProvider.ClearAndReExtract));
 

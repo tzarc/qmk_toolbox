@@ -4,14 +4,14 @@ using QmkToolbox.Core.Models;
 namespace QmkToolbox.Desktop.Models;
 
 /// <summary>
-/// Everything the log needs to know to render one <see cref="MessageType"/>: its stream
-/// discipline, leading prefix, and per-theme colours. Colours are plain <see cref="Color"/>
-/// structs, with no brushes, so the pure terminal layers can read prefixes without touching
-/// the view; <c>MessageTypeStyles</c> derives cached brushes from this table.
+/// How the log renders one <see cref="MessageType"/>: stream discipline, leading prefix, and
+/// per-theme colours. Colours are plain <see cref="Color"/> structs rather than brushes, so the
+/// terminal layers can read prefixes without touching the view; <c>MessageTypeStyles</c> derives
+/// cached brushes from this table.
 /// </summary>
 /// <param name="IsRawStream">
-/// True for types carrying a raw byte stream (tool stdout/stderr, HID console output),
-/// written to the log verbatim so progress bars and partial lines render live. False for
+/// True for types that carry a raw byte stream (tool stdout/stderr, HID console output); the
+/// log writes these verbatim so progress bars and partial lines render live. False for
 /// discrete, line-oriented messages (status, errors, command echo).
 /// </param>
 /// <param name="Prefix">The leading marker rendered before a line (e.g. "&gt; ", "* ").</param>
@@ -20,12 +20,12 @@ public sealed record MessageTypeDescriptor(
     string Prefix,
     Color DarkForeground,
     Color LightForeground,
-    Color? DarkPrefixForeground = null,   // null = transparent (prefix reserves its column silently)
+    Color? DarkPrefixForeground = null,   // null = transparent (prefix still reserves its column)
     Color? LightPrefixForeground = null);
 
 /// <summary>
-/// The single place a message type's rendering is defined. Adding a <see cref="MessageType"/>
-/// value means adding a row here; the exhaustiveness test fails otherwise.
+/// The single place that defines a message type's rendering. A new <see cref="MessageType"/>
+/// value needs a row here; the exhaustiveness test fails otherwise.
 /// </summary>
 public static class MessageTypeDescriptors
 {

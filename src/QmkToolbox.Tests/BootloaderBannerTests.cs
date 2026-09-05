@@ -7,9 +7,9 @@ namespace QmkToolbox.Tests;
 public class BootloaderBannerTests
 {
     /// <summary>
-    /// Enum-exhaustiveness regression guard: a new <see cref="BootloaderType"/> must be added
-    /// to a banner row (or deliberately excluded here) before it can ship; the startup banner
-    /// can no longer silently drift from the supported-bootloader set.
+    /// Regression guard: a new <see cref="BootloaderType"/> must be added to a banner row, or
+    /// excluded here, before it ships; otherwise the startup banner drifts from the
+    /// supported-bootloader set.
     /// </summary>
     [Fact]
     public void EveryBootloaderTypeAppearsInExactlyOneBannerRow()

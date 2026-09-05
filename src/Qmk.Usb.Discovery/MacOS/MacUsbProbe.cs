@@ -64,7 +64,7 @@ internal sealed class MacUsbProbe : IUsbProbe
 
     public StringComparison PathComparison => StringComparison.Ordinal;
 
-    // Kept as fields; the delegates must outlive the unmanaged notification registrations.
+    // The delegates must outlive the unmanaged notification registrations.
     private IOServiceMatchingCallback? _arrivalCallback;
     private IOServiceMatchingCallback? _terminationCallback;
     private Thread? _runLoopThread;
@@ -111,8 +111,8 @@ internal sealed class MacUsbProbe : IUsbProbe
         _runLoop = CFRunLoopGetCurrent();
         IntPtr mode = CFStringCreateWithCString(IntPtr.Zero, "kCFRunLoopDefaultMode", KCfStringEncodingUtf8);
         CFRunLoopAddSource(_runLoop, IONotificationPortGetRunLoopSource(_port), mode);
-        // Draining arms the notifications; the arrival drain also delivers devices already
-        // present at registration; it completes before Start() returns, so the tracker's sweep
+        // Draining arms the notifications, and the arrival drain also delivers devices already
+        // present at registration. It completes before Start() returns, so the tracker's sweep
         // runs against an armed subscription.
         DrainArrivals(_arrivalIterator);
         DrainTerminations(_terminationIterator);

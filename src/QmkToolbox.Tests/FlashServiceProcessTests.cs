@@ -137,7 +137,7 @@ internal sealed class FakeRunningProcess(
     public int ExitCode { get; } = exitCode;
     public bool KillCalled { get; private set; }
 
-    // When hanging, the process only "exits" via cancellation, mimicking a stuck flash tool.
+    // When hanging, the process "exits" only via cancellation, as a stuck flash tool would.
     public Task WaitForExitAsync(CancellationToken cancellationToken) =>
         hang ? Task.Delay(Timeout.Infinite, cancellationToken) : Task.CompletedTask;
 
@@ -150,7 +150,7 @@ internal sealed class FakeRunningProcess(
     }
 }
 
-/// <summary>A read stream that fails mid-pump, mimicking a broken pipe.</summary>
+/// <summary>A read stream that fails mid-pump, as a broken pipe would.</summary>
 internal sealed class ThrowingStream : Stream
 {
     public override bool CanRead => true;

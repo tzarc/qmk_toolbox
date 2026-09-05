@@ -31,8 +31,8 @@ public static class LinuxUdevInstaller
 
         string script = BuildInstallScript(qmkIdSrc, rulesSrc);
 
-        // Create an owner-only temp directory so no other local user can race-replace
-        // the script between writing it and pkexec executing it.
+        // The temp directory is owner-only so no other local user can replace the
+        // script between writing it and pkexec executing it.
         DirectoryInfo tmpDir = Directory.CreateTempSubdirectory("qmk_udev_");
         File.SetUnixFileMode(tmpDir.FullName, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
         string scriptPath = Path.Combine(tmpDir.FullName, "install.sh");
@@ -74,8 +74,7 @@ public static class LinuxUdevInstaller
     }
 
     /// <summary>
-    /// Builds the privileged install script run under <c>pkexec /bin/sh</c>. Pure: the quoting
-    /// rules and installed locations are verified by tests without touching the system.
+    /// Builds the privileged install script run under <c>pkexec /bin/sh</c>.
     /// </summary>
     internal static string BuildInstallScript(string qmkIdSrc, string rulesSrc)
     {

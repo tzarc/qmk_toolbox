@@ -13,11 +13,9 @@ namespace QmkToolbox.Desktop;
 /// <summary>Avalonia application entry point: creates the main window, wires commands, and builds the native app menu.</summary>
 public partial class App : Application
 {
-    // Retained for AppAbout_OnClick, the Click handler wired in App.axaml.
-    // The AXAML-declared NativeMenu.Menu is loaded during Initialize() and is the menu
-    // item macOS actually makes clickable. Do NOT remove this field or AppAbout_OnClick
-    // even if a static analyser reports them as "unread": the AXAML Click binding is
-    // the only reference and is invisible to Roslyn's read-detection.
+    // Backs AppAbout_OnClick, the Click handler wired in App.axaml. Do not remove this
+    // field or the handler even if a static analyser reports them as unread: the AXAML
+    // Click binding is their only reference, and Roslyn cannot see it.
     private MainWindowViewModel? _mainWindowViewModel;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
@@ -37,14 +35,12 @@ public partial class App : Application
             };
             var orchestrator = new Core.Services.FlashOrchestrator(bootloaderServices);
             // The HID tracker initialises hidapi on Start() and tears it down on Dispose();
-            // one is created per HID console window and disposed when that window closes.
+            // each HID console window creates its own and disposes it on close.
             var windowService = new DesktopWindowService(() => new Services.Hid.HidDeviceTracker());
 
-            // One marshalling sink per stream, owned here: every log/trace producer routes
-            // through these, so UI-thread marshalling is guaranteed at the composition root
-            // rather than by per-caller discipline. The log sink resolves the ViewModel lazily
-            // (it is constructed below); Log routes each message by its type's stream
-            // discipline (see MessageType.IsRawStream).
+            // Every log/trace producer routes through these two sinks, which marshal onto
+            // the UI thread; no caller marshals for itself. The log sink resolves the
+            // ViewModel lazily because it is constructed below.
             MainWindowViewModel? mainVm = null;
             void logSink(string message, Core.Models.MessageType type) =>
                 Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => mainVm?.Log(message, type));
@@ -55,9 +51,8 @@ public partial class App : Application
             orchestrator.DiagnosticTrace = traceSink;
             orchestrator.OutputReceived += logSink;
 
-            // The session receives its UI invoker at construction, so USB events arriving from
-            // the moment Start() is called are always marshalled; there is no window in which
-            // listeners run without an invoker.
+            // The session takes its UI invoker at construction, so USB events are marshalled
+            // from the moment Start() is called.
             var session = new FlashSession(
                 Avalonia.Threading.Dispatcher.UIThread.InvokeAsync,
                 usbDetector,
@@ -67,8 +62,8 @@ public partial class App : Application
             {
                 DiagnosticTrace = traceSink,
             };
-            // The clipboard delegate closes over the window constructed just below; it is
-            // invoked only by copy commands, long after the window exists.
+            // The clipboard delegate closes over the window constructed below; copy commands
+            // invoke it long after the window exists.
             MainWindow? mainWindow = null;
             var vm = new MainWindowViewModel(
                 session, toolProvider, new SettingsService(), windowService, ApplyTheme,
@@ -81,17 +76,15 @@ public partial class App : Application
             MainWindowHost.Attach(mainWindow, vm, windowService);
             desktop.MainWindow = mainWindow;
 
-            // Serves Windows and Linux; on macOS the NSMenuBar reads NativeMenu.Menu from the
-            // Application during Initialize(), before this method runs, so this SetMenu has no
-            // effect on the macOS app menu (see AppMenu.BuildApplicationMenu).
+            // Serves Windows and Linux only: on macOS the NSMenuBar reads NativeMenu.Menu from
+            // the Application during Initialize(), before this method runs, so this SetMenu
+            // cannot change the macOS app menu (see AppMenu.BuildApplicationMenu).
             NativeMenu.SetMenu(this, AppMenu.BuildApplicationMenu(vm, OperatingSystem.IsMacOS()));
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    // The Avalonia adapter for the ViewModel's theme-applier seam: maps the persisted
-    // variant name onto the application-wide requested theme.
     private static void ApplyTheme(string variant) =>
         Current!.RequestedThemeVariant = variant switch
         {
@@ -100,11 +93,9 @@ public partial class App : Application
             _ => Avalonia.Styling.ThemeVariant.Dark,
         };
 
-    // Handler for the "About QMK Toolbox" NativeMenuItem declared in App.axaml.
-    // On macOS, the AXAML-declared NativeMenu.Menu is what the NSMenuBar uses for the
-    // app menu; the programmatic NativeMenu.SetMenu call above does not replace it.
-    // This Click handler is therefore the actual code path for About on macOS.
-    // Do NOT remove this method; it looks unreferenced to Roslyn but is called by Avalonia
-    // via the AXAML Click="AppAbout_OnClick" binding at runtime.
+    // Click handler for the "About QMK Toolbox" item declared in App.axaml. The NSMenuBar
+    // uses that AXAML menu for the macOS app menu, so this is the About code path there.
+    // Do not remove: Roslyn sees no reference, but Avalonia calls it at runtime via the
+    // AXAML Click binding.
     private void AppAbout_OnClick(object? sender, EventArgs args) => _mainWindowViewModel?.OpenAboutCommand.Execute(null);
 }

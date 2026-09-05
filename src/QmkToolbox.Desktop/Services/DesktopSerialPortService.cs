@@ -24,8 +24,8 @@ public class DesktopSerialPortService : ISerialPortService
 
     /// <summary>
     /// Matches a USB device by VID/PID against /dev/serial/by-id/ symlinks.
-    /// These symlinks are maintained by udev and encode the VID, PID, and serial
-    /// number in their filename, providing a reliable match without timestamp heuristics.
+    /// udev maintains these symlinks and encodes the VID, PID, and serial number
+    /// in the filename, so the match needs no timestamp heuristics.
     /// </summary>
     /// <param name="byIdDir">Overrides the symlink directory (used by tests).</param>
     internal static string? FindByIdLinux(UsbDeviceInfo device, string byIdDir = "/dev/serial/by-id")
@@ -53,18 +53,17 @@ public class DesktopSerialPortService : ISerialPortService
 
     /// <summary>
     /// Returns the most recently created /dev/cu.* serial device.
-    /// Since FindSerialPort is called immediately after USB device detection,
-    /// the target device will be the newest serial port.
+    /// FindSerialPort runs immediately after USB device detection, so the target
+    /// device is the newest serial port.
     /// <para>
     /// Known limitation: another serial device appearing between detection and this call
-    /// could be selected. In practice this window is very small and users rarely have two
+    /// could be selected. In practice this window is small and users rarely have two
     /// devices in bootloader mode simultaneously.
     /// </para>
     /// </summary>
     [SupportedOSPlatform("macos")]
     private static string? FindNewestSerialPortMacOS()
     {
-        // Sort by device node creation time (descending), newest first
         return SerialPort.GetPortNames()
             .Select(p => new FileInfo(p))
             .Where(fi => fi.Exists)
@@ -92,14 +91,14 @@ public class DesktopSerialPortService : ISerialPortService
             using RegistryKey? usbKey = Registry.LocalMachine.OpenSubKey(keyPath);
             if (usbKey is not null)
             {
-                // Each sub-key represents a device instance (keyed by serial number)
+                // Sub-keys are device instances, keyed by serial number.
                 foreach (string instanceId in usbKey.GetSubKeyNames())
                 {
                     using RegistryKey? instanceKey = usbKey.OpenSubKey(instanceId);
                     using RegistryKey? paramsKey = instanceKey?.OpenSubKey("Device Parameters");
                     if (paramsKey?.GetValue("PortName") is string portName)
                     {
-                        // Verify the port actually exists right now
+                        // The registry keeps PortName values for unplugged devices; accept only ports present now.
                         string[] activePorts = SerialPort.GetPortNames();
                         if (Array.Exists(activePorts, p => p.Equals(portName, StringComparison.OrdinalIgnoreCase)))
                             return portName;

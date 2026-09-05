@@ -4,8 +4,8 @@ namespace Qmk.Usb.Discovery;
 /// <summary>
 /// Detects USB device arrivals and removals. Subscribe to <see cref="DeviceConnected"/> and
 /// <see cref="DeviceDisconnected"/>, then call <see cref="Start"/>; devices already attached
-/// are reported too. Removals always deliver the instance that arrived, so devices can be
-/// tracked by reference. A custom <see cref="IUsbProbe"/> may replace the platform default.
+/// are reported too. Removals always deliver the instance that arrived, so callers can track
+/// devices by reference. A custom <see cref="IUsbProbe"/> may replace the platform default.
 /// </summary>
 public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
 {
@@ -33,10 +33,9 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
         probe.Arrived += OnArrived;
         probe.Removed += OnRemoved;
         probe.Start();
-        // The probe's live events cover future arrivals only; devices attached before
-        // monitoring started must be swept up explicitly. The sweep runs
-        // after subscription so nothing can slip between sweep and subscription; a device
-        // delivered by both is dropped by OnArrived's duplicate-path guard.
+        // The probe's live events cover future arrivals only; the sweep picks up devices
+        // already attached. It runs after subscription so no arrival slips between the two;
+        // OnArrived's duplicate-path guard drops a device delivered by both.
         foreach (UsbDeviceInfo device in probe.EnumeratePresent())
             OnArrived(device);
     }
@@ -97,7 +96,7 @@ public sealed class UsbDeviceTracker(IUsbProbe probe) : IUsbEventsDetector
             }
 
             // Removal events often drop the path, so fall back to VID/PID when the hint carries
-            // one. A probe whose paths are canonical simply leaves the hint's VID/PID zero.
+            // one. A probe whose paths are canonical leaves the hint's VID/PID zero.
             if (existing == null && (hint.VendorId != 0 || hint.ProductId != 0))
             {
                 if (DiagnosticTrace != null)

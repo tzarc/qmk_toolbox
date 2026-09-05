@@ -2,8 +2,8 @@
 namespace Qmk.Usb.Discovery;
 
 /// <summary>
-/// The shared grammar for device-event diagnostic trace lines, so identifiers and paths format
-/// identically (and stay greppable) across every producer.
+/// Formats device identifiers and paths for diagnostic trace lines. Every trace producer uses
+/// these helpers, so trace lines format identically and stay greppable.
 /// </summary>
 public static class DeviceTrace
 {

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # make-macos-app.sh: Wrap a dotnet publish output into a macOS .app bundle and
-# zip it. The ZIP is produced here (alongside the bundle build).
+# zip it.
 #
-# When signing, the bundle is code-signed in place *after* it is built, so the
-# ZIP must be regenerated from the signed bundle. Pass --repack to skip building
-# and only (re)create the ZIP from the existing publish-osx-dmg/QMK Toolbox.app.
+# Signing rewrites the bundle in place *after* the build, so the ZIP must be
+# rebuilt from the signed bundle. Pass --repack to skip building and only
+# (re)create the ZIP from the existing publish-osx-dmg/QMK Toolbox.app.
 #
 # Usage:  scripts/make-macos-app.sh [osx-arm64|osx-x64|osx-universal]   (default: osx-universal)
 #         scripts/make-macos-app.sh --repack        # re-zip the existing (signed) bundle
@@ -46,7 +46,6 @@ if [[ "${REPACK}" -eq 0 ]]; then
 
     cp -R "${PUBLISH_DIR}/." "${MACOS_DIR}/"
     chmod +x "${MACOS_DIR}/qmk_toolbox"
-    # Make any extracted native dylibs executable too
     find "${MACOS_DIR}" -name "*.dylib" -exec chmod +x {} +
 
     cp "${REPO_ROOT}/resources/macos-app-support/Info.plist" "${CONTENTS}/Info.plist"

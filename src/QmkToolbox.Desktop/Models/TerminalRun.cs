@@ -19,10 +19,10 @@ public enum TerminalRunKind
 }
 
 /// <summary>
-/// A single contiguous piece of rendered terminal output with its absolute offset in the
-/// flattened text. The projection computes every offset, including the one consumed by each
-/// <see cref="TerminalRunKind.LineBreak"/>, so text-selection and URL hit-testing agree on
-/// positions without the view re-deriving them.
+/// A contiguous piece of rendered terminal output with its absolute offset in the flattened
+/// text. The projection computes every offset, including the one each
+/// <see cref="TerminalRunKind.LineBreak"/> consumes, so text selection and URL hit-testing
+/// agree on positions; the view never derives its own.
 /// </summary>
 /// <param name="Text">The run's characters. For <see cref="TerminalRunKind.LineBreak"/> this is "\n".</param>
 /// <param name="Type">The originating message type (drives colour; ignored for line breaks).</param>

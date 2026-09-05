@@ -4,10 +4,9 @@ using Xunit;
 namespace Qmk.Usb.Discovery.Tests.Linux;
 
 /// <summary>
-/// Drives the Linux probe's three seams: the kernel-uevent datagram parser (byte fixtures, no
-/// hardware, no udev), the arrival build (uevent identity + sysfs strings against a
-/// fixture-owned fake sysfs node), and the /sys/bus/usb startup sweep over a fixture-owned
-/// fake sysfs tree.
+/// Drives the Linux probe's three seams: the kernel-uevent datagram parser (raw byte fixtures
+/// stand in for kernel traffic), the arrival build (uevent identity + sysfs strings against a
+/// fixture-owned fake sysfs node), and the /sys/bus/usb startup sweep over a fake sysfs tree.
 /// </summary>
 public sealed class LinuxUsbProbeTests : IDisposable
 {

@@ -31,7 +31,7 @@ internal sealed class DfuUtilDevice : BootloaderDevice
     }
 
     // Only reachable when IsResettable (the orchestrator filters on it); a null suffix
-    // degrades to a plain dfu-util invocation rather than guarding a path nothing takes.
+    // degrades to a plain dfu-util invocation.
     public override Task ResetAsync(string mcu)
     {
         string[] args = ["-a", _family.AltSetting.ToString(), "-d", DeviceId, .. _family.ResetSuffix ?? []];

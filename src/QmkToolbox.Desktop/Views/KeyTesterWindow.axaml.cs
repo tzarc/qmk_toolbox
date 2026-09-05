@@ -6,7 +6,7 @@ namespace QmkToolbox.Desktop.Views;
 
 /// <summary>
 /// Key tester window: forwards physical key events to the ViewModel. Layout and colours are
-/// declared entirely in AXAML over the ViewModel's key table.
+/// declared in AXAML over the ViewModel's key table.
 /// </summary>
 public partial class KeyTesterWindow : Window
 {

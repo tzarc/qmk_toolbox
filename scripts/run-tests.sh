@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # run-tests.sh: Run the QmkToolbox test suite inside Docker.
 #
-# Coverage (cobertura) is collected via coverlet using src/coverage.runsettings and
-# rendered with ReportGenerator into coveragereport/ at the repo root (gitignored):
-# a browsable HTML report, a GitHub-flavoured markdown summary (consumed by CI for
-# the job summary), and a text summary printed at the end of the run.
+# Collects cobertura coverage via coverlet (src/coverage.runsettings) and renders
+# it with ReportGenerator into coveragereport/ at the repo root (gitignored):
+# an HTML report, a GitHub-flavoured markdown summary (CI appends it to the job
+# summary), and a text summary printed at the end of the run.
 #
 # Usage:  ./scripts/run-tests.sh [extra dotnet-test args...]
 #         e.g. ./scripts/run-tests.sh --configuration Release   (as CI does)

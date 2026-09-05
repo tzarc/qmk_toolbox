@@ -31,8 +31,7 @@ internal abstract class AvrdudeDevice : BootloaderDevice
 
     private async Task RunAsync(string mcu, string target, string file)
     {
-        // The -U value is a single argument: "flash:w:/path/to/file:i"
-        // ArgumentList passes it as one discrete argument, so no manual quoting is needed.
+        // ArgumentList passes the whole -U value ("flash:w:/path/to/file:i") as one argument, so it needs no manual quoting.
         string[] port = ComPortTask == null ? [] : ["-P", RequireComPort(await ComPortTask.ConfigureAwait(false))];
         await RunToolAsync("avrdude", ["-p", mcu, "-c", _programmer, "-U", $"{target}:w:{file}:i", .. port]);
     }

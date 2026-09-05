@@ -7,12 +7,11 @@ namespace QmkToolbox.Desktop.Services;
 /// <summary>
 /// Cross-platform mount point service for mass-storage bootloader devices (LUFA MS, UF2).
 /// A volume qualifies when it carries the caller's marker file and
-/// <see cref="UsbVolumeOwner"/> does not prove it belongs to a different USB device (unknown
-/// ownership is accepted rather than rejecting a working volume). Among qualifying volumes the
-/// most recently mounted wins.
+/// <see cref="UsbVolumeOwner"/> does not prove it belongs to a different USB device; unknown
+/// ownership qualifies. Among qualifying volumes the most recently mounted wins.
 /// <para>
 /// Known limitation: when ownership is unresolvable and two devices of the same bootloader
-/// family are mounted simultaneously, the newer volume is selected.
+/// family are mounted simultaneously, the newer volume wins.
 /// </para>
 /// </summary>
 public class DesktopMountPointService : IMountPointService
@@ -41,11 +40,10 @@ public class DesktopMountPointService : IMountPointService
     /// <summary>
     /// Scans a /proc/mounts-format table for the most recently mounted volume carrying the
     /// marker file and not provably another device's. Entries appear in mount order, so the
-    /// last matching entry is the newest, so no timestamp comparison is needed.
-    /// Matches mount points under /media/, /run/media/, and /mnt/ (covering udisks2-managed
-    /// volumes on modern desktops as well as distros and setups that mount removable devices
-    /// under /mnt/), which handles all USB mass-storage device node types (/dev/sd*,
-    /// /dev/mmcblk*, /dev/vd*, etc.) without enumerating device-path prefixes.
+    /// last match is the newest; no timestamps are compared.
+    /// Filtering by mount-point prefix (/media/, /run/media/, /mnt/) covers udisks2 mounts and
+    /// manual /mnt/ setups for every mass-storage device node type (/dev/sd*, /dev/mmcblk*,
+    /// /dev/vd*) without enumerating device-path prefixes.
     /// </summary>
     /// <param name="mountRoots">Overrides the accepted mount-point prefixes (used by tests).</param>
     internal static string? FindMountPointLinux(

@@ -147,8 +147,8 @@ public partial class MainWindowViewModel : LogViewModelBase
     }
 
     /// <summary>
-    /// Persists everything in one call: the window bounds passed by the host, the theme, and
-    /// the session's flash settings.
+    /// Persists the window bounds passed by the host, the theme, and the session's flash
+    /// settings.
     /// </summary>
     public void SaveSettings(WindowBounds bounds)
     {

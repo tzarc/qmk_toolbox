@@ -6,8 +6,8 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Drives the tracker's diffing and device lifecycle through a fake probe. Polls are invoked
-/// directly, so no timers or threads are involved and events fire synchronously.
+/// Drives the tracker's diffing and device lifecycle through a fake probe. Tests call Poll
+/// directly, so no timer or thread is involved and events fire synchronously.
 /// </summary>
 public sealed class HidDeviceTrackerTests
 {
@@ -111,7 +111,7 @@ public sealed class HidDeviceTrackerTests
         Assert.False(console.Disposed);
     }
 
-    // A device can vanish between enumeration and open; it is skipped and simply retried
+    // A device can vanish between enumeration and open; the tracker skips it and retries
     // on the next poll if it reappears.
     [Fact]
     public void DeviceVanishingBeforeOpen_IsSkippedWithoutEvents()

@@ -27,9 +27,7 @@ public class MessageTypeRoutingTests
     [Fact]
     public void IsRawStream_HandlesEveryMessageType()
     {
-        // Regression guard (July 2026: an incomplete IsRawStream shipped a
-        // NotImplementedException): an unhandled new enum value must fail here,
-        // not at render time.
+        // A new enum value left unhandled must fail here, not at render time.
         foreach (MessageType type in Enum.GetValues<MessageType>())
             _ = type.IsRawStream();
     }

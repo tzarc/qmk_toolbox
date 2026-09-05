@@ -9,8 +9,8 @@ using QmkToolbox.Desktop.Models;
 namespace QmkToolbox.Desktop.Converters;
 
 /// <summary>
-/// Brush lookups for key-tester keys, keyed on key state and theme like
-/// <see cref="MessageTypeStyles"/>: immutable brushes resolved once, no colour knowledge in XAML.
+/// Brush lookups for key-tester keys, keyed on key state and theme. Immutable brushes are
+/// resolved once; colour values stay out of XAML.
 /// </summary>
 internal static class KeyStateStyles
 {
@@ -32,8 +32,8 @@ internal static class KeyStateStyles
 }
 
 /// <summary>
-/// Multi-value converters combining a key's <see cref="KeyState"/> with the window's actual
-/// theme variant, so key colours restyle live on state and theme changes without code-behind.
+/// Multi-value converters that combine a key's <see cref="KeyState"/> with the window's actual
+/// theme variant, so key colours update when either changes.
 /// </summary>
 public static class KeyStateConverters
 {

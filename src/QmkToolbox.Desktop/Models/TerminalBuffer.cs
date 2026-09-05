@@ -11,14 +11,11 @@ public class TerminalLine
 }
 
 /// <summary>
-/// A simple terminal-style buffer that handles \r (carriage return) and \n (newline) semantics.
-/// 
-/// - Regular characters: inserted/overwritten at the current column position within the active line.
-///   The line extends as needed when writing past its length.
-/// - '\r' (carriage return): resets column to 0 within the current line without adding a new line.
-/// - '\n' (newline): flushes the current line to the completed buffer, creates a fresh line at col 0.
-/// 
-/// The active (current) line is always included in iteration via Lines property.
+/// A terminal-style buffer with carriage-return and newline semantics.
+///
+/// - Ordinary characters overwrite at the cursor column; the line extends when written past its end.
+/// - '\r' resets the column to 0 without starting a new line.
+/// - '\n' moves the current line to <see cref="Lines"/> and starts a fresh line at column 0.
 /// </summary>
 public class TerminalBuffer
 {
@@ -30,7 +27,7 @@ public class TerminalBuffer
     /// <summary> Completed lines. </summary>
     public IReadOnlyList<TerminalLine> Lines => _lines;
 
-    /// <summary> The currently active (in-progress) line being written to. </summary>
+    /// <summary> The in-progress line the cursor writes to. </summary>
     public TerminalLine CurrentLine { get; private set; } = new();
 
     /// <summary> Cursor column within the current line. </summary>
@@ -83,9 +80,8 @@ public class TerminalBuffer
             TerminalSegment seg = segments[i];
             if (offset + seg.Text.Length > Col)
             {
-                // Overwrite the character at Col within an existing segment, keeping that
-                // segment's colour (in-place overwrites, e.g. progress bars, reuse the
-                // original type, so splitting the run for a colour change isn't worth it).
+                // Overwrites keep the segment's original type: a '\r' rewrite (e.g. a
+                // progress bar) reuses the colour of the text it replaces.
                 var sb = new StringBuilder(seg.Text);
                 sb[Col - offset] = ch;
                 segments[i] = seg with { Text = sb.ToString() };
@@ -94,9 +90,8 @@ public class TerminalBuffer
             offset += seg.Text.Length;
         }
 
-        // At or past the end: extend the trailing same-type segment so a line stays a few
-        // contiguous runs (not one run per character), which keeps URL detection and the
-        // rendered inline count sane.
+        // Appends coalesce into the trailing same-type segment: URL detection and the
+        // rendered inline count need contiguous runs, not one segment per character.
         int last = segments.Count - 1;
         if (last >= 0 && segments[last].Type == type)
             segments[last] = segments[last] with { Text = segments[last].Text + ch };

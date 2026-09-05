@@ -58,7 +58,6 @@ public class TerminalBufferTests
     [Fact]
     public void CarriageReturn_OverwritesFromColumnZero()
     {
-        // The canonical case: "aaa\rbb\n" renders as "bba".
         var buffer = new TerminalBuffer();
         buffer.Write("aaa\rbb\n", MessageType.CommandOutput);
         Assert.Equal("bba", TerminalText.Flatten(buffer));

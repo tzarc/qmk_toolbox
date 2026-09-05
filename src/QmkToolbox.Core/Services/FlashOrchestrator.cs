@@ -24,9 +24,8 @@ public class FlashOrchestrator(BootloaderServices services)
 
     private readonly List<BootloaderDevice> _bootloaders = [];
 
-    // Pending volume probes, one per unknown mass-storage device (mostly not bootloaders;
-    // e.g. thumb drives), watching for a marker volume to appear, so a disconnect can end
-    // its device's probe.
+    // One pending volume probe per unknown mass-storage device (mostly thumb drives, not
+    // bootloaders); tracked so a disconnect can cancel that device's probe.
     private readonly List<(UsbDeviceInfo Device, CancellationTokenSource Cancellation)> _volumeProbes = [];
 
     // Every unknown mass-storage device is polled for a marker volume for as long as it
@@ -155,8 +154,8 @@ public class FlashOrchestrator(BootloaderServices services)
         SnapshotBootloaders().Any(b => b is MassStorageDevice ms && ms.MountPoint == mount);
 
     // The detector guarantees a removal delivers the identical UsbDeviceInfo instance it announced
-    // at arrival (see IUsbEventsDetector.DeviceDisconnected), so matching is reference identity;
-    // no path/VID-PID re-matching here.
+    // at arrival (see IUsbEventsDetector.DeviceDisconnected), so matching uses reference identity
+    // rather than path or VID/PID.
     private void CancelVolumeProbe(UsbDeviceInfo device)
     {
         CancellationTokenSource? cancellation;
@@ -212,8 +211,8 @@ public class FlashOrchestrator(BootloaderServices services)
 
     /// <summary>
     /// Runs <paramref name="operation"/> as the single in-flight flash / reset / EEPROM /
-    /// resource-maintenance operation, returning <see langword="true"/> if it ran or
-    /// <see langword="false"/> without running when one is already in progress.
+    /// resource-maintenance operation. Returns <see langword="true"/> if it ran, or
+    /// <see langword="false"/> without running it when another operation is in progress.
     /// </summary>
     public async Task<bool> RunExclusiveAsync(Func<Task> operation)
     {

@@ -8,10 +8,9 @@ namespace QmkToolbox.Desktop.Services.Hid;
 public readonly record struct HidDeviceKey(string DevicePath, ushort UsagePage, ushort Usage);
 
 /// <summary>
-/// Enumeration seam for <see cref="HidDeviceTracker"/>, mirroring the probe/tracker split in
-/// Qmk.Usb.Discovery: the probe knows how to find and open console-capable devices; the
-/// tracker owns polling, diffing, and device lifecycle. Members are called only from the
-/// tracker's poll thread.
+/// Enumeration seam for <see cref="HidDeviceTracker"/>: the probe finds and opens
+/// console-capable devices; the tracker owns polling, diffing, and device lifecycle. The
+/// tracker calls every member from its poll thread.
 /// </summary>
 public interface IHidProbe : IDisposable
 {

@@ -3,10 +3,10 @@ using QmkToolbox.Core.Models;
 namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
-/// A dfu-util-flashed bootloader family as one row: the alt setting and the extra flash/reset
-/// arguments are all that vary between families. The dfu-util <c>-d</c> device ID is not a
-/// column; <see cref="DfuUtilDevice"/> derives it from the arriving device's own VID/PID,
-/// which is the pair the factory matched on.
+/// A dfu-util-flashed bootloader family as one row: only the alt setting and the extra
+/// flash/reset arguments vary between families. The dfu-util <c>-d</c> device ID is not a
+/// column; <see cref="DfuUtilDevice"/> derives it from the arriving device's VID/PID, the
+/// pair the factory matched on.
 /// </summary>
 internal sealed record DfuUtilBootloader(
     BootloaderType Type,

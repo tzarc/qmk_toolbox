@@ -9,10 +9,10 @@ namespace QmkToolbox.Desktop;
 
 /// <summary>
 /// Builds the window's native menu (File / Tools / Help). NativeMenu.Menu on a Window doesn't
-/// inherit DataContext, so {Binding} in AXAML resolves to null and every item is disabled;
+/// inherit DataContext, so {Binding} in AXAML resolves to null and disables every item;
 /// commands reference the ViewModel directly and checkable items track their source property
-/// through its change notifications instead. The macOS application menu (the bold
-/// "QMK Toolbox" entry) is separate and owned by App.axaml / App.axaml.cs.
+/// through its change notifications. The macOS application menu (the bold "QMK Toolbox"
+/// entry) is separate; App.axaml and App.axaml.cs own it.
 /// </summary>
 public static class AppMenu
 {
@@ -77,9 +77,9 @@ public static class AppMenu
 
     /// <summary>
     /// Builds the application-level menu (the bold "QMK Toolbox" entry). On macOS the About
-    /// item is skipped: the NSMenuBar takes it from the AXAML-declared NativeMenu.Menu, which
-    /// loads during Initialize() and routes through AppAbout_OnClick; a programmatic entry
-    /// there would be dead.
+    /// item is skipped: the NSMenuBar takes About from the AXAML-declared NativeMenu.Menu,
+    /// which loads during Initialize() and routes through AppAbout_OnClick, so a programmatic
+    /// entry here would be dead.
     /// </summary>
     public static NativeMenu BuildApplicationMenu(MainWindowViewModel vm, bool isMacOS)
     {
@@ -125,7 +125,7 @@ public static class AppMenu
     }
 
     // The subscription lives for the source's lifetime; the menu and its ViewModel are both
-    // application-lifetime objects, so nothing ever needs to unsubscribe.
+    // application-lifetime objects, so nothing needs to unsubscribe.
     private static void Track(
         NativeMenuItem item, INotifyPropertyChanged source, string propertyName, Func<bool> isChecked)
     {

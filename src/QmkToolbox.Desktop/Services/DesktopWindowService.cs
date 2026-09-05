@@ -12,9 +12,9 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     private readonly Dictionary<Type, Window> _singletons = [];
 
     /// <summary>
-    /// Binds the service to its owner window once it exists; the service is constructed at the
-    /// composition root, before any window. Every window-facing member is triggered from UI
-    /// inside the owner window, so none can run before attachment.
+    /// Binds the service to its owner window once it exists; the composition root constructs the
+    /// service before any window. Every window-facing member fires from UI inside the owner
+    /// window, so none can run before attachment.
     /// </summary>
     public void AttachWindow(Window owner)
     {
@@ -59,8 +59,8 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     public void ShowKeyTester() =>
         ShowSingleton(() => new KeyTesterWindow { DataContext = new KeyTesterViewModel() });
 
-    // The listener's lifecycle is scoped to the console window: created here and disposed
-    // when the window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
+    // The console window scopes the listener's lifecycle: created here, disposed when the
+    // window closes (via HidConsoleWindow.OnClosed → HidConsoleViewModel.Dispose).
     public void ShowHidConsole() =>
         ShowSingleton(() =>
         {

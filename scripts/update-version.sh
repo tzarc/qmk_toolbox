@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# update-version.sh: Update the app version across all relevant source files.
+# update-version.sh: Update the app version in every file that embeds it.
 #
 # Usage: ./scripts/update-version.sh <new-version>
 # Example: ./scripts/update-version.sh 0.9.9
@@ -21,7 +21,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
-# Detect current version from the csproj as the source of truth
+# The csproj is the source of truth for the current version
 CSPROJ="${REPO_ROOT}/src/QmkToolbox.Desktop/QmkToolbox.Desktop.csproj"
 OLD="$(grep '<Version>' "${CSPROJ}" | sed 's/.*<Version>\([^<]*\)<.*/\1/')"
 

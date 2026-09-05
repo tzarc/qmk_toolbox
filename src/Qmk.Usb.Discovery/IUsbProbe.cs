@@ -26,8 +26,8 @@ public interface IUsbProbe : IDisposable
     StringComparison PathComparison { get; }
 
     /// <summary>
-    /// The devices connected right now, so devices attached before monitoring started are still
-    /// reported. Called by the tracker after <see cref="Start"/>.
+    /// Enumerates the devices connected right now; the tracker calls this after
+    /// <see cref="Start"/> to pick up devices attached before monitoring began.
     /// </summary>
     IEnumerable<UsbDeviceInfo> EnumeratePresent();
 

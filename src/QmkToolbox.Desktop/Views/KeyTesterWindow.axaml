@@ -23,8 +23,8 @@
             <Button Content="Reset" Command="{Binding ResetCommand}" />
         </StackPanel>
 
-        <!-- Keys are absolutely positioned from the ViewModel's layout table; colours come
-             from KeyStateConverters, so state and theme changes restyle with no code-behind. -->
+        <!-- Key positions come from the ViewModel's layout table; KeyStateConverters map
+             key state and theme variant to colours. -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Keys}" Width="1040" Height="278" Margin="8">
                 <ItemsControl.ItemsPanel>

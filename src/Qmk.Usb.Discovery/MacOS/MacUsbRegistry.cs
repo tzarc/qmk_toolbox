@@ -236,7 +236,7 @@ internal static class MacUsbRegistry
     /// Resolves the USB device carrying the volume mounted at <paramref name="mountPath"/>
     /// (e.g. <c>/Volumes/RPI-RP2</c>): statfs yields the backing BSD device, IOKit yields its
     /// IOMedia object, and the registry parent chain leads to the owning IOUSBHostDevice.
-    /// Returns null whenever any step cannot be answered; the caller treats unknown ownership
+    /// Returns null when any step fails; the caller treats unknown ownership
     /// as acceptable rather than rejecting a working volume.
     /// </summary>
     public static (ushort VendorId, ushort ProductId, string DevicePath)? FindVolumeOwner(string mountPath)

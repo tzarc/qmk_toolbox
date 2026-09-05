@@ -25,10 +25,9 @@ mkdir -p "${ARTIFACTS_DIR}"
 echo "=== Building Windows installer (Inno Setup) ==="
 
 # The amake/innosetup container runs as xclient (uid 1000). On GitHub Actions
-# the runner uid differs, so bind-mounting a host directory for output fails
-# with "Access denied": the container can't write to a directory it doesn't own.
-# Avoid bind-mounted output entirely: let Inno Setup write to the container's own
-# filesystem, then extract the result with `docker cp`.
+# the runner uid differs, so the container cannot write to a bind-mounted
+# output directory ("Access denied"). Inno Setup writes inside the container
+# instead; `docker cp` extracts the result.
 CONTAINER_NAME="qmk-innosetup-$$"
 trap 'docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true' EXIT
 

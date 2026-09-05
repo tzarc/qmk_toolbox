@@ -6,9 +6,9 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Exercises the udev installer through the <see cref="IProcessRunner"/> seam: script
-/// generation (quoting, install targets) is verified as text, and the pkexec invocation is
-/// captured by a fake runner, so no privileged process ever starts.
+/// Tests the udev installer through the <see cref="IProcessRunner"/> seam: script generation
+/// (quoting, install targets) is checked as text, and a fake runner captures the pkexec
+/// invocation, so no privileged process starts.
 /// </summary>
 public class LinuxUdevInstallerTests
 {
@@ -28,7 +28,7 @@ public class LinuxUdevInstallerTests
     [Fact]
     public void BuildInstallScript_QuotesShellMetacharactersInPaths()
     {
-        // A path containing $, backtick, quotes, and an apostrophe must survive as one literal.
+        // A path containing $(), backticks, and an apostrophe must survive as one literal.
         string hostile = "/home/it's a $(test)/`x`/qmk_id";
 
         string script = LinuxUdevInstaller.BuildInstallScript(hostile, "/res/50-qmk.rules");

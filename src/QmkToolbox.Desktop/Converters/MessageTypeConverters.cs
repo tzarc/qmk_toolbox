@@ -7,7 +7,6 @@ namespace QmkToolbox.Desktop.Converters;
 
 internal static class LogBrushes
 {
-    // Link colours
     public static readonly IBrush DarkLink = new SolidColorBrush(Color.Parse("#60CDFF"));
     public static readonly IBrush DarkLinkHover = new SolidColorBrush(Color.Parse("#99E5FF"));
     public static readonly IBrush LightLink = new SolidColorBrush(Color.Parse("#0067C0"));
@@ -15,8 +14,8 @@ internal static class LogBrushes
 }
 
 /// <summary>
-/// Brush lookups derived mechanically from <see cref="MessageTypeDescriptors"/>, with no per-type
-/// knowledge lives here, so a new <see cref="MessageType"/> only needs its descriptor row.
+/// Brush lookups derived from <see cref="MessageTypeDescriptors"/>. No per-type knowledge lives
+/// here; a new <see cref="MessageType"/> needs only its descriptor row.
 /// </summary>
 internal static class MessageTypeStyles
 {

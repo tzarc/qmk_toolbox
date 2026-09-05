@@ -5,7 +5,7 @@ namespace QmkToolbox.Desktop.Models;
 /// <summary>A window's placement, captured at close and restored at the next open.</summary>
 public readonly record struct WindowBounds(int X, int Y, double Width, double Height);
 
-/// <summary>Window placement policy, kept pure so it is testable without a windowing system.</summary>
+/// <summary>Window placement policy; takes no windowing-system dependency.</summary>
 public static class WindowPlacement
 {
     /// <summary>

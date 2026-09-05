@@ -10,8 +10,8 @@ namespace QmkToolbox.Tests;
 
 /// <summary>
 /// Drives FlashSession through its interface: a fake USB detector raises events, the real
-/// FlashOrchestrator runs over mocked tool/serial/mount seams and a capturing process runner
-/// (no child processes fork), and an immediate invoker stands in for the UI thread.
+/// FlashOrchestrator runs over mocked tool/serial/mount seams and a process runner that captures
+/// commands instead of forking children, and an immediate invoker stands in for the UI thread.
 /// The per-test harness owns the temp firmware file and deletes it on Dispose.
 /// </summary>
 public sealed class FlashSessionTests : IDisposable
@@ -34,8 +34,8 @@ public sealed class FlashSessionTests : IDisposable
         public void Stop() { }
         public void Dispose() { }
 
-        // Per the IUsbEventsDetector invariant, RaiseDisconnected must be passed the identical
-        // instance previously passed to RaiseConnected.
+        // IUsbEventsDetector invariant: RaiseDisconnected receives the same instance
+        // previously passed to RaiseConnected.
         public void RaiseConnected(UsbDeviceInfo device) => DeviceConnected?.Invoke(device);
         public void RaiseDisconnected(UsbDeviceInfo device) => DeviceDisconnected?.Invoke(device);
     }

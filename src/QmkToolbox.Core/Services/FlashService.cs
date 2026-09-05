@@ -9,9 +9,9 @@ public static class FlashService
 
     /// <summary>
     /// Launches a flash tool as a child process and returns its exit code.
-    /// stdout/stderr are forwarded as raw text chunks as they arrive, embedded '\r'/'\n'
-    /// intact with no line assembly, so a terminal-style consumer can render progress bars
-    /// and partial lines immediately.
+    /// Forwards stdout/stderr as raw text chunks as they arrive, embedded '\r'/'\n' intact
+    /// and without line assembly, so a terminal-style consumer can render progress bars and
+    /// partial lines immediately.
     /// </summary>
     /// <param name="toolName">Name of the tool binary (without path or extension).</param>
     /// <param name="args">Individual command-line arguments. Each element is passed as a

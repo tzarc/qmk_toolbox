@@ -4,17 +4,14 @@ using System.Runtime.InteropServices;
 namespace Qmk.Usb.Discovery.Windows;
 
 // WMI (Win32_PnPEntity event queries) is unsuitable here: "WITHIN n" polling delays events,
-// WMI infrastructure initialisation adds ~7 seconds of cold-start latency in a fresh .NET 10
-// process, and its reflection/COM plumbing is incompatible with PublishTrimmed.
-// RegisterDeviceNotification is a kernel-mode callback: the driver stack delivers arrival and
-// removal events to the window procedure synchronously with no polling, no cold-start
-// overhead, and no trim incompatibilities.
+// WMI initialisation adds ~7 seconds of cold-start latency in a fresh .NET 10 process, and its
+// reflection/COM plumbing breaks under PublishTrimmed. RegisterDeviceNotification avoids all
+// three: the driver stack delivers arrival and removal events straight to the window procedure.
 
 /// <summary>
-/// Windows probe using RegisterDeviceNotification via a message-only window. Avoids WMI entirely:
-/// events arrive synchronously via WndProc with no polling latency. Removal hints carry the
-/// interface path only: Windows interface paths are canonical and always present, so the tracker
-/// never needs a VID/PID fallback.
+/// Windows probe using RegisterDeviceNotification via a message-only window. Removal hints carry
+/// the interface path only: Windows interface paths are canonical and always present, so the
+/// tracker never needs a VID/PID fallback.
 /// </summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal sealed class WindowsUsbProbe : IUsbProbe
@@ -32,7 +29,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     private int _notifyError;
     private uint _messageThreadId;
     private readonly ManualResetEventSlim _hwndReady = new(false);
-    // Kept as a field; the delegate must outlive the unmanaged window class registration.
+    // The delegate must outlive the unmanaged window class registration, so it lives in a field.
     private WndProcDelegate? _wndProcDelegate;
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
@@ -161,8 +158,8 @@ internal sealed class WindowsUsbProbe : IUsbProbe
         _messageThread.Start();
         _hwndReady.Wait();
 
-        // A failed setup means USB detection is dead for the whole session; throwing lets
-        // the caller surface it as a visible error.
+        // A failed setup kills USB detection for the whole session; throw so the caller
+        // can surface it as a visible error.
         if (_hwnd == IntPtr.Zero)
             throw new InvalidOperationException($"USB notification window creation failed (Win32 error {_windowError}).");
         if (_notifyHandle == IntPtr.Zero)
@@ -170,10 +167,10 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     }
 
     /// <summary>
-    /// The devices with a present USB device interface. The tracker calls this after
+    /// Devices with a present USB device interface. The tracker calls this after
     /// <see cref="Start"/>, so the notification window already exists and nothing can slip
-    /// between sweep and subscription; a device delivered by both is dropped by the tracker's
-    /// duplicate-path guard.
+    /// between sweep and subscription; the tracker's duplicate-path guard drops a device
+    /// delivered by both.
     /// </summary>
     public IEnumerable<UsbDeviceInfo> EnumeratePresent()
     {

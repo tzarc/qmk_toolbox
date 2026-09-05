@@ -41,8 +41,8 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
         Assert.Null(DesktopSerialPortService.FindByIdLinux(Device(0x2341, 0x0043), _byIdDir));
     }
 
-    // The VID digits appearing inside another device's serial number must not match; only the
-    // combined "VID_PID" token does.
+    // VID digits inside another device's serial number must not match; only the combined
+    // "VID_PID" token does.
     [FactOnLinux]
     public void VidInsideAnotherSerialNumber_DoesNotMatch()
     {

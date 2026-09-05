@@ -4,7 +4,7 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/qmk/qmk_toolbox/build.yml?logo=github&style=for-the-badge)](https://github.com/qmk/qmk_toolbox/actions?query=workflow%3ACI+branch%3Amaster)
 [![Discord](https://img.shields.io/discord/440868230475677696.svg?logo=discord&logoColor=white&color=7289DA&style=for-the-badge)](https://discord.gg/qmk)
 
-This is a collection of flashing tools packaged into one app. It supports auto-detection and auto-flashing of firmware to keyboards.
+QMK Toolbox packages a collection of flashing tools into one app. It auto-detects keyboards and can flash firmware automatically.
 
 |Windows|macOS|Linux|
 |-------|-----|-----|
@@ -59,7 +59,7 @@ On Windows, QMK Toolbox will prompt at first run to install the necessary driver
 
 If you run into any issues with "Device not found" when flashing, you may need to use [Zadig](https://docs.qmk.fm/#/driver_installation_zadig) to fix the issue.
 
-On Linux, `libudev` is required for USB hotplug support (`libudev-dev` / `libudev1`). This is present by default on most desktop distributions.
+On Linux, QMK Toolbox will prompt at first run to install udev rules, which grant unprivileged access to QMK-supported bootloaders and HID devices. They can also be installed later from the Tools menu.
 
 ### Download
 
@@ -117,7 +117,7 @@ scripts/check-deps.sh --upgrade
 ### Fonts
 
 **Inter**  
-Copyright © 2016–2024 The Inter Project Authors.  
+Copyright © 2016-2024 The Inter Project Authors.  
 Designed by Rasmus Andersson.  
 Source: https://github.com/rsms/inter  
 License: [SIL Open Font License 1.1](https://openfontlicense.org/)

@@ -1,8 +1,8 @@
 namespace QmkToolbox.Desktop.Models;
 
 /// <summary>
-/// The firmware file extensions the app accepts, shared by the file picker and
-/// drag-and-drop so the two can't drift apart.
+/// The firmware file extensions the app accepts. The file picker and drag-and-drop
+/// both filter on this list.
 /// </summary>
 public static class FirmwareFiles
 {

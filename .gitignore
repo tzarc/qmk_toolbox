@@ -40,7 +40,7 @@ TestResult.xml
 ._*
 .Spotlight-*
 
-# Safety
+# Secrets and signing material
 *.p12
 *.p8
 *.pem

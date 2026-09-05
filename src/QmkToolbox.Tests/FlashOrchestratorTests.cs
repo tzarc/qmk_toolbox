@@ -52,8 +52,8 @@ public class FlashOrchestratorTests
             Assert.True(await orch.OnDeviceConnectedAsync(MassStorage(), false));
             Assert.True(orch.HasBootloaders);
 
-            // The connected message is emitted from a WhenReadyAsync continuation on the
-            // thread pool; wait for it rather than asserting immediately.
+            // A WhenReadyAsync continuation on the thread pool emits the connected message;
+            // wait for it rather than asserting immediately.
             string msg = await connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.StartsWith("UF2 (TEST-V1) device connected", msg);
         }
@@ -183,12 +183,10 @@ public class FlashOrchestratorTests
         FlashOrchestrator orch = NewOrchestrator();
         var gate = new TaskCompletionSource();
 
-        // Start an operation that stays in flight until we release the gate.
         Task<bool> first = orch.RunExclusiveAsync(() => gate.Task);
         Assert.True(orch.IsBusy);
         Assert.False(first.IsCompleted);
 
-        // A second request is refused (returns false) and does not disturb the in-flight op.
         bool second = await orch.RunExclusiveAsync(() => Task.CompletedTask);
         Assert.False(second);
         Assert.True(orch.IsBusy);

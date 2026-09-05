@@ -7,9 +7,9 @@ using QmkToolbox.Desktop.ViewModels;
 namespace QmkToolbox.Desktop.Views;
 
 /// <summary>
-/// Owns the main window's lifecycle wiring in one place: placement restore, native menu,
-/// service attachment, session start, and first-start setup on open; settings capture and
-/// session stop on close. The code-behind keeps only view-local input handling.
+/// Owns the main window's lifecycle wiring: placement restore, native menu, service
+/// attachment, session start, and first-start setup on open; settings capture and session
+/// stop on close. The code-behind keeps only view-local input handling.
 /// </summary>
 internal static class MainWindowHost
 {

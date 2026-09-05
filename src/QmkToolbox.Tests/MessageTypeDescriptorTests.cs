@@ -7,7 +7,7 @@ namespace QmkToolbox.Tests;
 /// <summary>
 /// Exhaustiveness guard for the message-type rendering table: every enum value must have a
 /// descriptor row, so a new MessageType fails here at test time instead of throwing at render
-/// time. (Per-value raw/line classification is pinned in MessageTypeRoutingTests.)
+/// time. (MessageTypeRoutingTests pins the per-value raw/line classification.)
 /// </summary>
 public class MessageTypeDescriptorTests
 {

@@ -1,8 +1,7 @@
 namespace QmkToolbox.Core.Services;
 
 /// <summary>
-/// Starts an external process. This is the single seam that lets <see cref="FlashService"/> run
-/// against a scripted process in tests instead of a real child process.
+/// Starts an external process.
 /// </summary>
 public interface IProcessRunner
 {

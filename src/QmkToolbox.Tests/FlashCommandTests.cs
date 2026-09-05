@@ -10,9 +10,9 @@ namespace QmkToolbox.Tests;
 /// <summary>
 /// Verifies the CLI command strings produced by each bootloader device class.
 ///
-/// Strategy: a <see cref="CapturingProcessRunner"/> in the device's BootloaderServices
-/// records every launched command ("{tool} {args}") without forking a child process;
-/// GetToolPath resolves to the bare tool name so the captured line matches the invocation.
+/// A <see cref="CapturingProcessRunner"/> in the device's BootloaderServices records every
+/// launched command ("{tool} {args}") without forking a child process; GetToolPath resolves
+/// to the bare tool name so the captured line matches the invocation.
 /// </summary>
 public class FlashCommandTests
 {

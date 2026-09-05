@@ -62,9 +62,9 @@ public partial class LogPanel : UserControl
         LogText.LayoutUpdated += (_, _) => _urlRectCache = null;
     }
 
-    // Commands are referenced directly (CopyCommand/ClearCommand through their property
-    // observables, since XAML sets them after construction): the flyout's popup has its own
-    // name scope, so {Binding #Root...} on resource-declared items never resolves.
+    // The items reference the commands directly (CopyCommand/ClearCommand through their
+    // property observables, since XAML sets them after construction): the flyout's popup has
+    // its own name scope, so {Binding #Root...} on resource-declared items never resolves.
     private MenuFlyout BuildContextMenu()
     {
         var copy = new MenuItem { Header = "Copy", Command = CopySelectionCommand };
@@ -127,9 +127,9 @@ public partial class LogPanel : UserControl
         if (buffer == null)
             return;
 
-        // Rebuilding the inlines drops the current text selection. Remember it so it can be
-        // restored when the content only grew (the common append case), where every offset
-        // before the selection is unchanged.
+        // Rebuilding the inlines drops the current text selection. Save it to restore when
+        // the content only grew (the common append case), where every offset before the
+        // selection is unchanged.
         int selStart = LogText.SelectionStart;
         int selEnd = LogText.SelectionEnd;
         bool hadSelection = selStart != selEnd;

@@ -18,7 +18,7 @@
 #   scripts/macos-signing.sh cleanup
 #
 # --------------------------------------------------------------------------
-# Environment variables (identical to the existing repository secret set)
+# Environment variables (names match the repository's GitHub secrets)
 # --------------------------------------------------------------------------
 #   MACOS_CERTIFICATE_P12_BASE64            base64 "Developer ID Application" .p12
 #   MACOS_CERTIFICATE_PASSWORD              password for that .p12
@@ -134,11 +134,10 @@ cmd_setup() {
 		"$APPLE_API_ISSUER" "$APPLE_API_KEY_ID" /signing/AuthKey.p8
 	rm -f "${SIGN_DIR}/AuthKey.p8"
 
-	# Hardened-runtime entitlements. Unlike the old Cocoa app (which shipped an
-	# empty entitlements file), the .NET/Avalonia app JITs and dlopen()s bundled
-	# native libraries, so it needs the JIT / unsigned-executable-memory /
-	# library-validation exceptions or it will not launch under the hardened
-	# runtime that notarization requires.
+	# Hardened-runtime entitlements. The app JITs and dlopen()s bundled native
+	# libraries, so it needs the JIT / unsigned-executable-memory /
+	# library-validation exceptions to launch under the hardened runtime that
+	# notarization requires.
 	if [[ -n "${MACOS_ENTITLEMENTS:-}" ]]; then
 		[[ -f "$MACOS_ENTITLEMENTS" ]] || die "entitlements file not found: $MACOS_ENTITLEMENTS"
 		cp "$MACOS_ENTITLEMENTS" "${SIGN_DIR}/entitlements.plist"

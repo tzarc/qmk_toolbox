@@ -11,9 +11,8 @@ public interface IUsbEventsDetector : IDisposable
 
     /// <summary>
     /// Raised when a USB device is disconnected. Always delivers the identical
-    /// <see cref="UsbDeviceInfo"/> instance previously delivered by <see cref="DeviceConnected"/>;
-    /// consumers may track devices by reference; all lossy-removal resolution happens inside
-    /// the detector.
+    /// <see cref="UsbDeviceInfo"/> instance previously delivered by <see cref="DeviceConnected"/>,
+    /// so subscribers can track devices by reference; the detector resolves lossy removals itself.
     /// </summary>
     event Action<UsbDeviceInfo> DeviceDisconnected;
 

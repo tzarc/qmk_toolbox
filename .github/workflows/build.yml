@@ -92,7 +92,7 @@ jobs:
     - name: Sign bundled macOS binaries
       run: ./scripts/macos-signing.sh sign-resources resources/*/osx
 
-    - name: Republish macOS again, containing signed resources
+    - name: Republish macOS with signed resources
       run: ./scripts/publish-all.sh osx-arm64 osx-x64
 
     - name: Build macOS .app bundle

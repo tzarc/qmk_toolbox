@@ -4,21 +4,19 @@ using QmkToolbox.Core.Models;
 namespace QmkToolbox.Desktop.Models;
 
 /// <summary>
-/// Projects a <see cref="TerminalBuffer"/> into a flat list of <see cref="TerminalRun"/> ready
-/// for a view to render. This is the single place that resolves line prefixes, splits URLs out
-/// of segments, and assigns absolute text offsets, so the recurring selection / URL / offset
-/// logic is pure and unit-testable, and the view is a thin run-to-inline adapter.
+/// Projects a <see cref="TerminalBuffer"/> into a flat list of <see cref="TerminalRun"/> for the
+/// view to render. This is the only place that resolves line prefixes, splits URLs out of
+/// segments, and assigns absolute text offsets; the view maps runs to inlines and nothing more.
 /// </summary>
 public static class TerminalProjection
 {
-    // Same pattern the log has always used: an http(s) URL up to the first whitespace or
-    // closing bracket/quote.
+    // An http(s) URL up to the first whitespace, closing bracket, or quote.
     private static readonly Regex UrlRegex = new(@"https?://[^\s\)\]}>""']+", RegexOptions.Compiled);
 
     /// <summary>
     /// Flattens the buffer's completed lines and in-progress line into runs. Each completed line
-    /// is followed by a <see cref="TerminalRunKind.LineBreak"/> run (one offset); the current line
-    /// is emitted without a trailing break, matching the buffer's cursor semantics.
+    /// ends with a <see cref="TerminalRunKind.LineBreak"/> run that occupies one offset; the current
+    /// line gets no trailing break, per the buffer's cursor semantics.
     /// </summary>
     public static IReadOnlyList<TerminalRun> ToRuns(TerminalBuffer buffer)
     {
@@ -40,8 +38,8 @@ public static class TerminalProjection
 
     /// <summary>
     /// Flattens the buffer to plain text exactly as rendered: prefixes included,
-    /// <see cref="Environment.NewLine"/> between lines. Used for clipboard export, so what is
-    /// copied matches what is shown.
+    /// <see cref="Environment.NewLine"/> between lines. Clipboard export uses this, so copied
+    /// text matches the display.
     /// </summary>
     public static string ToText(TerminalBuffer buffer) =>
         string.Concat(ToRuns(buffer).Select(r =>

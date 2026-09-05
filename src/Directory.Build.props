@@ -3,7 +3,7 @@
     <!-- Required for IDE analyzers (e.g. IDE0005 unused-using removal) to run during CLI builds and dotnet format -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
-    <!-- Enables IDE0005 (remove unnecessary usings); doc comments themselves are not enforced -->
+    <!-- Enables IDE0005 (remove unnecessary usings); doc comments are not enforced -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- CS1591: Missing XML comment for publicly visible type/member (side-effect of GenerateDocumentationFile) -->

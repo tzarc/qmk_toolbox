@@ -5,10 +5,9 @@ using HidApi;
 namespace QmkToolbox.Desktop.Services.Hid;
 
 /// <summary>
-/// Represents a QMK HID Console device (usage page 0xFF31, usage 0x0074).
-/// Opens the device on construction and continuously reads console output on a background
-/// thread, raising <see cref="BaseHidDevice.ConsoleReportReceived"/> with the decoded text of
-/// each report.
+/// A QMK HID console device (usage page 0xFF31, usage 0x0074).
+/// The constructor opens the device and starts a background read loop that raises
+/// <see cref="BaseHidDevice.ConsoleReportReceived"/> with the decoded text of each report.
 /// The console is a raw byte stream chunked into null-padded USB reports; the consumer's
 /// terminal buffer interprets '\r'/'\n'.
 /// </summary>
@@ -28,15 +27,13 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
 
     private CancellationTokenSource? _cts;
     private readonly Task? _readTask;
-    // UTF-8 decoder preserves state across HID reports so multi-byte characters
-    // that span a report boundary are decoded correctly.
+    // The stateful decoder handles multi-byte characters that span a report boundary.
     private readonly Decoder _decoder = Encoding.UTF8.GetDecoder();
 
     public HidConsoleDevice(DeviceInfo deviceInfo) : base(deviceInfo)
     {
         _cts = new CancellationTokenSource();
-        // ReadLoop uses blocking synchronous HID reads (ReadTimeout); Task.Run offloads
-        // it to a thread pool thread so the constructor doesn't block the UI thread.
+        // ReadLoop blocks in synchronous HID reads; it must run off the constructor's thread.
         _readTask = Task.Run(() => ReadLoop(_cts.Token), _cts.Token);
     }
 
@@ -70,7 +67,7 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
         }
         catch (Exception ex) when (ex is HidException or IOException or ObjectDisposedException)
         {
-            // Device disconnected or read error; stop gracefully
+            // Device disconnected or the read failed; the loop ends here.
         }
         catch (Exception ex)
         {

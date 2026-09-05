@@ -32,10 +32,8 @@ internal sealed class MassStorageDevice : BootloaderDevice
         }
         string destFile = Path.Combine(MountPoint, _family.DestFileName);
 
-        // File.Delete/Copy are blocking synchronous calls that can be slow on USB
-        // mass storage; Task.Run offloads them to a thread pool thread so the UI
-        // stays responsive. PrintMessage/OutputReceived are safe from any thread;
-        // callers (FlashOrchestrator) always marshal to the UI thread via Invoke.
+        // File.Delete/Copy block, and USB mass storage is slow enough to hang the UI thread.
+        // PrintMessage is safe from any thread; FlashOrchestrator marshals OutputReceived to the UI thread.
         await Task.Run(() =>
         {
             try

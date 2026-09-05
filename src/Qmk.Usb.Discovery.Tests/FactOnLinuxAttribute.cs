@@ -2,9 +2,8 @@ using Xunit;
 
 namespace Qmk.Usb.Discovery.Tests;
 
-// xUnit v2 has no built-in conditional skip; a custom FactAttribute subclass
-// sets Skip when the condition is false, making skipped tests visible in the runner
-// rather than silently passing.
+// xUnit v2 has no built-in conditional skip. Setting Skip in the constructor shows
+// the test as skipped in the runner instead of letting it pass silently.
 public class FactOnLinuxAttribute : FactAttribute
 {
     public FactOnLinuxAttribute()

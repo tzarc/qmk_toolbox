@@ -7,8 +7,8 @@
 #   qmk_driver_installer  WinUSB driver installer (Windows only)
 #   qmk_udev              udev rules + qmk_id helper binary (Linux only)
 #
-# All outputs are committed to version control so that builds and CI require no
-# network access.  Run this script whenever upstream tools need to be updated.
+# All outputs live in version control so builds and CI need no network access.
+# Run this script to pick up new upstream releases.
 #
 # Usage:  ./scripts/fetch-tools.sh
 # Deps:   curl, jq, zstd, tar
@@ -23,7 +23,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 # Map: resource directory name -> qmk_flashutils platform tag
-# Both macOS architectures share single universal binaries.
+# Both macOS architectures share one set of universal binaries.
 declare -A PLATFORMS=(
     ["linux-x64"]="linuxX64"
     ["linux-arm64"]="linuxARM64"
@@ -74,19 +74,19 @@ for RID in "${!PLATFORMS[@]}"; do
     TOOLS_ARCHIVE="$(fetch_archive "qmk_flashutils-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
     tar --zstd -xf "${TOOLS_ARCHIVE}" --strip-components=1 -C "${TOOLS_DIR}"
 
-    # Remove tools that are not needed by QMK Toolbox
+    # Drop tools QMK Toolbox does not use
     rm -f "${TOOLS_DIR}"/dfu-prefix "${TOOLS_DIR}"/dfu-prefix.exe \
           "${TOOLS_DIR}"/dfu-suffix "${TOOLS_DIR}"/dfu-suffix.exe
 
     # hidapi native library: extract to a temp dir then rename to the name
-    # HidApi.Net 1.x actually searches for on this platform.
+    # HidApi.Net 1.x searches for on this platform.
     echo "  qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst -> ${HIDAPI_DIR}"
     HIDAPI_ARCHIVE="$(fetch_archive "qmk_hidapi-${FLASHUTILS_TAG}-${PLATFORM}.tar.zst")"
     HIDAPI_TMP="${SCRATCH_DIR}/hidapi-${RID}"
     mkdir -p "${HIDAPI_TMP}"
     tar --zstd -xf "${HIDAPI_ARCHIVE}" --strip-components=1 -C "${HIDAPI_TMP}"
 
-    # Move the library (whatever it was named in the archive) to the expected name
+    # The library name inside the archive varies
     HIDAPI_SRC="$(find "${HIDAPI_TMP}" -maxdepth 1 -type f \( \
         -name '*.so' -o -name '*.so.*' -o -name '*.dylib' -o -name '*.dll' \
     \) | head -1)"
@@ -98,7 +98,6 @@ for RID in "${!PLATFORMS[@]}"; do
 
     cp "${HIDAPI_SRC}" "${HIDAPI_DIR}/${HIDAPI_NAME}"
 
-    # Also copy the release manifest (hidapi_release_<platform>) if present
     HIDAPI_MANIFEST="$(find "${HIDAPI_TMP}" -maxdepth 1 -name 'hidapi_release_*' | head -1)"
     if [[ -n "${HIDAPI_MANIFEST}" ]]; then
         cp "${HIDAPI_MANIFEST}" "${HIDAPI_DIR}/$(basename "${HIDAPI_MANIFEST}")"
@@ -112,8 +111,7 @@ for RID in "${!PLATFORMS[@]}"; do
 done
 
 # ── Windows-only: qmk_driver_installer ───────────────────────────────────────
-# Download from the latest GitHub release into resources/windows-drivers/ so it
-# gets embedded as a resource for Windows builds.
+# Embedded as a resource in Windows builds.
 DRIVER_INSTALLER_ROOT="${REPO_ROOT}/resources/windows-drivers"
 mkdir -p "${DRIVER_INSTALLER_ROOT}"
 

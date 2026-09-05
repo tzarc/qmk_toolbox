@@ -6,7 +6,7 @@ namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
 /// Abstract base class for all bootloader device implementations.
-/// Wraps an <see cref="UsbDeviceInfo"/> and provides common plumbing for flashing,
+/// Wraps a <see cref="UsbDeviceInfo"/> and provides common plumbing for flashing,
 /// EEPROM operations, reset, and tool invocation.
 /// </summary>
 public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices services, bool resolvesComPort = false)
@@ -60,8 +60,8 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
             throw new UnsupportedFileFormatException(extensions);
     }
 
-    // Serial ports (Caterina et al.) and mass-storage volumes both appear some time after
-    // the USB arrival event; poll with short delays so the resource has time to appear.
+    // Serial ports (Caterina et al.) and mass-storage volumes appear some time after
+    // the USB arrival event; polling with short delays covers that gap.
     private static async Task<string?> PollAsync(Func<string?> resolve, int delayMs)
     {
         const int attempts = 10;

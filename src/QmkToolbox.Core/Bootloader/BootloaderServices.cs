@@ -3,10 +3,9 @@ using QmkToolbox.Core.Services;
 namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
-/// The shared dependencies of the bootloader device family, constructed once (composition root
-/// in production, one bundle per test) and handed unchanged to every device the factory creates.
-/// Devices pull what they need; families without a serial port or mount point never touch those
-/// members.
+/// Shared dependencies for the bootloader device family, built once and handed unchanged to
+/// every device the factory creates. Devices pull what they need; families without a serial
+/// port or mount point never touch those members.
 /// </summary>
 public sealed record BootloaderServices(IFlashToolProvider ToolProvider)
 {

@@ -31,7 +31,7 @@ public class SettingsService
 
     public AppSettings Current { get; private set; } = new AppSettings();
 
-    /// <summary>Receives user-visible error messages (e.g. save failures); Debug output otherwise.</summary>
+    /// <summary>Receives user-visible error messages such as save failures; when unset, errors go only to Debug output.</summary>
     public Action<string>? ErrorLogger { get; set; }
 
     /// <param name="settingsPath">Overrides the settings file location (used by tests).</param>

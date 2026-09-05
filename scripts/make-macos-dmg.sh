@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # make-macos-dmg.sh: Build a DMG disk image from the existing .app bundle.
 #
-# Kept separate from make-macos-app.sh (like make-macos-pkg.sh) so it runs
-# against whatever bundle is present, in particular the *signed* bundle when
-# signing runs between building and packaging.
+# Packages whatever bundle is on disk, so when signing runs between building
+# and packaging the DMG picks up the signed bundle.
 #
 # Input:  publish-osx-dmg/QMK Toolbox.app  (from make-macos-app.sh)
 # Output: artifacts/QMK Toolbox.dmg
@@ -26,8 +25,8 @@ mkdir -p "${ARTIFACTS_DIR}"
 
 echo "=== Building macOS .dmg from ${APP_SRC} ==="
 
-# Build the DMG in a container to avoid needing genisoimage on the host. rm first
-# so the image is rebuilt rather than appended to.
+# genisoimage comes from the container, not the host. It appends to an existing
+# image, so remove the old DMG first.
 rm -f "${ARTIFACTS_DIR}/QMK Toolbox.dmg"
 docker run --rm -i \
     -v "${REPO_ROOT}:/app" \

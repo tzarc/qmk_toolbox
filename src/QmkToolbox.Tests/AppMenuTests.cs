@@ -11,9 +11,8 @@ using Xunit;
 namespace QmkToolbox.Tests;
 
 /// <summary>
-/// Exercises the native menu through <see cref="AppMenu.Build"/> over a real ViewModel: the
-/// menu shape and command wiring are asserted directly, and the checkable items are driven by
-/// toggling the underlying state, so the explicit-source bindings are verified end to end.
+/// Covers the native menu from <see cref="AppMenu.Build"/> over a real ViewModel: top-level
+/// shape, command wiring, and checkable items that track session and theme state.
 /// </summary>
 public sealed class AppMenuTests : IDisposable
 {

@@ -3,9 +3,8 @@ using Xunit;
 
 namespace QmkToolbox.Tests;
 
-// xUnit v2 has no built-in conditional skip; a custom FactAttribute subclass
-// sets Skip when the condition is false, making skipped tests visible in the runner
-// rather than silently passing.
+// xUnit v2 has no built-in conditional skip; this FactAttribute subclass sets Skip
+// so the runner reports the test as skipped instead of silently passing it.
 public class FactOnLinuxAttribute : FactAttribute
 {
     public FactOnLinuxAttribute()
@@ -115,8 +114,8 @@ public sealed class FlashToolProviderExtractionTests : IDisposable
     {
         FlashToolProvider provider = Provider();
         provider.EnsureResourceFolder();
-        // Stale the *second* manifest: the old single-manifest check keyed off an arbitrary
-        // FirstOrDefault pick and could miss this one.
+        // Stale the *second* manifest: staleness in any manifest must trigger the wipe,
+        // not just the first one enumerated.
         string hidapiManifest = Path.Combine(_folder, "hidapi_release_testhost");
         File.WriteAllText(hidapiManifest, "COMMIT_DATE=1970-01-01\n");
         File.WriteAllText(Path.Combine(_folder, "user-file.txt"), "stale folder");
@@ -143,7 +142,7 @@ public sealed class FlashToolProviderExtractionTests : IDisposable
     [FactOnLinux]
     public void EnsureResourceFolder_SetsExecuteBitOnToolBinaries()
     {
-        // FactOnLinux already skips elsewhere; the guard exists for the CA1416 analyzer,
+        // FactOnLinux already skips non-Linux hosts; the guard is for the CA1416 analyzer,
         // which can't see through the attribute.
         if (!OperatingSystem.IsLinux())
             return;

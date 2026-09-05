@@ -1,7 +1,7 @@
 namespace QmkToolbox.Core.Models;
 
 /// <summary>
-/// Represents a connected HID device.
+/// A connected HID device.
 /// </summary>
 public interface IHidDevice
 {

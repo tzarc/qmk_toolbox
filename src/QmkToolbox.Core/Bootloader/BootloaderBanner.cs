@@ -3,9 +3,8 @@ using QmkToolbox.Core.Models;
 namespace QmkToolbox.Core.Bootloader;
 
 /// <summary>
-/// The startup-banner catalogue of supported bootloaders and ISP flashers. Each row names the
-/// <see cref="BootloaderType"/>s it covers so a test can prove every type is listed; adding a
-/// bootloader without a banner row fails the exhaustiveness test instead of silently drifting.
+/// Startup-banner catalogue of supported bootloaders and ISP flashers. Each row names the
+/// <see cref="BootloaderType"/>s it covers; an exhaustiveness test fails when a type has no banner row.
 /// </summary>
 public static class BootloaderBanner
 {

@@ -15,7 +15,7 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
-    <!-- Disable GitInfo overriding the version of the assembly -->
+    <!-- Keep GitInfo from overriding the assembly version. -->
     <GitVersion>false</GitVersion>
   </PropertyGroup>
   <!-- Both macOS RIDs share a single universal resource directory. -->
@@ -34,9 +34,9 @@
     <EmbeddedResource Include="../../resources/firmware-support/reset_left.eep" Link="Resources/reset_left.eep" />
     <EmbeddedResource Include="../../resources/firmware-support/reset_right.eep" Link="Resources/reset_right.eep" />
   </ItemGroup>
-  <!-- Embed platform-specific flash tool binaries from the committed resources tree.
-       The RuntimeIdentifier is set during `dotnet publish -r <rid>`.
-       Guard with ItemGroup condition so the glob is never evaluated without a RID. -->
+  <!-- Platform-specific flash tool binaries from the committed resources tree.
+       RuntimeIdentifier is only set during `dotnet publish -r <rid>`; the condition
+       keeps the glob from evaluating without one. -->
   <ItemGroup Condition="'$(_ResourceRid)' != '' And '$(RuntimeIdentifier)' != '' And Exists('../../resources/flashutils/$(_ResourceRid)')">
     <EmbeddedResource Include="../../resources/flashutils/$(_ResourceRid)/**" Link="Resources/%(Filename)%(Extension)" />
   </ItemGroup>
@@ -52,14 +52,14 @@
   <ItemGroup Condition="'$(_ResourceRid)' != '' And $(RuntimeIdentifier.StartsWith('win')) And Exists('../../resources/windows-drivers')">
     <EmbeddedResource Include="../../resources/windows-drivers/**" Link="Resources/%(Filename)%(Extension)" />
   </ItemGroup>
-  <!-- Place the hidapi native library alongside the published executable so that
-       HidApi.Net can find it at runtime (same mechanism as libSkiaSharp, etc.). -->
+  <!-- HidApi.Net bundles no native library: hidapi must sit next to the published
+       executable (same mechanism as libSkiaSharp). -->
   <!-- Embed the hidapi release manifest alongside the flash-tool manifests. -->
   <ItemGroup Condition="'$(_ResourceRid)' != '' And Exists('../../resources/hidapi/$(_ResourceRid)')">
     <EmbeddedResource Include="../../resources/hidapi/$(_ResourceRid)/hidapi_release_*" Link="Resources/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Pick up native HIDAPI binaries only (exclude the release manifest). -->
+    <!-- Native hidapi binaries only; the release manifest is embedded above. -->
     <_NativeLibraries Include="$(MSBuildThisFileDirectory)../../resources/hidapi/$(_ResourceRid)/*"
                       Exclude="$(MSBuildThisFileDirectory)../../resources/hidapi/$(_ResourceRid)/hidapi_release_*" />
   </ItemGroup>

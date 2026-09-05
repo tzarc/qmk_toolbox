@@ -4,9 +4,8 @@ namespace QmkToolbox.Desktop.Services.Hid;
 
 /// <summary>
 /// Polls an <see cref="IHidProbe"/> for QMK console devices and raises hotplug and
-/// console-report events, mirroring UsbDeviceTracker's probe/tracker split so the diffing and
-/// lifecycle logic runs against a fake probe in tests. Events fire on the poll thread;
-/// subscribers marshal to the UI thread themselves.
+/// console-report events. Events fire on the poll thread; subscribers marshal to the UI
+/// thread themselves.
 /// </summary>
 public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
 {
@@ -27,7 +26,7 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
         probe.Start();
         _cts = new CancellationTokenSource();
         CancellationToken token = _cts.Token;
-        // The polling loop runs until disposal; Task.Run keeps it off the UI thread.
+        // The poll loop runs until disposal; it must stay off the UI thread.
         _pollTask = Task.Run(async () =>
         {
             try

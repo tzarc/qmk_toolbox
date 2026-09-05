@@ -9,7 +9,7 @@ namespace QmkToolbox.Desktop.Services.Hid;
 /// </summary>
 internal sealed class HidApiProbe : IHidProbe
 {
-    // Open needs the full DeviceInfo behind a key; kept from the latest enumeration.
+    // Open needs the full DeviceInfo behind a key; this map holds the latest enumeration.
     private readonly Dictionary<HidDeviceKey, DeviceInfo> _lastSeen = [];
 
     public void Start() => HidApi.Hid.Init();

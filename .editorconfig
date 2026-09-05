@@ -1,4 +1,4 @@
-# EditorConfig – QMK Toolbox
+# EditorConfig for QMK Toolbox
 # https://editorconfig.org
 
 root = true
@@ -32,12 +32,11 @@ indent_size = 2
 # ── C# files ─────────────────────────────────────────────────────────────────
 [*.cs]
 
-# Language version & nullable
 dotnet_analyzer_diagnostic.category-Style.severity = warning
 
 # ── Formatting ────────────────────────────────────────────────────────────────
 
-# Braces – Allman style (opening brace on its own line)
+# Braces: Allman style (opening brace on its own line)
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
@@ -117,11 +116,10 @@ csharp_style_prefer_not_pattern = true:warning
 csharp_style_prefer_pattern_matching = true:warning
 csharp_style_prefer_switch_expression = true:warning
 
-# Disable "populate switch" (IDE0010 statements / IDE0072 expressions). Their auto-fix — which the
-# dotnet-format pre-commit hook applies — stubs every unlisted enum member with
-# `throw new NotImplementedException()`, silently turning a correct discard-armed switch into one
-# that throws at runtime (it corrupted MessageTypeExtensions.IsRawStream this way). Off, so the
-# formatter can never behavior-change code again.
+# Keep "populate switch" (IDE0010 statements / IDE0072 expressions) off. Its auto-fix, which the
+# dotnet-format pre-commit hook applies, stubs every unlisted enum member with
+# `throw new NotImplementedException()` and turns a correct discard-armed switch into one that
+# throws at runtime.
 dotnet_diagnostic.IDE0010.severity = none
 dotnet_diagnostic.IDE0072.severity = none
 
@@ -161,7 +159,7 @@ csharp_style_unused_value_assignment_preference = discard_variable:warning
 
 # ── Naming conventions ────────────────────────────────────────────────────────
 
-# Constants – PascalCase
+# Constants: PascalCase
 dotnet_naming_rule.constants_should_be_pascal_case.severity = warning
 dotnet_naming_rule.constants_should_be_pascal_case.symbols = constant_fields
 dotnet_naming_rule.constants_should_be_pascal_case.style = pascal_case_style
@@ -170,7 +168,7 @@ dotnet_naming_symbols.constant_fields.applicable_kinds = field
 dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
 dotnet_naming_symbols.constant_fields.required_modifiers = const
 
-# Static readonly fields – PascalCase
+# Static readonly fields: PascalCase
 dotnet_naming_rule.static_readonly_should_be_pascal_case.severity = warning
 dotnet_naming_rule.static_readonly_should_be_pascal_case.symbols = static_readonly_fields
 dotnet_naming_rule.static_readonly_should_be_pascal_case.style = pascal_case_style
@@ -179,7 +177,7 @@ dotnet_naming_symbols.static_readonly_fields.applicable_kinds = field
 dotnet_naming_symbols.static_readonly_fields.applicable_accessibilities = private, protected, internal, private_protected
 dotnet_naming_symbols.static_readonly_fields.required_modifiers = static, readonly
 
-# Private/internal fields – _camelCase
+# Private/internal fields: _camelCase
 dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
 dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be_camel_case.style = underscore_camel_case_style
@@ -187,7 +185,7 @@ dotnet_naming_rule.private_fields_should_be_camel_case.style = underscore_camel_
 dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private, internal
 
-# Interfaces – IPascalCase
+# Interfaces: IPascalCase
 dotnet_naming_rule.interfaces_should_begin_with_i.severity = warning
 dotnet_naming_rule.interfaces_should_begin_with_i.symbols = interfaces
 dotnet_naming_rule.interfaces_should_begin_with_i.style = begins_with_i_style
@@ -195,7 +193,7 @@ dotnet_naming_rule.interfaces_should_begin_with_i.style = begins_with_i_style
 dotnet_naming_symbols.interfaces.applicable_kinds = interface
 dotnet_naming_symbols.interfaces.applicable_accessibilities = *
 
-# Types, methods, properties, events – PascalCase
+# Types, methods, properties, events: PascalCase
 dotnet_naming_rule.general_should_be_pascal_case.severity = warning
 dotnet_naming_rule.general_should_be_pascal_case.symbols = general_symbols
 dotnet_naming_rule.general_should_be_pascal_case.style = pascal_case_style
@@ -203,7 +201,7 @@ dotnet_naming_rule.general_should_be_pascal_case.style = pascal_case_style
 dotnet_naming_symbols.general_symbols.applicable_kinds = class, struct, enum, delegate, method, property, event, namespace, type_parameter
 dotnet_naming_symbols.general_symbols.applicable_accessibilities = *
 
-# Parameters – camelCase
+# Parameters: camelCase
 dotnet_naming_rule.parameters_should_be_camel_case.severity = warning
 dotnet_naming_rule.parameters_should_be_camel_case.symbols = parameters
 dotnet_naming_rule.parameters_should_be_camel_case.style = camel_case_style
@@ -211,7 +209,7 @@ dotnet_naming_rule.parameters_should_be_camel_case.style = camel_case_style
 dotnet_naming_symbols.parameters.applicable_kinds = parameter
 dotnet_naming_symbols.parameters.applicable_accessibilities = *
 
-# Local variables – camelCase
+# Local variables: camelCase
 dotnet_naming_rule.locals_should_be_camel_case.severity = warning
 dotnet_naming_rule.locals_should_be_camel_case.symbols = locals
 dotnet_naming_rule.locals_should_be_camel_case.style = camel_case_style
