@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using QmkToolbox.Core.Bootloader;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
+using QmkToolbox.Desktop.Models;
 using QmkToolbox.Desktop.Services;
 
 namespace QmkToolbox.Desktop.ViewModels;
@@ -138,11 +139,35 @@ public partial class MainWindowViewModel : LogViewModelBase
         _confirmTcs = null;
     }
 
-    public void SaveSettings()
+    /// <summary>
+    /// Persists everything in one call: the window bounds passed by the host, the theme, and
+    /// the session's flash settings.
+    /// </summary>
+    public void SaveSettings(WindowBounds bounds)
     {
-        Settings.Current.ThemeVariant = ThemeVariant;
-        Session.SaveTo(Settings.Current);
+        AppSettings s = Settings.Current;
+        s.WindowX = bounds.X;
+        s.WindowY = bounds.Y;
+        s.WindowWidth = bounds.Width;
+        s.WindowHeight = bounds.Height;
+        s.ThemeVariant = ThemeVariant;
+        Session.SaveTo(s);
         Settings.Save();
+    }
+
+    /// <summary>
+    /// The placement to restore: the saved size (null on first run) and the saved position
+    /// when it lies within one of the given work areas (null otherwise, e.g. after a monitor
+    /// was unplugged).
+    /// </summary>
+    public (Size? Size, PixelPoint? Position) RestoredBounds(IEnumerable<PixelRect> workAreas)
+    {
+        AppSettings s = Settings.Current;
+        Size? size = s.WindowWidth is { } w && s.WindowHeight is { } h ? new Size(w, h) : null;
+        PixelPoint? position = s.WindowX is { } x && s.WindowY is { } y
+            ? WindowPlacement.Clamp(new PixelPoint((int)x, (int)y), workAreas)
+            : null;
+        return (size, position);
     }
 
     private void LogStartupBanner()

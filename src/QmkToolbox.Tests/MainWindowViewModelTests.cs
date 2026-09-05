@@ -1,3 +1,4 @@
+using Avalonia;
 using NSubstitute;
 using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Bootloader;
@@ -165,5 +166,44 @@ public sealed class MainWindowViewModelTests : IDisposable
 
         Assert.False(vm.IsConfirmVisible);
         Assert.False(_settings.Current.FirstStart);
+    }
+
+    // ── window bounds ─────────────────────────────────────────────────────────
+
+    private static readonly PixelRect Screen = new(0, 0, 1920, 1080);
+
+    [Fact]
+    public void SaveSettings_PersistsWindowBounds_AcrossReload()
+    {
+        NewVm().SaveSettings(new WindowBounds(100, 200, 800, 600));
+
+        var reloaded = new SettingsService(_settingsPath);
+        var vm = new MainWindowViewModel(_session, _toolProvider, reloaded, _windowService, _appliedThemes.Add);
+        (Size? size, PixelPoint? position) = vm.RestoredBounds([Screen]);
+
+        Assert.Equal(new Size(800, 600), size);
+        Assert.Equal(new PixelPoint(100, 200), position);
+    }
+
+    // A window saved on a monitor that has since been unplugged keeps its size but falls
+    // back to the default position.
+    [Fact]
+    public void RestoredBounds_OffScreenPosition_DropsPositionAndKeepsSize()
+    {
+        NewVm().SaveSettings(new WindowBounds(5000, 5000, 800, 600));
+
+        (Size? size, PixelPoint? position) = NewVm().RestoredBounds([Screen]);
+
+        Assert.Equal(new Size(800, 600), size);
+        Assert.Null(position);
+    }
+
+    [Fact]
+    public void RestoredBounds_FirstRun_ReturnsNothing()
+    {
+        (Size? size, PixelPoint? position) = NewVm().RestoredBounds([Screen]);
+
+        Assert.Null(size);
+        Assert.Null(position);
     }
 }

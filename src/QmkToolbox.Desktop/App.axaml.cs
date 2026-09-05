@@ -70,7 +70,9 @@ public partial class App : Application
             var vm = new MainWindowViewModel(session, toolProvider, new SettingsService(), windowService, ApplyTheme, filePath);
             mainVm = vm;
             _mainWindowViewModel = vm;
-            desktop.MainWindow = new MainWindow(windowService) { DataContext = vm };
+            var mainWindow = new MainWindow { DataContext = vm };
+            MainWindowHost.Attach(mainWindow, vm, windowService);
+            desktop.MainWindow = mainWindow;
 
             // Builds the native app menu for non-macOS platforms (Windows, Linux).
             // On macOS the NSMenuBar reads NativeMenu.Menu from the Application during
