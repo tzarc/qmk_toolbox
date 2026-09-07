@@ -1,8 +1,6 @@
-using Qmk.Usb.Discovery;
-using QmkToolbox.Desktop.Services;
 using Xunit;
 
-namespace QmkToolbox.Tests;
+namespace Qmk.Usb.Discovery.Tests;
 
 /// <summary>
 /// Exercises the Linux sysfs tty lookup against a temp tree shaped like real sysfs:
@@ -10,14 +8,14 @@ namespace QmkToolbox.Tests;
 /// directory holds idVendor/idProduct. The symlinks must keep their relative targets;
 /// a lookup that resolves them lexically lands outside the tree.
 /// </summary>
-public sealed class DesktopSerialPortServiceTests : IDisposable
+public sealed class UsbSerialPortsTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("sysfs-test-").FullName;
 
     private string ClassTty => Path.Combine(_root, "class", "tty");
     private string DevDir => Path.Combine(_root, "dev");
 
-    public DesktopSerialPortServiceTests()
+    public UsbSerialPortsTests()
     {
         Directory.CreateDirectory(ClassTty);
         Directory.CreateDirectory(DevDir);
@@ -54,8 +52,8 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
     {
         AddUsbTty("ttyACM0", "3-3", "2341", "0036");
 
-        Assert.Equal(Path.Combine(DevDir, "ttyACM0"),
-            DesktopSerialPortService.FindBySysfsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
+        Assert.Equal([Path.Combine(DevDir, "ttyACM0")],
+            UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
     }
 
     [FactOnLinux]
@@ -63,7 +61,7 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
     {
         AddUsbTty("ttyACM0", "3-3", "feed", "6060");
 
-        Assert.Null(DesktopSerialPortService.FindBySysfsLinux(Device(0x2341, 0x0043), ClassTty, DevDir));
+        Assert.Empty(UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x2341, 0x0043), ClassTty, DevDir));
     }
 
     [FactOnLinux]
@@ -72,8 +70,8 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
         AddUsbTty("ttyACM0", "3-3", "feed", "6060");
         AddUsbTty("ttyACM1", "3-4", "2341", "0036");
 
-        Assert.Equal(Path.Combine(DevDir, "ttyACM1"),
-            DesktopSerialPortService.FindBySysfsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
+        Assert.Equal([Path.Combine(DevDir, "ttyACM1")],
+            UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
     }
 
     // Platform UARTs and virtual consoles resolve under a devices subtree with no
@@ -86,8 +84,8 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
         Directory.CreateSymbolicLink(Path.Combine(ClassTty, "ttyS0"), Path.GetRelativePath(ClassTty, node));
         AddUsbTty("ttyACM0", "3-3", "2341", "0036");
 
-        Assert.Equal(Path.Combine(DevDir, "ttyACM0"),
-            DesktopSerialPortService.FindBySysfsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
+        Assert.Equal([Path.Combine(DevDir, "ttyACM0")],
+            UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
     }
 
     // The hub above the device also carries idVendor/idProduct; only the nearest
@@ -101,11 +99,21 @@ public sealed class DesktopSerialPortServiceTests : IDisposable
         File.WriteAllText(Path.Combine(hubDir, "idProduct"), "0002\n");
         AddUsbTty("ttyACM0", "3-3", "feed", "6060", parentDir: hubDir);
 
-        Assert.Null(DesktopSerialPortService.FindBySysfsLinux(Device(0x1D6B, 0x0002), ClassTty, DevDir));
+        Assert.Empty(UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x1D6B, 0x0002), ClassTty, DevDir));
+    }
+
+    [FactOnLinux]
+    public void MultiPortDevice_YieldsAllPortsInNodeNameOrder()
+    {
+        AddUsbTty("ttyACM1", "3-3", "2341", "0036");
+        AddUsbTty("ttyACM0", "3-3", "2341", "0036");
+
+        Assert.Equal([Path.Combine(DevDir, "ttyACM0"), Path.Combine(DevDir, "ttyACM1")],
+            UsbSerialPorts.EnumerateSerialPortsLinux(Device(0x2341, 0x0036), ClassTty, DevDir));
     }
 
     [Fact]
-    public void MissingDirectory_ReturnsNull() =>
-        Assert.Null(DesktopSerialPortService.FindBySysfsLinux(
+    public void MissingDirectory_YieldsNothing() =>
+        Assert.Empty(UsbSerialPorts.EnumerateSerialPortsLinux(
             Device(0xFEED, 0x6060), Path.Combine(_root, "does-not-exist"), DevDir));
 }

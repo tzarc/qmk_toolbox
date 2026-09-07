@@ -290,6 +290,77 @@ internal static class MacUsbRegistry
         return null;
     }
 
+    /// <summary>
+    /// Enumerates the callout devices (<c>/dev/cu.*</c>) of the serial ports owned by the
+    /// device with the given VID/PID, in IOKit registry order: each IOSerialBSDClient names
+    /// its callout device, and the nearest ancestor holding idVendor/idProduct is the owning
+    /// device. Callout devices are used because the dial-in tty.* twins block until carrier
+    /// detect. Built-in ports such as tty.debug-console have no USB ancestor and never match.
+    /// </summary>
+    internal static IReadOnlyList<string> EnumerateCalloutDevices(ushort vendorId, ushort productId)
+    {
+        List<string> ports = [];
+        if (IOServiceGetMatchingServices(IntPtr.Zero, IOServiceMatching("IOSerialBSDClient"), out IntPtr iterator) != 0)
+            return ports;
+        try
+        {
+            IntPtr service;
+            while ((service = IOIteratorNext(iterator)) != IntPtr.Zero)
+            {
+                try
+                {
+                    if (ReadStringProperty(service, "IOCalloutDevice") is { } callout
+                        && UsbAncestorMatches(service, vendorId, productId))
+                    {
+                        ports.Add(callout);
+                    }
+                }
+                finally
+                {
+                    _ = IOObjectRelease(service);
+                }
+            }
+        }
+        finally
+        {
+            _ = IOObjectRelease(iterator);
+        }
+        return ports;
+    }
+
+    private static bool UsbAncestorMatches(IntPtr service, ushort vendorId, ushort productId)
+    {
+        IntPtr current = service;
+        // The caller owns the starting service; this method releases only the parents it obtains.
+        bool releaseCurrent = false;
+        try
+        {
+            for (int depth = 0; depth < 12; depth++)
+            {
+                if (IORegistryEntryGetParentEntry(current, "IOService", out IntPtr parent) != 0)
+                    return false;
+                if (releaseCurrent)
+                    _ = IOObjectRelease(current);
+                current = parent;
+                releaseCurrent = true;
+
+                ushort? entryVid = ReadUShortPropertyOrNull(current, "idVendor");
+                ushort? entryPid = ReadUShortPropertyOrNull(current, "idProduct");
+                if (entryVid is null || entryPid is null)
+                    continue;
+                // The nearest attribute-bearing ancestor decides; the hub above it also
+                // carries idVendor/idProduct and must not match.
+                return entryVid == vendorId && entryPid == productId;
+            }
+            return false;
+        }
+        finally
+        {
+            if (releaseCurrent)
+                _ = IOObjectRelease(current);
+        }
+    }
+
     private static string RegistryPath(IntPtr service)
     {
         byte[] buffer = new byte[512]; // io_string_t
@@ -328,19 +399,23 @@ internal static class MacUsbRegistry
         }
     }
 
-    private static ushort ReadUShortProperty(IntPtr service, string key)
+    private static ushort ReadUShortProperty(IntPtr service, string key) =>
+        ReadUShortPropertyOrNull(service, key) ?? 0;
+
+    /// <summary>Distinguishes an absent property from a zero value (ancestor walks stop at the first entry that has the properties).</summary>
+    private static ushort? ReadUShortPropertyOrNull(IntPtr service, string key)
     {
         IntPtr cfKey = CFStringCreateWithCString(IntPtr.Zero, key, KCfStringEncodingUtf8);
         if (cfKey == IntPtr.Zero)
-            return 0;
+            return null;
         try
         {
             IntPtr number = IORegistryEntryCreateCFProperty(service, cfKey, IntPtr.Zero, 0);
             if (number == IntPtr.Zero)
-                return 0;
+                return null;
             try
             {
-                return CFNumberGetValue(number, KCfNumberIntType, out int value) ? (ushort)value : (ushort)0;
+                return CFNumberGetValue(number, KCfNumberIntType, out int value) ? (ushort)value : null;
             }
             finally
             {

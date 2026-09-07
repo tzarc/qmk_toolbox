@@ -92,6 +92,5 @@
     <PackageReference Include="Optris.Icons.Avalonia.FontAwesome" />
     <PackageReference Include="Optris.Icons.Avalonia" />
     <PackageReference Include="Semi.Avalonia" />
-    <PackageReference Include="System.IO.Ports" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,6 @@
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Hardware -->
     <PackageVersion Include="HidApi.Net" Version="1.2.0" />
-    <PackageVersion Include="System.IO.Ports" Version="10.0.11" />
     <!-- Build metadata -->
     <PackageVersion Include="GitInfo" Version="3.6.1" />
     <!-- Testing -->
