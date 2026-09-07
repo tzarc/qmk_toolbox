@@ -32,7 +32,7 @@ public partial class App : Application
             var bootloaderServices = new Core.Bootloader.BootloaderServices(toolProvider)
             {
                 SerialPorts = new SystemSerialPortService(),
-                MountPoints = new DesktopMountPointService(),
+                MountPoints = new SystemMountPointService(),
             };
             var orchestrator = new FlashOrchestrator(bootloaderServices);
             // The HID tracker initialises hidapi on Start() and tears it down on Dispose();

@@ -9,9 +9,8 @@ public interface IMountPointService
 {
     /// <summary>
     /// Returns the mount point path for <paramref name="device"/>, or <see langword="null"/>
-    /// if the device is not mounted. Only volumes carrying <paramref name="markerFile"/> at
-    /// their root qualify, and a volume provably backed by a different USB device is never
-    /// returned; a volume whose ownership cannot be determined is accepted.
+    /// if the device is not mounted. Only volumes the device provably backs qualify, and of
+    /// those only one carrying <paramref name="markerFile"/> at its root is returned.
     /// </summary>
     string? FindMountPoint(UsbDeviceInfo device, string markerFile);
 }
