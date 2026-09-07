@@ -11,7 +11,8 @@ namespace Qmk.Usb.Discovery.Windows;
 /// <summary>
 /// Windows probe using RegisterDeviceNotification via a message-only window. Removal hints carry
 /// the interface path only: Windows interface paths are canonical and always present, so the
-/// tracker never needs a VID/PID fallback.
+/// tracker never needs a VID/PID fallback. The probe announces live arrivals only after the
+/// devnode settles, so the driver name and mass-storage flag reflect the bound driver stack.
 /// </summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal sealed class WindowsUsbProbe : IUsbProbe
@@ -21,6 +22,13 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
     // Interface paths compare case-insensitively (some paths are reported with differing case).
     public StringComparison PathComparison => StringComparison.OrdinalIgnoreCase;
+
+    // Live arrivals settle on a worker before the probe announces them (SettleAndRaiseAsync);
+    // a removal broadcast cancels its pending arrival, so a gone device stays unannounced.
+    private readonly Dictionary<string, CancellationTokenSource> _pendingArrivals = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _pendingLock = new();
+    private const int SettlePollMs = 100;
+    private const int SettleTimeoutMs = 3000;
 
     private Thread? _messageThread;
     private volatile IntPtr _hwnd = IntPtr.Zero;
@@ -49,6 +57,8 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     private const uint CM_DRP_HARDWAREID = 0x00000002; // SPDRP_HARDWAREID: hardware IDs incl. REV_ (REG_MULTI_SZ)
     private const uint CM_DRP_SERVICE = 0x00000005;    // SPDRP_SERVICE: driver service name e.g. "WinUSB" (REG_SZ)
     private const uint CM_DRP_MFG = 0x0000000C;        // SPDRP_MFG: manufacturer string (REG_SZ)
+
+    private const uint DN_HAS_PROBLEM = 0x00000400;
 
     private const uint CM_GET_DEVICE_INTERFACE_LIST_PRESENT = 0;
 
@@ -122,7 +132,7 @@ internal sealed class WindowsUsbProbe : IUsbProbe
     [DllImport("user32.dll")]
     private static extern bool PostThreadMessageW(uint idThread, uint msg, IntPtr wParam, IntPtr lParam);
 
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern IntPtr GetModuleHandleW(string? lpModuleName);
 
     [DllImport("kernel32.dll")]
@@ -136,6 +146,9 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
     [DllImport("cfgmgr32.dll", ExactSpelling = true)]
     private static extern int CM_Get_Sibling(out uint pdnDevInst, uint dnDevInst, uint ulFlags);
+
+    [DllImport("cfgmgr32.dll", ExactSpelling = true)]
+    private static extern int CM_Get_DevNode_Status(out uint pulStatus, out uint pulProblemNumber, uint dnDevInst, uint ulFlags);
 
     [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern int CM_Get_DevNode_Registry_PropertyW(
@@ -198,6 +211,12 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
     public void Stop()
     {
+        lock (_pendingLock)
+        {
+            foreach (CancellationTokenSource pending in _pendingArrivals.Values)
+                pending.Cancel();
+            _pendingArrivals.Clear();
+        }
         uint tid = _messageThreadId;
         if (tid != 0)
         {
@@ -277,17 +296,83 @@ internal sealed class WindowsUsbProbe : IUsbProbe
 
                     if (eventType == DBT_DEVICEARRIVAL)
                     {
-                        if (BuildDeviceInfo(deviceInterfacePath) is { } device)
-                            Arrived?.Invoke(device);
+                        ScheduleArrival(deviceInterfacePath);
                     }
                     else
                     {
-                        Removed?.Invoke(new UsbRemovalHint(deviceInterfacePath));
+                        // The lock orders this against a concurrent settle completion: a device
+                        // is either announced before its removal or never announced at all.
+                        lock (_pendingLock)
+                        {
+                            if (_pendingArrivals.Remove(deviceInterfacePath, out CancellationTokenSource? pending))
+                                pending.Cancel();
+                            else
+                                Removed?.Invoke(new UsbRemovalHint(deviceInterfacePath));
+                        }
                     }
                 }
             }
         }
         return DefWindowProcW(hWnd, msg, wParam, lParam);
+    }
+
+    private void ScheduleArrival(string deviceInterfacePath)
+    {
+        var cts = new CancellationTokenSource();
+        lock (_pendingLock)
+        {
+            // A re-arrival on the same path replaces any stale pending settle.
+            if (_pendingArrivals.TryGetValue(deviceInterfacePath, out CancellationTokenSource? stale))
+                stale.Cancel();
+            _pendingArrivals[deviceInterfacePath] = cts;
+        }
+        _ = Task.Run(() => SettleAndRaiseAsync(deviceInterfacePath, cts));
+    }
+
+    /// <summary>
+    /// Announces a live arrival once its devnode settles. WM_DEVICECHANGE fires when the devnode
+    /// is configured, before the driver stack binds: Service is still empty and a usbccgp root
+    /// has no children yet, so an immediate read misreports the driver and the mass-storage
+    /// flag. Driverless nodes settle fast via their problem code; the timeout covers the rest.
+    /// </summary>
+    private async Task SettleAndRaiseAsync(string deviceInterfacePath, CancellationTokenSource cts)
+    {
+        try
+        {
+            for (int elapsed = 0; elapsed < SettleTimeoutMs && !IsDevNodeSettled(deviceInterfacePath); elapsed += SettlePollMs)
+                await Task.Delay(SettlePollMs, cts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        lock (_pendingLock)
+        {
+            // Only the still-registered settle may announce; a removal or re-arrival won the race otherwise.
+            if (!_pendingArrivals.TryGetValue(deviceInterfacePath, out CancellationTokenSource? current) || current != cts)
+                return;
+            _pendingArrivals.Remove(deviceInterfacePath);
+            if (BuildDeviceInfo(deviceInterfacePath) is { } device)
+                Arrived?.Invoke(device);
+        }
+    }
+
+    private static bool IsDevNodeSettled(string deviceInterfacePath)
+    {
+        string instanceId = UsbDeviceParser.InterfacePathToInstanceId(deviceInterfacePath);
+        if (CM_Locate_DevNodeW(out uint devNode, instanceId, 0) != CR_SUCCESS)
+            return true;
+        string service = ReadDevNodeProperty(devNode, CM_DRP_SERVICE);
+        if (service.Length == 0)
+        {
+            // No service and no problem code means driver binding is still in progress.
+            return CM_Get_DevNode_Status(out uint status, out _, devNode, 0) == CR_SUCCESS
+                && (status & DN_HAS_PROBLEM) != 0;
+        }
+        // A usbccgp root settles when its child functions have enumerated.
+        return !string.Equals(service, "usbccgp", StringComparison.OrdinalIgnoreCase)
+            || CollectChildServices(devNode).Count > 0;
     }
 
     private static UsbDeviceInfo? BuildDeviceInfo(string deviceInterfacePath)
