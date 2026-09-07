@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>QmkToolbox.Usb.Hid</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Library boundary: every public member ships XML docs, so re-enable CS1591 (suppressed repo-wide). -->
+    <NoWarn>$(NoWarn.Replace(';CS1591', ''))</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="HidApi.Net" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../QmkToolbox.Usb.Abstractions/QmkToolbox.Usb.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

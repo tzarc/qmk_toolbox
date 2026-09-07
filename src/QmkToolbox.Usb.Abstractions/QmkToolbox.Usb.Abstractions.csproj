@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Types keep their implementation namespaces (QmkToolbox.Usb.Discovery, QmkToolbox.Usb.Hid);
+         the root plus the Discovery/ and Hid/ folders satisfy IDE0130. -->
+    <RootNamespace>QmkToolbox.Usb</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Library boundary: every public member ships XML docs, so re-enable CS1591 (suppressed repo-wide). -->
+    <NoWarn>$(NoWarn.Replace(';CS1591', ''))</NoWarn>
+  </PropertyGroup>
+</Project>

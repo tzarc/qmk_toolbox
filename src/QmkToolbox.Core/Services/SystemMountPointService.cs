@@ -1,4 +1,4 @@
-using Qmk.Usb.Discovery;
+using QmkToolbox.Usb.Discovery;
 
 namespace QmkToolbox.Core.Services;
 

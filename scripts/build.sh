@@ -21,6 +21,6 @@ docker run --rm \
     ${DOCKER_RUN_USER} \
     -e HOME=/tmp \
     -v "${REPO_ROOT}":/app \
-    -w /app/src \
+    -w /app \
     mcr.microsoft.com/dotnet/sdk:10.0 \
     dotnet build QmkToolbox.slnx "$@"

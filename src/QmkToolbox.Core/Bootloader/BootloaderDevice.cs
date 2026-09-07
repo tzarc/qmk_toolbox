@@ -1,6 +1,6 @@
-using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
+using QmkToolbox.Usb.Discovery;
 
 namespace QmkToolbox.Core.Bootloader;
 

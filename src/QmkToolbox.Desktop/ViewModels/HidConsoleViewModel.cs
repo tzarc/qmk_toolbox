@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using QmkToolbox.Core.Models;
-using QmkToolbox.Desktop.Services;
+using QmkToolbox.Desktop.Services.Hid;
 
 namespace QmkToolbox.Desktop.ViewModels;
 

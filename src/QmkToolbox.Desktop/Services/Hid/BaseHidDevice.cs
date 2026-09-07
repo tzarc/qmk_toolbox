@@ -1,18 +1,17 @@
-using HidApi;
-using QmkToolbox.Core.Models;
+using QmkToolbox.Usb.Hid;
 
 namespace QmkToolbox.Desktop.Services.Hid;
 
-public abstract class BaseHidDevice(DeviceInfo deviceInfo) : IHidDevice
+public abstract class BaseHidDevice(HidInterfaceInfo iface) : IHidDevice
 {
-    public string ManufacturerString { get; } = deviceInfo.ManufacturerString ?? "";
-    public string ProductString { get; } = deviceInfo.ProductString ?? "";
-    public ushort VendorId { get; } = deviceInfo.VendorId;
-    public ushort ProductId { get; } = deviceInfo.ProductId;
-    public ushort RevisionBcd { get; } = deviceInfo.ReleaseNumber;
-    public ushort UsagePage { get; } = deviceInfo.UsagePage;
-    public ushort Usage { get; } = deviceInfo.Usage;
-    public string DevicePath { get; } = deviceInfo.Path;
+    public string ManufacturerString { get; } = iface.Manufacturer;
+    public string ProductString { get; } = iface.Product;
+    public ushort VendorId { get; } = iface.VendorId;
+    public ushort ProductId { get; } = iface.ProductId;
+    public ushort RevisionBcd { get; } = iface.RevisionBcd;
+    public ushort UsagePage { get; } = iface.UsagePage;
+    public ushort Usage { get; } = iface.Usage;
+    public string DevicePath { get; } = iface.DevicePath;
 
     /// <inheritdoc />
     public abstract bool IsConsoleDevice { get; }

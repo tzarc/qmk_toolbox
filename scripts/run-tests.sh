@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run-tests.sh: Run the QmkToolbox test suite inside Docker.
 #
-# Collects cobertura coverage via coverlet (src/coverage.runsettings) and renders
+# Collects cobertura coverage via coverlet (coverage.runsettings) and renders
 # it with ReportGenerator into coveragereport/ at the repo root (gitignored):
 # an HTML report, a GitHub-flavoured markdown summary (CI appends it to the job
 # summary), and a text summary printed at the end of the run.
@@ -27,7 +27,7 @@ docker run --rm \
     ${DOCKER_RUN_USER} \
     -e HOME=/tmp \
     -v "${REPO_ROOT}":/app \
-    -w /app/src \
+    -w /app \
     mcr.microsoft.com/dotnet/sdk:10.0 \
     sh -c '
         dotnet test QmkToolbox.slnx \

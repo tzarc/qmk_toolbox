@@ -82,13 +82,13 @@
 
   <ItemGroup>
     <ProjectReference Include="../QmkToolbox.Core/QmkToolbox.Core.csproj" />
+    <ProjectReference Include="../QmkToolbox.Usb.Hid/QmkToolbox.Usb.Hid.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="GitInfo" />
-    <PackageReference Include="HidApi.Net" />
     <PackageReference Include="Optris.Icons.Avalonia.FontAwesome" />
     <PackageReference Include="Optris.Icons.Avalonia" />
     <PackageReference Include="Semi.Avalonia" />

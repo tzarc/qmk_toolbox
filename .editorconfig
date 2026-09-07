@@ -236,7 +236,7 @@ dotnet_naming_style.begins_with_i_style.capitalization = pascal_case
 dotnet_naming_style.begins_with_i_style.required_prefix = I
 
 # ── Test projects ─────────────────────────────────────────────────────────────
-[src/*Tests/**.cs]
+[tests/**.cs]
 # CA1707: xUnit test names use Method_Scenario underscores.
 dotnet_diagnostic.CA1707.severity = none
 # CA1861: hoisting expected-value arrays out of assertions hides them from the test body.

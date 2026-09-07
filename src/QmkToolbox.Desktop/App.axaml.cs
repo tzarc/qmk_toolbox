@@ -3,11 +3,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
-using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.Services;
 using QmkToolbox.Desktop.ViewModels;
 using QmkToolbox.Desktop.Views;
+using QmkToolbox.Usb.Discovery;
 
 namespace QmkToolbox.Desktop;
 
@@ -35,8 +35,7 @@ public partial class App : Application
                 MountPoints = new SystemMountPointService(),
             };
             var orchestrator = new FlashOrchestrator(bootloaderServices);
-            // The HID tracker initialises hidapi on Start() and tears it down on Dispose();
-            // each HID console window creates its own and disposes it on close.
+            // Each HID console window creates its own tracker and disposes it on close.
             var windowService = new DesktopWindowService(() => new Services.Hid.HidDeviceTracker());
 
             // Every log/trace producer routes through these two sinks, which marshal onto

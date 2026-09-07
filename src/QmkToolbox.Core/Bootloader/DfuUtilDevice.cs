@@ -1,5 +1,5 @@
 using System.Globalization;
-using Qmk.Usb.Discovery;
+using QmkToolbox.Usb.Discovery;
 
 namespace QmkToolbox.Core.Bootloader;
 

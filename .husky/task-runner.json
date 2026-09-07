@@ -5,7 +5,7 @@
          "name": "format-staged",
          "group": "pre-commit",
          "command": "dotnet",
-         "args": ["format", "src/QmkToolbox.slnx", "--include", "${staged}"],
+         "args": ["format", "QmkToolbox.slnx", "--include", "${staged}"],
          "include": ["**/*.cs"],
          "pathsFrom": "staged"
       }

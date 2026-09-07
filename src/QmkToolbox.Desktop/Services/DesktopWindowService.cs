@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using QmkToolbox.Desktop.Models;
+using QmkToolbox.Desktop.Services.Hid;
 using QmkToolbox.Desktop.ViewModels;
 using QmkToolbox.Desktop.Views;
 

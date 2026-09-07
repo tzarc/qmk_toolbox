@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="src/QmkToolbox.Usb.Abstractions/QmkToolbox.Usb.Abstractions.csproj" />
+  <Project Path="src/QmkToolbox.Usb.Discovery/QmkToolbox.Usb.Discovery.csproj" />
+  <Project Path="src/QmkToolbox.Usb.Hid/QmkToolbox.Usb.Hid.csproj" />
+  <Project Path="src/QmkToolbox.Core/QmkToolbox.Core.csproj" />
+  <Project Path="src/QmkToolbox.Desktop/QmkToolbox.Desktop.csproj" />
+  <Project Path="tests/QmkToolbox.Usb.Discovery.Tests/QmkToolbox.Usb.Discovery.Tests.csproj" />
+  <Project Path="tests/QmkToolbox.Usb.Hid.Tests/QmkToolbox.Usb.Hid.Tests.csproj" />
+  <Project Path="tests/QmkToolbox.Tests/QmkToolbox.Tests.csproj" />
+</Solution>

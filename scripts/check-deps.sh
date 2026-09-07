@@ -24,9 +24,9 @@ dotnet tool restore
 # ── NuGet packages ────────────────────────────────────────────────────────────
 echo "=== NuGet packages ==="
 if $UPGRADE; then
-    dotnet tool run dotnet-outdated src/QmkToolbox.slnx --upgrade
+    dotnet tool run dotnet-outdated QmkToolbox.slnx --upgrade
 else
-    dotnet tool run dotnet-outdated src/QmkToolbox.slnx
+    dotnet tool run dotnet-outdated QmkToolbox.slnx
 fi
 
 # ── dotnet tools ──────────────────────────────────────────────────────────────

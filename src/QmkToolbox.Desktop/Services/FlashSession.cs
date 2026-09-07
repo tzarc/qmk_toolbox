@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Qmk.Usb.Discovery;
 using QmkToolbox.Core.Models;
 using QmkToolbox.Core.Services;
 using QmkToolbox.Desktop.ViewModels;
+using QmkToolbox.Usb.Discovery;
 
 namespace QmkToolbox.Desktop.Services;
 

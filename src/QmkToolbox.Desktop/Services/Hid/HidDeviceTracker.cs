@@ -1,5 +1,3 @@
-using QmkToolbox.Core.Models;
-
 namespace QmkToolbox.Desktop.Services.Hid;
 
 /// <summary>
@@ -19,7 +17,7 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
     private CancellationTokenSource? _cts;
     private Task? _pollTask;
 
-    public HidDeviceTracker() : this(new HidApiProbe()) { }
+    public HidDeviceTracker() : this(new HidInterfaceProbe()) { }
 
     public void Start()
     {
@@ -36,7 +34,7 @@ public sealed class HidDeviceTracker(IHidProbe probe) : IHidListener
                 {
                     try
                     {
-                        // Poll cadence; hidapi has no hotplug callbacks.
+                        // Poll cadence; HID interface discovery is enumeration-based.
                         await Task.Delay(500, token).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) { break; }

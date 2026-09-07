@@ -1,15 +1,13 @@
-using System.Diagnostics;
 using System.Text;
-using HidApi;
+using QmkToolbox.Usb.Hid;
 
 namespace QmkToolbox.Desktop.Services.Hid;
 
 /// <summary>
-/// A QMK HID console device (usage page 0xFF31, usage 0x0074).
-/// The constructor opens the device and starts a background read loop that raises
-/// <see cref="BaseHidDevice.ConsoleReportReceived"/> with the decoded text of each report.
-/// The console is a raw byte stream chunked into null-padded USB reports; the consumer's
-/// terminal buffer interprets '\r'/'\n'.
+/// A QMK HID console device (usage page 0xFF31, usage 0x0074): decodes the null-padded
+/// UTF-8 report stream into <see cref="BaseHidDevice.ConsoleReportReceived"/> text events.
+/// The console is a raw byte stream chunked into reports; the consumer's terminal buffer
+/// interprets '\r'/'\n'.
 /// </summary>
 public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
 {
@@ -19,75 +17,38 @@ public sealed class HidConsoleDevice : BaseHidDevice, IDisposable
     /// <inheritdoc />
     public override bool IsConsoleDevice => true;
 
-    public static bool Match(DeviceInfo d) =>
-        d.UsagePage == TargetUsagePage && d.Usage == TargetUsage;
+    public static bool Match(HidInterfaceInfo iface) =>
+        iface.UsagePage == TargetUsagePage && iface.Usage == TargetUsage;
 
-    public static BaseHidDevice? TryCreate(DeviceInfo d) =>
-        Match(d) ? new HidConsoleDevice(d) : null;
+    public static BaseHidDevice? TryCreate(HidInterfaceInfo iface) =>
+        Match(iface) && iface.Open() is { } channel ? new HidConsoleDevice(iface, channel) : null;
 
-    private CancellationTokenSource? _cts;
-    private readonly Task? _readTask;
+    private readonly HidInterfaceDevice _channel;
     // The stateful decoder handles multi-byte characters that span a report boundary.
     private readonly Decoder _decoder = Encoding.UTF8.GetDecoder();
+    private readonly char[] _charBuffer = new char[Encoding.UTF8.GetMaxCharCount(1024)];
 
-    public HidConsoleDevice(DeviceInfo deviceInfo) : base(deviceInfo)
+    private HidConsoleDevice(HidInterfaceInfo iface, HidInterfaceDevice channel) : base(iface)
     {
-        _cts = new CancellationTokenSource();
-        // ReadLoop blocks in synchronous HID reads; it must run off the constructor's thread.
-        _readTask = Task.Run(() => ReadLoop(_cts.Token), _cts.Token);
+        _channel = channel;
+        _channel.ReportReceived += OnReport;
+        _channel.Start();
     }
 
-    private void ReadLoop(CancellationToken token)
+    private void OnReport(byte[] report)
     {
-        try
-        {
-            using var device = new Device(DevicePath);
-            byte[] buffer = new byte[65];
-            char[] charBuffer = new char[Encoding.UTF8.GetMaxCharCount(65)];
-            while (!token.IsCancellationRequested)
-            {
-                int bytesRead = device.ReadTimeout(buffer, 100);
-                if (bytesRead <= 0)
-                    continue;
-
-                // HID reports are null-padded; truncate at the first null byte.
-                int validBytes = bytesRead;
-                for (int i = 0; i < bytesRead; i++)
-                {
-                    if (buffer[i] == 0)
-                    { validBytes = i; break; }
-                }
-                if (validBytes == 0)
-                    continue;
-
-                int charCount = _decoder.GetChars(buffer, 0, validBytes, charBuffer, 0);
-                if (charCount > 0)
-                    RaiseConsoleReport(new string(charBuffer, 0, charCount));
-            }
-        }
-        catch (Exception ex) when (ex is HidException or IOException or ObjectDisposedException)
-        {
-            // Device disconnected or the read failed; the loop ends here.
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"HidConsoleDevice.ReadLoop unexpected exception: {ex}");
-        }
+        // HID reports are null-padded; truncate at the first null byte.
+        int validBytes = Array.IndexOf(report, (byte)0) is >= 0 and var nul ? nul : report.Length;
+        if (validBytes == 0)
+            return;
+        int charCount = _decoder.GetChars(report, 0, Math.Min(validBytes, 1024), _charBuffer, 0);
+        if (charCount > 0)
+            RaiseConsoleReport(new string(_charBuffer, 0, charCount));
     }
 
     public void Dispose()
     {
-        _cts?.Cancel();
-
-        try
-        {
-            _readTask?.Wait(TimeSpan.FromSeconds(1));
-        }
-        catch (AggregateException)
-        {
-            // ReadLoop faulted/cancelled; nothing left to wait on.
-        }
-        _cts?.Dispose();
-        _cts = null;
+        _channel.ReportReceived -= OnReport;
+        _channel.Dispose();
     }
 }

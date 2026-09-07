@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Qmk.Usb.Discovery/Qmk.Usb.Discovery.csproj" />
+    <ProjectReference Include="../QmkToolbox.Usb.Discovery/QmkToolbox.Usb.Discovery.csproj" />
   </ItemGroup>
 </Project>
