@@ -9,7 +9,7 @@ namespace QmkToolbox.Desktop.Services;
 /// <summary>
 /// Cross-platform serial port service.
 /// <list type="bullet">
-///   <item>Linux: VID/PID matching via /dev/serial/by-id/ symlinks</item>
+///   <item>Linux: VID/PID match against sysfs tty devices</item>
 ///   <item>macOS: most recently created /dev/cu.* device node</item>
 ///   <item>Windows: registry lookup mapping VID/PID → COM port name</item>
 /// </list>
@@ -17,39 +17,61 @@ namespace QmkToolbox.Desktop.Services;
 public class DesktopSerialPortService : ISerialPortService
 {
     public string? FindSerialPort(UsbDeviceInfo device) =>
-        OperatingSystem.IsLinux() ? FindByIdLinux(device) :
+        OperatingSystem.IsLinux() ? FindBySysfsLinux(device) :
         OperatingSystem.IsMacOS() ? FindNewestSerialPortMacOS() :
         OperatingSystem.IsWindows() ? FindByRegistryWindows(device) :
         null;
 
     /// <summary>
-    /// Matches a USB device by VID/PID against /dev/serial/by-id/ symlinks.
-    /// udev maintains these symlinks and encodes the VID, PID, and serial number
-    /// in the filename, so the match needs no timestamp heuristics.
+    /// Matches a USB device by VID/PID via sysfs: each class/tty entry resolves to the
+    /// tty's device node, and the nearest ancestor holding idVendor/idProduct is the
+    /// owning device. /dev/serial/by-id names cannot be used for this: udev builds
+    /// them from string descriptors when the device has them (Caterina does), so VID/PID
+    /// appears in the name only for descriptor-less devices.
     /// </summary>
-    /// <param name="byIdDir">Overrides the symlink directory (used by tests).</param>
-    internal static string? FindByIdLinux(UsbDeviceInfo device, string byIdDir = "/dev/serial/by-id")
+    /// <param name="sysClassTty">Overrides the sysfs tty class directory (used by tests).</param>
+    /// <param name="devDir">Overrides the device-node directory (used by tests).</param>
+    internal static string? FindBySysfsLinux(UsbDeviceInfo device, string sysClassTty = "/sys/class/tty", string devDir = "/dev")
     {
-        if (!Directory.Exists(byIdDir))
+        if (!Directory.Exists(sysClassTty))
             return null;
 
-        // udev names numeric-only devices as "usb-VID_PID_SERIAL-ifNN".
-        // Matching the combined "VID_PID" token avoids false positives where a
-        // serial number from a different device happens to contain the VID digits.
-        string vidPid = $"{device.VendorId:X4}_{device.ProductId:X4}";
-
-        foreach (string link in Directory.EnumerateFiles(byIdDir))
+        foreach (string entry in Directory.EnumerateDirectories(sysClassTty))
         {
-            string name = Path.GetFileName(link);
-            if (name.Contains(vidPid, StringComparison.OrdinalIgnoreCase))
+            try
             {
-                var fi = new FileInfo(link);
-                FileSystemInfo? resolved = fi.ResolveLinkTarget(returnFinalTarget: true);
-                return resolved?.FullName ?? link;
+                // Walk up from the resolved class entry, not from the node's "device" link:
+                // sysfs symlink targets are relative, and only the class entry sits under a
+                // real directory where lexical resolution gives the true path.
+                var entryInfo = new DirectoryInfo(entry);
+                DirectoryInfo? dir = entryInfo.ResolveLinkTarget(returnFinalTarget: true) as DirectoryInfo ?? entryInfo;
+                for (int depth = 0; dir is not null && depth < 8; dir = dir.Parent, depth++)
+                {
+                    string vidFile = Path.Combine(dir.FullName, "idVendor");
+                    string pidFile = Path.Combine(dir.FullName, "idProduct");
+                    if (!File.Exists(vidFile) || !File.Exists(pidFile))
+                        continue;
+                    if (ReadHexAttribute(vidFile) == device.VendorId && ReadHexAttribute(pidFile) == device.ProductId)
+                        return Path.Combine(devDir, Path.GetFileName(entry));
+                    // The nearest attribute-bearing ancestor is the owning device; the hub
+                    // above it also carries idVendor/idProduct and must not match.
+                    break;
+                }
+            }
+            catch (IOException)
+            {
+                // The tty vanished mid-walk (unplug race); the poll retries.
+            }
+            catch (UnauthorizedAccessException)
+            {
             }
         }
         return null;
     }
+
+    private static ushort? ReadHexAttribute(string path) =>
+        ushort.TryParse(File.ReadAllText(path).Trim(), System.Globalization.NumberStyles.HexNumber,
+            System.Globalization.CultureInfo.InvariantCulture, out ushort value) ? value : null;
 
     /// <summary>
     /// Returns the most recently created /dev/cu.* serial device.
