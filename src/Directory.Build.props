@@ -3,6 +3,8 @@
     <!-- Required for IDE analyzers (e.g. IDE0005 unused-using removal) to run during CLI builds and dotnet format -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
+    <AnalysisMode>Recommended</AnalysisMode>
+
     <!-- Enables IDE0005 (remove unnecessary usings); doc comments are not enforced -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 

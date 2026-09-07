@@ -57,7 +57,7 @@ public class FlashCommandTests
     }
 
     /// <summary>Creates a device via the factory and collects the commands its runner launched.</summary>
-    private static async Task<List<string>> Commands(
+    private static async Task<List<string>> CommandsAsync(
         UsbDeviceInfo usb,
         ISerialPortService? serial,
         Func<BootloaderDevice, Task> action)
@@ -71,9 +71,9 @@ public class FlashCommandTests
     // ── AtmelDfuDevice ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AtmelDfuDevice_Flash_ThreeSequentialCommands()
+    public async Task AtmelDfuDevice_Flash_ThreeSequentialCommandsAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
@@ -84,9 +84,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task AtmelDfuDevice_FlashEeprom_IncludesErase()
+    public async Task AtmelDfuDevice_FlashEeprom_IncludesEraseAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
@@ -96,9 +96,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task QmkDfuDevice_FlashEeprom_NoErase()
+    public async Task QmkDfuDevice_FlashEeprom_NoEraseAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x2FEF, 0x0936), null,
             bd => bd.FlashEepromAsync("at90usb1286", "reset.eep"));
 
@@ -107,7 +107,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task AtmelDfuDevice_FlashEeprom_RejectsUnsupportedFormat()
+    public async Task AtmelDfuDevice_FlashEeprom_RejectsUnsupportedFormatAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x2FEF, 0), Services())!;
 
@@ -116,9 +116,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task AtmelDfuDevice_Reset()
+    public async Task AtmelDfuDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x2FEF, 0), null,
             bd => bd.ResetAsync("at90usb1286"));
 
@@ -133,9 +133,9 @@ public class FlashCommandTests
     [InlineData(0x2E3C, 0xDF11, "2E3C:DF11")] // At32Dfu (ArteryTek)
     [InlineData(0x28E9, 0x0189, "28E9:0189")] // Gd32VDfu (GigaDevice)
     [InlineData(0x0483, 0xDF11, "0483:DF11")] // Stm32Dfu (STMicroelectronics)
-    public async Task DfuUtilDevice_Flash_Bin(ushort vid, ushort pid, string deviceId)
+    public async Task DfuUtilDevice_Flash_BinAsync(ushort vid, ushort pid, string deviceId)
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(vid, pid), null,
             bd => bd.FlashAsync("", "test.bin"));
 
@@ -148,7 +148,7 @@ public class FlashCommandTests
     [InlineData(0x2E3C, 0xDF11)] // At32Dfu (ArteryTek)
     [InlineData(0x28E9, 0x0189)] // Gd32VDfu (GigaDevice)
     [InlineData(0x0483, 0xDF11)] // Stm32Dfu (STMicroelectronics)
-    public async Task DfuUtilDevice_Flash_NonBin_IsRejected(ushort vid, ushort pid)
+    public async Task DfuUtilDevice_Flash_NonBin_IsRejectedAsync(ushort vid, ushort pid)
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(vid, pid), Services())!;
 
@@ -161,9 +161,9 @@ public class FlashCommandTests
     [InlineData(0x2E3C, 0xDF11, "2E3C:DF11")] // At32Dfu (ArteryTek)
     [InlineData(0x28E9, 0x0189, "28E9:0189")] // Gd32VDfu (GigaDevice)
     [InlineData(0x0483, 0xDF11, "0483:DF11")] // Stm32Dfu (STMicroelectronics)
-    public async Task DfuUtilDevice_Reset(ushort vid, ushort pid, string deviceId)
+    public async Task DfuUtilDevice_ResetAsync(ushort vid, ushort pid, string deviceId)
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(vid, pid), null,
             bd => bd.ResetAsync(""));
 
@@ -174,9 +174,9 @@ public class FlashCommandTests
     // ── AtmelSamBaDevice ──────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AtmelSamBaDevice_Flash()
+    public async Task AtmelSamBaDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x6124), MockSerialPort(),
             bd => bd.FlashAsync("", "test.bin"));
 
@@ -185,9 +185,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task AtmelSamBaDevice_Reset()
+    public async Task AtmelSamBaDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x6124), MockSerialPort(),
             bd => bd.ResetAsync(""));
 
@@ -196,7 +196,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task AtmelSamBaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
+    public async Task AtmelSamBaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrowsAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x03EB, 0x6124), Services(serial: MockNoSerialPort()))!;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("", "test.bin"));
@@ -205,9 +205,9 @@ public class FlashCommandTests
     // ── AvrIspDevice ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AvrIspDevice_Flash()
+    public async Task AvrIspDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x16C0, 0x0483), MockSerialPort(),
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
@@ -218,7 +218,7 @@ public class FlashCommandTests
     // ── BootloadHidDevice ─────────────────────────────────────────────────────
 
     [Fact]
-    public async Task BootloadHidDevice_Flash_RejectsUnsupportedFormat()
+    public async Task BootloadHidDevice_Flash_RejectsUnsupportedFormatAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x16C0, 0x05DF), Services())!;
 
@@ -227,9 +227,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task BootloadHidDevice_Flash()
+    public async Task BootloadHidDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x16C0, 0x05DF), null,
             bd => bd.FlashAsync("", "test.hex"));
 
@@ -238,9 +238,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task BootloadHidDevice_Reset()
+    public async Task BootloadHidDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x16C0, 0x05DF), null,
             bd => bd.ResetAsync(""));
 
@@ -251,9 +251,9 @@ public class FlashCommandTests
     // ── CaterinaDevice ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CaterinaDevice_Flash()
+    public async Task CaterinaDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x1209, 0x2302), MockSerialPort(),
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
@@ -262,9 +262,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task CaterinaDevice_FlashEeprom()
+    public async Task CaterinaDevice_FlashEepromAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x1209, 0x2302), MockSerialPort(),
             bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
@@ -273,7 +273,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task CaterinaDevice_FlashEeprom_RejectsUnsupportedFormat()
+    public async Task CaterinaDevice_FlashEeprom_RejectsUnsupportedFormatAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), Services(serial: MockSerialPort()))!;
 
@@ -282,7 +282,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task CaterinaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrows()
+    public async Task CaterinaDevice_Flash_PortNeverAppears_ExhaustsRetriesAndThrowsAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x1209, 0x2302), Services(serial: MockNoSerialPort()))!;
         await Assert.ThrowsAsync<ComPortNotFoundException>(() => bd.FlashAsync("atmega32u4", "test.hex"));
@@ -291,9 +291,9 @@ public class FlashCommandTests
     // ── HalfKayDevice ─────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task HalfKayDevice_Flash()
+    public async Task HalfKayDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x16C0, 0x0478), null,
             bd => bd.FlashAsync("at90usb1286", "test.hex"));
 
@@ -302,9 +302,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task HalfKayDevice_Reset()
+    public async Task HalfKayDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x16C0, 0x0478), null,
             bd => bd.ResetAsync("at90usb1286"));
 
@@ -315,9 +315,9 @@ public class FlashCommandTests
     // ── KiibohdDfuDevice ──────────────────────────────────────────────────────
 
     [Fact]
-    public async Task KiibohdDfuDevice_Flash_Bin()
+    public async Task KiibohdDfuDevice_Flash_BinAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x1C11, 0xB007), null,
             bd => bd.FlashAsync("", "test.bin"));
 
@@ -326,9 +326,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task KiibohdDfuDevice_Reset()
+    public async Task KiibohdDfuDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x1C11, 0xB007), null,
             bd => bd.ResetAsync(""));
 
@@ -339,9 +339,9 @@ public class FlashCommandTests
     // ── LufaHidDevice ─────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task LufaHidDevice_Flash()
+    public async Task LufaHidDevice_FlashAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x03EB, 0x2067, 0), null,
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
@@ -352,7 +352,7 @@ public class FlashCommandTests
     // ── LufaMsDevice ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task LufaMsDevice_Flash_CopiesFileToMountPoint()
+    public async Task LufaMsDevice_Flash_CopiesFileToMountPointAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
@@ -371,7 +371,7 @@ public class FlashCommandTests
 
             string dest = Path.Combine(mountDir, "FLASH.BIN");
             Assert.True(File.Exists(dest));
-            Assert.Equal(File.ReadAllBytes(src), File.ReadAllBytes(dest));
+            Assert.Equal(await File.ReadAllBytesAsync(src), await File.ReadAllBytesAsync(dest));
         }
         finally
         {
@@ -383,7 +383,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task LufaMsDevice_Flash_MountAppearsAfterConnect_RetriesAndSucceeds()
+    public async Task LufaMsDevice_Flash_MountAppearsAfterConnect_RetriesAndSucceedsAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
@@ -414,7 +414,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task LufaMsDevice_Flash_VolumeNeverMounts_ExhaustsRetriesAndReportsError()
+    public async Task LufaMsDevice_Flash_VolumeNeverMounts_ExhaustsRetriesAndReportsErrorAsync()
     {
         // The service is present but the volume never appears, so the full retry loop runs dry.
         IMountPointService mount = Substitute.For<IMountPointService>();
@@ -427,11 +427,11 @@ public class FlashCommandTests
         await bd.FlashAsync("", "firmware.bin");
 
         mount.Received(10).FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>());
-        Assert.Contains(errors, e => e.StartsWith("Mount point not found!"));
+        Assert.Contains(errors, e => e.StartsWith("Mount point not found!", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task LufaMsDevice_Flash_RejectsNonBinFile()
+    public async Task LufaMsDevice_Flash_RejectsNonBinFileAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(
             Usb(0x03EB, 0x2045), Services())!;
@@ -443,7 +443,7 @@ public class FlashCommandTests
     // ── Uf2Device (VID/PID arbitrary: UF2 devices are matched by marker, not ID) ──
 
     [Fact]
-    public async Task Uf2Device_Flash_CopiesFileToVolume()
+    public async Task Uf2Device_Flash_CopiesFileToVolumeAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
@@ -462,7 +462,7 @@ public class FlashCommandTests
 
             string dest = Path.Combine(mountDir, "NEW.UF2");
             Assert.True(File.Exists(dest));
-            Assert.Equal(File.ReadAllBytes(src), File.ReadAllBytes(dest));
+            Assert.Equal(await File.ReadAllBytesAsync(src), await File.ReadAllBytesAsync(dest));
         }
         finally
         {
@@ -474,7 +474,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task Uf2Device_Flash_VolumeNeverMounts_ReportsError()
+    public async Task Uf2Device_Flash_VolumeNeverMounts_ReportsErrorAsync()
     {
         IMountPointService mount = Substitute.For<IMountPointService>();
         mount.FindMountPoint(Arg.Any<UsbDeviceInfo>(), Arg.Any<string>()).Returns((string?)null);
@@ -485,11 +485,11 @@ public class FlashCommandTests
 
         await bd.FlashAsync("", "firmware.uf2");
 
-        Assert.Contains(errors, e => e.StartsWith("Mount point not found!"));
+        Assert.Contains(errors, e => e.StartsWith("Mount point not found!", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task Uf2Device_Flash_RejectsNonUf2File()
+    public async Task Uf2Device_Flash_RejectsNonUf2FileAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateMassStorageDevice(
             BootloaderType.Uf2, Usb(0x239A, 0x00FF), Services());
@@ -501,9 +501,9 @@ public class FlashCommandTests
     // ── Stm32DuinoDevice ──────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Stm32DuinoDevice_Flash_Bin()
+    public async Task Stm32DuinoDevice_Flash_BinAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x1EAF, 0x0003), null,
             bd => bd.FlashAsync("", "test.bin"));
 
@@ -516,9 +516,9 @@ public class FlashCommandTests
     [Theory]
     [InlineData(0x16C0, 0x05DC, "usbasp")]  // UsbAsp (Van Ooijen)
     [InlineData(0x1781, 0x0C9F, "usbtiny")] // UsbTinyIsp (MECANIQUE)
-    public async Task AvrdudeIspDevice_Flash(ushort vid, ushort pid, string programmer)
+    public async Task AvrdudeIspDevice_FlashAsync(ushort vid, ushort pid, string programmer)
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(vid, pid), null,
             bd => bd.FlashAsync("atmega32u4", "test.hex"));
 
@@ -529,9 +529,9 @@ public class FlashCommandTests
     [Theory]
     [InlineData(0x16C0, 0x05DC, "usbasp")]  // UsbAsp (Van Ooijen)
     [InlineData(0x1781, 0x0C9F, "usbtiny")] // UsbTinyIsp (MECANIQUE)
-    public async Task AvrdudeIspDevice_FlashEeprom(ushort vid, ushort pid, string programmer)
+    public async Task AvrdudeIspDevice_FlashEepromAsync(ushort vid, ushort pid, string programmer)
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(vid, pid), null,
             bd => bd.FlashEepromAsync("atmega32u4", "reset.eep"));
 
@@ -544,9 +544,9 @@ public class FlashCommandTests
     [Theory]
     [InlineData("test.uf2")]
     [InlineData("test.bin")]
-    public async Task PicotoolDevice_Flash_AcceptedFormats(string filename)
+    public async Task PicotoolDevice_Flash_AcceptedFormatsAsync(string filename)
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x2E8A, 0x0003), null,
             bd => bd.FlashAsync("", filename));
 
@@ -556,7 +556,7 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task PicotoolDevice_Flash_RejectsHex()
+    public async Task PicotoolDevice_Flash_RejectsHexAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x2E8A, 0x0003), Services())!;
 
@@ -565,9 +565,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task PicotoolDevice_Reset()
+    public async Task PicotoolDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x2E8A, 0x0003), null,
             bd => bd.ResetAsync(""));
 
@@ -578,7 +578,7 @@ public class FlashCommandTests
     // ── Wb32DfuDevice ─────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Wb32DfuDevice_Flash_RejectsUnsupportedFormat()
+    public async Task Wb32DfuDevice_Flash_RejectsUnsupportedFormatAsync()
     {
         BootloaderDevice bd = BootloaderFactory.CreateDevice(Usb(0x342D, 0xDFA0), Services())!;
 
@@ -587,9 +587,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task Wb32DfuDevice_Flash_Bin()
+    public async Task Wb32DfuDevice_Flash_BinAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x342D, 0xDFA0), null,
             bd => bd.FlashAsync("", "test.bin"));
 
@@ -598,9 +598,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task Wb32DfuDevice_Flash_Hex()
+    public async Task Wb32DfuDevice_Flash_HexAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x342D, 0xDFA0), null,
             bd => bd.FlashAsync("", "test.hex"));
 
@@ -609,9 +609,9 @@ public class FlashCommandTests
     }
 
     [Fact]
-    public async Task Wb32DfuDevice_Reset()
+    public async Task Wb32DfuDevice_ResetAsync()
     {
-        List<string> cmds = await Commands(
+        List<string> cmds = await CommandsAsync(
             Usb(0x342D, 0xDFA0), null,
             bd => bd.ResetAsync(""));
 

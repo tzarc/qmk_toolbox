@@ -122,7 +122,7 @@ public sealed class SettingsServiceTests : IDisposable
 
         service.Save();
 
-        Assert.Contains(errors, e => e.StartsWith("Failed to save settings:"));
+        Assert.Contains(errors, e => e.StartsWith("Failed to save settings:", StringComparison.Ordinal));
     }
 
     [Fact]

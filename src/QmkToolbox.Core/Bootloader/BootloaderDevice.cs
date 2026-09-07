@@ -30,10 +30,12 @@ public abstract class BootloaderDevice(UsbDeviceInfo device, BootloaderServices 
     /// <summary>Background port resolution when constructed with <c>resolvesComPort</c>; null otherwise.</summary>
     protected Task<string?>? ComPortTask { get; } = resolvesComPort ? PollAsync(() => services.SerialPorts?.FindSerialPort(device), services.PollDelayMs) : null;
 
+#pragma warning disable VSTHRD002 // guarded by IsCompletedSuccessfully: Result on a completed task cannot block
     public override string ToString() =>
         ComPortTask is { IsCompletedSuccessfully: true }
             ? $"{Device} [{ComPortTask.Result ?? "port not found"}]"
             : Device.ToString()!;
+#pragma warning restore VSTHRD002
 
     /// <summary>Resolves when the device is ready to display (e.g. serial port has appeared).</summary>
     public virtual Task WhenReadyAsync() => ComPortTask ?? Task.CompletedTask;

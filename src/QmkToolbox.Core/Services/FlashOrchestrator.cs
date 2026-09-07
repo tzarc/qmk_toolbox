@@ -11,7 +11,7 @@ namespace QmkToolbox.Core.Services;
 /// <see cref="OutputReceived"/> and <see cref="StateChanged"/> are raised on whichever
 /// thread triggered them, so subscribers marshal to the UI themselves.
 /// </summary>
-public class FlashOrchestrator(BootloaderServices services)
+public class FlashOrchestrator(BootloaderServices services) : IDisposable
 {
     private static readonly bool IsWindows = OperatingSystem.IsWindows();
 
@@ -216,7 +216,7 @@ public class FlashOrchestrator(BootloaderServices services)
     /// </summary>
     public async Task<bool> RunExclusiveAsync(Func<Task> operation)
     {
-        if (!_operationGate.Wait(0))
+        if (!await _operationGate.WaitAsync(0).ConfigureAwait(false))
             return false;
 
         StateChanged?.Invoke();
@@ -233,15 +233,15 @@ public class FlashOrchestrator(BootloaderServices services)
     }
 
     public Task<bool> FlashAllAsync(string mcu, string firmwarePath) =>
-        RunExclusiveAsync(() => FlashAllCore(mcu, firmwarePath));
+        RunExclusiveAsync(() => FlashAllCoreAsync(mcu, firmwarePath));
 
     public Task<bool> ResetAllAsync(string mcu) =>
-        RunExclusiveAsync(() => ResetAllCore(mcu));
+        RunExclusiveAsync(() => ResetAllCoreAsync(mcu));
 
     public Task<bool> FlashEepromAsync(string mcu, string fileName, string startMessage, string completeMessage) =>
-        RunExclusiveAsync(() => FlashEepromCore(mcu, fileName, startMessage, completeMessage));
+        RunExclusiveAsync(() => FlashEepromCoreAsync(mcu, fileName, startMessage, completeMessage));
 
-    private async Task FlashAllCore(string mcu, string firmwarePath)
+    private async Task FlashAllCoreAsync(string mcu, string firmwarePath)
     {
         DiagnosticTrace?.Invoke($"[FLASH] FlashAllAsync start  (bootloaders:{BootloaderCount})");
         try
@@ -266,7 +266,7 @@ public class FlashOrchestrator(BootloaderServices services)
         }
     }
 
-    private async Task ResetAllCore(string mcu)
+    private async Task ResetAllCoreAsync(string mcu)
     {
         DiagnosticTrace?.Invoke($"[RESET] ResetAllAsync start  (bootloaders:{BootloaderCount})");
         foreach (BootloaderDevice b in SnapshotBootloaders().Where(b => b.IsResettable))
@@ -282,7 +282,7 @@ public class FlashOrchestrator(BootloaderServices services)
         }
     }
 
-    private async Task FlashEepromCore(string mcu, string fileName, string startMessage, string completeMessage)
+    private async Task FlashEepromCoreAsync(string mcu, string fileName, string startMessage, string completeMessage)
     {
         foreach (BootloaderDevice b in SnapshotBootloaders().Where(b => b.IsEepromFlashable))
         {
@@ -307,4 +307,10 @@ public class FlashOrchestrator(BootloaderServices services)
     // Matches upstream behaviour: show the driver name, or NO DRIVER if none is assigned.
     private static string WindowsDriverSuffix(string driver) =>
         IsWindows ? $" ({(string.IsNullOrEmpty(driver) ? "NO DRIVER" : driver)})" : "";
+
+    public void Dispose()
+    {
+        _operationGate.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }

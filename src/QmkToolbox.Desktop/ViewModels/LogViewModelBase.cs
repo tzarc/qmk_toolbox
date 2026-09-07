@@ -38,5 +38,5 @@ public abstract partial class LogViewModelBase(
     private void Clear() => Buffer.Clear();
 
     [RelayCommand]
-    private async Task CopyAll() => await setClipboardText(TerminalProjection.ToText(Buffer));
+    private async Task CopyAllAsync() => await setClipboardText(TerminalProjection.ToText(Buffer));
 }

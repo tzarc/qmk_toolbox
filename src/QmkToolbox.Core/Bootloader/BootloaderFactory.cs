@@ -106,7 +106,7 @@ public static class BootloaderFactory
             BootloaderType.Wb32Dfu => new Wb32DfuDevice(device, services),
             BootloaderType.Picotool => new PicotoolDevice(device, services),
             BootloaderType.None => null,
-            _ => throw new ArgumentOutOfRangeException(nameof(BootloaderType), type, "No device implementation for this bootloader type"),
+            _ => throw new ArgumentOutOfRangeException(nameof(device), type, "No device implementation for this bootloader type"),
         };
     }
 

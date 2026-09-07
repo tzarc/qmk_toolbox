@@ -43,9 +43,9 @@ public partial class App : Application
             // ViewModel lazily because it is constructed below.
             MainWindowViewModel? mainVm = null;
             void logSink(string message, Core.Models.MessageType type) =>
-                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => mainVm?.Log(message, type));
+                _ = Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => mainVm?.Log(message, type));
             void traceSink(string message) =>
-                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => windowService.TraceDebug(message));
+                _ = Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => windowService.TraceDebug(message));
 
             usbDetector.DiagnosticTrace = traceSink;
             orchestrator.DiagnosticTrace = traceSink;

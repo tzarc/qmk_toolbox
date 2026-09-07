@@ -1,3 +1,4 @@
+using System.Globalization;
 using Qmk.Usb.Discovery;
 
 namespace QmkToolbox.Core.Bootloader;
@@ -26,7 +27,7 @@ internal sealed class DfuUtilDevice : BootloaderDevice
     {
         ValidateFileExtension(file, ".bin");
 
-        string[] args = ["-a", _family.AltSetting.ToString(), "-d", DeviceId, .. _family.FlashSuffix ?? [], "-D", file];
+        string[] args = ["-a", _family.AltSetting.ToString(CultureInfo.InvariantCulture), "-d", DeviceId, .. _family.FlashSuffix ?? [], "-D", file];
         return RunToolAsync("dfu-util", args);
     }
 
@@ -34,7 +35,7 @@ internal sealed class DfuUtilDevice : BootloaderDevice
     // degrades to a plain dfu-util invocation.
     public override Task ResetAsync(string mcu)
     {
-        string[] args = ["-a", _family.AltSetting.ToString(), "-d", DeviceId, .. _family.ResetSuffix ?? []];
+        string[] args = ["-a", _family.AltSetting.ToString(CultureInfo.InvariantCulture), "-d", DeviceId, .. _family.ResetSuffix ?? []];
         return RunToolAsync("dfu-util", args);
     }
 }

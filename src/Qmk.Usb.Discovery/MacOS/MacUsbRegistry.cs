@@ -17,7 +17,7 @@ internal static class MacUsbRegistry
     private const uint KCfStringEncodingUtf8 = 0x08000100;
     private const int KCfNumberIntType = 9;
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr IOServiceMatching(string name);
 
     [DllImport(IOKitLib, ExactSpelling = true)]
@@ -32,7 +32,7 @@ internal static class MacUsbRegistry
     [DllImport(IOKitLib, ExactSpelling = true)]
     private static extern IntPtr IORegistryEntryCreateCFProperty(IntPtr entry, IntPtr key, IntPtr allocator, uint options);
 
-    [DllImport(CoreFoundationLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(CoreFoundationLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr CFStringCreateWithCString(IntPtr alloc, string cStr, uint encoding);
 
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
@@ -41,19 +41,19 @@ internal static class MacUsbRegistry
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
     private static extern bool CFStringGetCString(IntPtr theString, byte[] buffer, long bufferSize, uint encoding);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern int IORegistryEntryGetPath(IntPtr entry, string plane, byte[] path);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr IOBSDNameMatching(IntPtr mainPort, uint options, string bsdName);
 
     [DllImport(IOKitLib, ExactSpelling = true)]
     private static extern IntPtr IOServiceGetMatchingService(IntPtr mainPort, IntPtr matching);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern int IORegistryEntryGetParentEntry(IntPtr entry, string plane, out IntPtr parent);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern bool IOObjectConformsTo(IntPtr obj, string className);
 
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
@@ -61,10 +61,10 @@ internal static class MacUsbRegistry
 
     // macOS statfs: the 64-bit-inode variant is the plain symbol on arm64 but carries the
     // $INODE64 suffix on x86_64; both RIDs build from the same source, so pick at runtime.
-    [DllImport("libSystem", EntryPoint = "statfs", CharSet = CharSet.Ansi)]
+    [DllImport("libSystem", EntryPoint = "statfs", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern int StatfsArm64(string path, ref StatfsBuf buf);
 
-    [DllImport("libSystem", EntryPoint = "statfs$INODE64", CharSet = CharSet.Ansi)]
+    [DllImport("libSystem", EntryPoint = "statfs$INODE64", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern int StatfsX64(string path, ref StatfsBuf buf);
 
     private static int Statfs(string path, ref StatfsBuf buf) =>
@@ -177,13 +177,13 @@ internal static class MacUsbRegistry
                 }
                 finally
                 {
-                    IOObjectRelease(service);
+                    _ = IOObjectRelease(service);
                 }
             }
         }
         finally
         {
-            IOObjectRelease(iterator);
+            _ = IOObjectRelease(iterator);
         }
         return false;
     }
@@ -216,13 +216,13 @@ internal static class MacUsbRegistry
                     }
                     finally
                     {
-                        IOObjectRelease(service);
+                        _ = IOObjectRelease(service);
                     }
                 }
             }
             finally
             {
-                IOObjectRelease(iterator);
+                _ = IOObjectRelease(iterator);
             }
         }
         catch (Exception)
@@ -271,17 +271,17 @@ internal static class MacUsbRegistry
                     }
                     if (IORegistryEntryGetParentEntry(entry, "IOService", out IntPtr parent) != 0)
                         return null;
-                    IOObjectRelease(entry);
+                    _ = IOObjectRelease(entry);
                     entry = parent;
                 }
                 catch
                 {
-                    IOObjectRelease(entry);
+                    _ = IOObjectRelease(entry);
                     throw;
                 }
             }
             if (entry != IntPtr.Zero)
-                IOObjectRelease(entry);
+                _ = IOObjectRelease(entry);
         }
         catch (Exception)
         {

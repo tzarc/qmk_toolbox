@@ -73,7 +73,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
         if (bind(_fd, ref addr, (uint)Marshal.SizeOf<SockaddrNl>()) != 0)
         {
             int errno = Marshal.GetLastPInvokeError();
-            close(_fd);
+            _ = close(_fd);
             _fd = -1;
             throw new InvalidOperationException($"netlink uevent socket bind failed (errno {errno}).");
         }
@@ -88,7 +88,7 @@ internal sealed class LinuxUsbProbe : IUsbProbe
         _stopping = true;
         if (_fd >= 0)
         {
-            close(_fd);
+            _ = close(_fd);
             _fd = -1;
         }
         _listenThread?.Join(TimeSpan.FromSeconds(2));

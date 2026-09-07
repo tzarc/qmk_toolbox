@@ -116,7 +116,7 @@ public partial class MainWindowViewModel : LogViewModelBase
         else if (IsLinux)
         {
             if (await ShowConfirmAsync("Linux udev Rules", "Would you like to install Linux udev rules for QMK-supported bootloaders and HID devices?"))
-                await InstallUdevRules();
+                await InstallUdevRulesAsync();
         }
 
         Settings.Current.FirstStart = false;
@@ -202,32 +202,32 @@ public partial class MainWindowViewModel : LogViewModelBase
     private bool CanClearResources => Session.CanClearResources;
 
     [RelayCommand(CanExecute = nameof(CanFlash))]
-    private Task Flash() => Session.FlashAsync();
+    private Task FlashAsync() => Session.FlashAsync();
 
     [RelayCommand(CanExecute = nameof(CanReset))]
-    private Task Reset() => Session.ResetAsync();
+    private Task ResetAsync() => Session.ResetAsync();
 
     [RelayCommand(CanExecute = nameof(CanClearEeprom))]
-    private Task ClearEeprom() => Session.ClearEepromAsync();
+    private Task ClearEepromAsync() => Session.ClearEepromAsync();
 
     [RelayCommand(CanExecute = nameof(CanClearEeprom))]
-    private Task SetLeftHand() => Session.SetHandednessAsync(left: true);
+    private Task SetLeftHandAsync() => Session.SetHandednessAsync(left: true);
 
     [RelayCommand(CanExecute = nameof(CanClearEeprom))]
-    private Task SetRightHand() => Session.SetHandednessAsync(left: false);
+    private Task SetRightHandAsync() => Session.SetHandednessAsync(left: false);
 
     [RelayCommand(CanExecute = nameof(CanClearResources))]
-    private Task ClearResources() => Session.ClearResourcesAsync();
+    private Task ClearResourcesAsync() => Session.ClearResourcesAsync();
 
     [RelayCommand]
-    private void Exit()
+    private static void Exit()
     {
         if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime lt)
             lt.Shutdown();
     }
 
     [RelayCommand]
-    private async Task OpenFile()
+    private async Task OpenFileAsync()
     {
         string? path = await _windowService.PickFirmwareFileAsync();
         if (path != null)
@@ -250,7 +250,7 @@ public partial class MainWindowViewModel : LogViewModelBase
     private void InstallDrivers() => WindowsDriversInstaller.Install(_toolProvider, LogError);
 
     [RelayCommand]
-    private async Task InstallUdevRules() =>
+    private async Task InstallUdevRulesAsync() =>
         await LinuxUdevInstaller.InstallAsync(
             _toolProvider,
             msg => Invoke(() => Log(msg, MessageType.UdevOutput)),

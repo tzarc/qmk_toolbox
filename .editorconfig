@@ -123,6 +123,13 @@ csharp_style_prefer_switch_expression = true:warning
 dotnet_diagnostic.IDE0010.severity = none
 dotnet_diagnostic.IDE0072.severity = none
 
+# ── Analyzer policy ───────────────────────────────────────────────────────────
+# CA1716: flags members named after VB keywords (Stop); nothing consumes this code from VB.
+dotnet_diagnostic.CA1716.severity = none
+# VSTHRD003 guards JoinableTaskFactory deadlocks; this app has no JTF, and its stored tasks
+# (ComPortTask, WhenReadyAsync) are thread-pool backed.
+dotnet_diagnostic.VSTHRD003.severity = none
+
 # ── Null-checking ─────────────────────────────────────────────────────────────
 csharp_style_throw_expression = true:warning
 csharp_style_conditional_delegate_call = true:warning
@@ -227,3 +234,10 @@ dotnet_naming_style.underscore_camel_case_style.required_prefix = _
 
 dotnet_naming_style.begins_with_i_style.capitalization = pascal_case
 dotnet_naming_style.begins_with_i_style.required_prefix = I
+
+# ── Test projects ─────────────────────────────────────────────────────────────
+[src/*Tests/**.cs]
+# CA1707: xUnit test names use Method_Scenario underscores.
+dotnet_diagnostic.CA1707.severity = none
+# CA1861: hoisting expected-value arrays out of assertions hides them from the test body.
+dotnet_diagnostic.CA1861.severity = none

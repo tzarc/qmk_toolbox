@@ -30,10 +30,10 @@ internal sealed class MacUsbProbe : IUsbProbe
     [DllImport(IOKitLib, ExactSpelling = true)]
     private static extern IntPtr IONotificationPortGetRunLoopSource(IntPtr port);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr IOServiceMatching(string name);
 
-    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(IOKitLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern int IOServiceAddMatchingNotification(
         IntPtr port, string notificationType, IntPtr matching,
         IOServiceMatchingCallback callback, IntPtr refCon, out IntPtr iterator);
@@ -56,7 +56,7 @@ internal sealed class MacUsbProbe : IUsbProbe
     [DllImport(CoreFoundationLib, ExactSpelling = true)]
     private static extern void CFRunLoopStop(IntPtr runLoop);
 
-    [DllImport(CoreFoundationLib, CharSet = CharSet.Ansi, ExactSpelling = true)]
+    [DllImport(CoreFoundationLib, CharSet = CharSet.Ansi, ExactSpelling = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr CFStringCreateWithCString(IntPtr alloc, string cStr, uint encoding);
 
     public event Action<UsbDeviceInfo>? Arrived;
@@ -140,7 +140,7 @@ internal sealed class MacUsbProbe : IUsbProbe
             }
             finally
             {
-                IOObjectRelease(service);
+                _ = IOObjectRelease(service);
             }
         }
     }
@@ -161,7 +161,7 @@ internal sealed class MacUsbProbe : IUsbProbe
             }
             finally
             {
-                IOObjectRelease(service);
+                _ = IOObjectRelease(service);
             }
         }
     }
@@ -177,12 +177,12 @@ internal sealed class MacUsbProbe : IUsbProbe
         _runLoopThread = null;
         if (_arrivalIterator != IntPtr.Zero)
         {
-            IOObjectRelease(_arrivalIterator);
+            _ = IOObjectRelease(_arrivalIterator);
             _arrivalIterator = IntPtr.Zero;
         }
         if (_terminationIterator != IntPtr.Zero)
         {
-            IOObjectRelease(_terminationIterator);
+            _ = IOObjectRelease(_terminationIterator);
             _terminationIterator = IntPtr.Zero;
         }
         if (_port != IntPtr.Zero)

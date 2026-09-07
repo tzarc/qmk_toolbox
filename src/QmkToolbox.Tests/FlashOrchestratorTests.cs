@@ -29,11 +29,11 @@ public class FlashOrchestratorTests
     // ── UF2 volume probe ──────────────────────────────────────────────────────
 
     [Fact]
-    public async Task OnDeviceConnectedAsync_MassStorageWithUf2Volume_RegistersBootloader()
+    public async Task OnDeviceConnectedAsync_MassStorageWithUf2Volume_RegistersBootloaderAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
-        File.WriteAllText(Path.Combine(mountDir, "INFO_UF2.TXT"),
+        await File.WriteAllTextAsync(Path.Combine(mountDir, "INFO_UF2.TXT"),
             "UF2 Bootloader v3.0\nModel: Test Board\nBoard-ID: TEST-V1\n");
 
         try
@@ -64,11 +64,11 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task OnDeviceConnectedAsync_VolumeMountedLate_RegistersOnMount()
+    public async Task OnDeviceConnectedAsync_VolumeMountedLate_RegistersOnMountAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
-        File.WriteAllText(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
+        await File.WriteAllTextAsync(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
 
         try
         {
@@ -89,7 +89,7 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task OnDeviceConnectedAsync_VolumeNeverMounts_ProbesUntilRemoval()
+    public async Task OnDeviceConnectedAsync_VolumeNeverMounts_ProbesUntilRemovalAsync()
     {
         // NSubstitute auto-returns "" for strings; the probe must see null ("not mounted").
         IMountPointService mount = Substitute.For<IMountPointService>();
@@ -108,11 +108,11 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task OnDeviceConnectedAsync_VolumeAlreadyClaimed_SecondDeviceKeepsProbing()
+    public async Task OnDeviceConnectedAsync_VolumeAlreadyClaimed_SecondDeviceKeepsProbingAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
-        File.WriteAllText(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
+        await File.WriteAllTextAsync(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
 
         try
         {
@@ -140,7 +140,7 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task OnDeviceConnectedAsync_UnknownNonMassStorage_NotProbed()
+    public async Task OnDeviceConnectedAsync_UnknownNonMassStorage_NotProbedAsync()
     {
         IMountPointService mount = Substitute.For<IMountPointService>();
         FlashOrchestrator orch = NewOrchestrator(mount);
@@ -152,11 +152,11 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task OnDeviceDisconnected_RemovesUf2Bootloader()
+    public async Task OnDeviceDisconnected_RemovesUf2BootloaderAsync()
     {
         string mountDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(mountDir);
-        File.WriteAllText(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
+        await File.WriteAllTextAsync(Path.Combine(mountDir, "INFO_UF2.TXT"), "UF2 Bootloader v3.0\n");
 
         try
         {
@@ -178,7 +178,7 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task RunExclusiveAsync_WhileBusy_SecondCallRefused()
+    public async Task RunExclusiveAsync_WhileBusy_SecondCallRefusedAsync()
     {
         FlashOrchestrator orch = NewOrchestrator();
         var gate = new TaskCompletionSource();
@@ -197,7 +197,7 @@ public class FlashOrchestratorTests
     }
 
     [Fact]
-    public async Task RunExclusiveAsync_OperationThrows_ResetsBusyAndPropagates()
+    public async Task RunExclusiveAsync_OperationThrows_ResetsBusyAndPropagatesAsync()
     {
         FlashOrchestrator orch = NewOrchestrator();
 

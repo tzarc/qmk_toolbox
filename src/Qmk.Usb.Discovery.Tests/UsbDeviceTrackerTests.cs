@@ -7,7 +7,7 @@ namespace Qmk.Usb.Discovery.Tests;
 /// raises raw arrivals/removals and serves the startup sweep. The load-bearing assertions are
 /// the identity invariant (removal delivers the arrival instance) and the sweep/dedup behaviour.
 /// </summary>
-public class UsbDeviceTrackerTests
+public sealed class UsbDeviceTrackerTests : IDisposable
 {
     private sealed class FakeProbe : IUsbProbe
     {
@@ -189,4 +189,6 @@ public class UsbDeviceTrackerTests
         Assert.False(_probe.Started);
         Assert.Empty(_connected);
     }
+
+    public void Dispose() => _tracker.Dispose();
 }

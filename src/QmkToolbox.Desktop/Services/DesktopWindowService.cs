@@ -73,7 +73,7 @@ public sealed class DesktopWindowService(Func<IHidListener> hidListenerFactory) 
     public void ShowAbout()
     {
         var win = new AboutWindow();
-        win.ShowDialog(Owner);
+        _ = win.ShowDialog(Owner);
     }
 
     public void ShowDebugLog() =>

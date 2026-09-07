@@ -9,7 +9,7 @@ namespace QmkToolbox.Tests;
 /// Drives the tracker's diffing and device lifecycle through a fake probe. Tests call Poll
 /// directly, so no timer or thread is involved and events fire synchronously.
 /// </summary>
-public sealed class HidDeviceTrackerTests
+public sealed class HidDeviceTrackerTests : IDisposable
 {
     private sealed class FakeConsoleDevice(string path, ushort usage) : BaseHidDevice(
         new DeviceInfo(path, 0xFEED, 0x0001, "", 0x0100, "QMK", "Board", 0xFF31, usage, 0, default)), IDisposable
@@ -135,4 +135,6 @@ public sealed class HidDeviceTrackerTests
         Assert.True(device.Disposed);
         Assert.True(_probe.Disposed);
     }
+
+    public void Dispose() => _tracker.Dispose();
 }

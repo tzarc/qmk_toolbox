@@ -38,7 +38,7 @@ public static class LinuxUdevInstaller
         string scriptPath = Path.Combine(tmpDir.FullName, "install.sh");
         try
         {
-            File.WriteAllText(scriptPath, script);
+            await File.WriteAllTextAsync(scriptPath, script).ConfigureAwait(false);
             File.SetUnixFileMode(scriptPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 
             try

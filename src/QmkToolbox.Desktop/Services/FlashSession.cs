@@ -232,7 +232,7 @@ public partial class FlashSession : ObservableObject
         FlashEepromAsync(left ? "reset_left.eep" : "reset_right.eep",
             "Attempting to set handedness, please don't remove device", "EEPROM write complete");
 
-    private Task FlashEepromAsync(string eepFile, string startMessage, string completeMessage) =>
+    private Task<bool> FlashEepromAsync(string eepFile, string startMessage, string completeMessage) =>
         _orchestrator.FlashEepromAsync(SelectedMcu, _toolProvider.GetDataFilePath(eepFile), startMessage, completeMessage);
 
     // ClearAndReExtract blocks; Task.Run keeps it off the UI thread. The orchestrator's gate

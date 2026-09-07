@@ -55,10 +55,10 @@ public static class FlashService
         {
             try
             {
-                Task stdoutTask = PumpAsync(process.StandardOutput, cts.Token,
-                    chunk => outputReceived?.Invoke(chunk, MessageType.CommandOutput));
-                Task stderrTask = PumpAsync(process.StandardError, cts.Token,
-                    chunk => outputReceived?.Invoke(chunk, MessageType.CommandError));
+                Task stdoutTask = PumpAsync(process.StandardOutput,
+                    chunk => outputReceived?.Invoke(chunk, MessageType.CommandOutput), cts.Token);
+                Task stderrTask = PumpAsync(process.StandardError,
+                    chunk => outputReceived?.Invoke(chunk, MessageType.CommandError), cts.Token);
 
                 await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
                 await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
@@ -89,7 +89,7 @@ public static class FlashService
         string.Join(' ', [toolName, .. args.Select(a =>
             a.Contains(' ') || a.Length == 0 ? $"\"{a.Replace("\"", "\\\"")}\"" : a)]);
 
-    private static async Task PumpAsync(StreamReader reader, CancellationToken ct, Action<string> onChunk)
+    private static async Task PumpAsync(StreamReader reader, Action<string> onChunk, CancellationToken ct)
     {
         char[] buf = new char[4096];
         int count;

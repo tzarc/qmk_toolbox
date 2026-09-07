@@ -82,5 +82,9 @@ public partial class HidConsoleViewModel : LogViewModelBase, IDisposable
     private void OnErrorOccurred(string message) =>
         Invoke(() => Log(message, MessageType.Error));
 
-    public void Dispose() => _hidListener.Dispose();
+    public void Dispose()
+    {
+        _hidListener.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }

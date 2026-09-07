@@ -140,7 +140,7 @@ public sealed class FlashSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task BusyOperation_DisablesAllActions_ThenRestores()
+    public async Task BusyOperation_DisablesAllActions_ThenRestoresAsync()
     {
         _h.Detector.RaiseConnected(AtmelDfu());
         var gate = new TaskCompletionSource();
@@ -184,7 +184,7 @@ public sealed class FlashSessionTests : IDisposable
     // ── auto-flash policy ─────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AutoFlash_EnabledWithValidFirmware_FlashesOnConnect()
+    public async Task AutoFlash_EnabledWithValidFirmware_FlashesOnConnectAsync()
     {
         _h.Session.AutoFlashEnabled = true;
         _h.Session.SetFirmwarePath(_h.FirmwareFile);
@@ -195,7 +195,7 @@ public sealed class FlashSessionTests : IDisposable
 
         Assert.True(_h.HasOutput("Attempting to flash"));
         Assert.True(_h.HasOutput("Flash complete"));
-        Assert.Contains(_h.Snapshot(), o => o.Type == MessageType.Command && o.Message.StartsWith("dfu-programmer"));
+        Assert.Contains(_h.Snapshot(), o => o.Type == MessageType.Command && o.Message.StartsWith("dfu-programmer", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -233,7 +233,7 @@ public sealed class FlashSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task AutoFlash_WhileBusy_SkipsWithMessage()
+    public async Task AutoFlash_WhileBusy_SkipsWithMessageAsync()
     {
         _h.Session.AutoFlashEnabled = true;
         _h.Session.SetFirmwarePath(_h.FirmwareFile);
@@ -252,7 +252,7 @@ public sealed class FlashSessionTests : IDisposable
     // ── manual flash validation ───────────────────────────────────────────────
 
     [Fact]
-    public async Task FlashAsync_NoFirmwareSelected_ReportsError()
+    public async Task FlashAsync_NoFirmwareSelected_ReportsErrorAsync()
     {
         _h.Detector.RaiseConnected(AtmelDfu());
 
@@ -341,7 +341,7 @@ public sealed class FlashSessionTests : IDisposable
     // ── lifecycle ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task StartAsync_ExtractsResourcesBeforeStartingDetector()
+    public async Task StartAsync_ExtractsResourcesBeforeStartingDetectorAsync()
     {
         var order = new List<string>();
         _h.ToolProvider.When(p => p.EnsureResourceFolder()).Do(_ => order.Add("extract"));
@@ -353,7 +353,7 @@ public sealed class FlashSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_ExtractionFailure_ReportedAndDetectorStillStarts()
+    public async Task StartAsync_ExtractionFailure_ReportedAndDetectorStillStartsAsync()
     {
         _h.ToolProvider.When(p => p.EnsureResourceFolder()).Do(_ => throw new IOException("disk full"));
 

@@ -32,10 +32,10 @@ internal static class UsbDeviceParser
         Match m = HwIdRegex.Match(devicePath);
         if (!m.Success)
             return false;
-        vid = ushort.Parse(m.Groups[1].Value, NumberStyles.HexNumber);
-        pid = ushort.Parse(m.Groups[2].Value, NumberStyles.HexNumber);
+        vid = ushort.Parse(m.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        pid = ushort.Parse(m.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         if (m.Groups[3].Success)
-            rev = ushort.Parse(m.Groups[3].Value, NumberStyles.HexNumber);
+            rev = ushort.Parse(m.Groups[3].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         return true;
     }
 
