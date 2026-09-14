@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:QmkToolbox.Desktop.Views.Controls"
+             x:Class="QmkToolbox.Desktop.Views.Controls.LogPanel"
+             x:DataType="controls:LogPanel"
+             x:CompileBindings="True"
+             x:Name="Root">
+
+    <!-- Code-behind builds the context menu (BuildContextMenu): flyout content opens in
+         a popup with its own name scope, so {Binding #Root...} on the items never resolves
+         and the commands come out null. -->
+    <ScrollViewer Name="LogScroller"
+                  Background="{DynamicResource LogPanelBackground}">
+        <!-- A transparent (not null) background makes the whole arranged width hit-testable,
+             so a selection can start in the empty space to the right of a short line. -->
+        <controls:HitTestableTextBlock Name="LogText"
+                                       Background="Transparent"
+                                       HorizontalAlignment="Stretch"
+                                       FontFamily="avares://qmk_toolbox/Assets/Fonts#JetBrains Mono NL"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="4,2" />
+    </ScrollViewer>
+</UserControl>

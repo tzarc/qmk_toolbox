@@ -1,0 +1,77 @@
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using QmkToolbox.Core.Models;
+using QmkToolbox.Desktop.Models;
+
+namespace QmkToolbox.Desktop.Services;
+
+[JsonSerializable(typeof(AppSettings))]
+[JsonSourceGenerationOptions(WriteIndented = true)]
+internal partial class AppSettingsJsonContext : JsonSerializerContext
+{
+}
+
+public class AppSettings
+{
+    public bool FirstStart { get; set; } = true;
+    public bool ShowAllDevices { get; set; }
+    public bool AutoFlashEnabled { get; set; }
+    public string FirmwareFilePath { get; set; } = "";
+    public List<string> FirmwareFileHistory { get; set; } = [];
+    public string SelectedMcu { get; set; } = "atmega32u4";
+    public string ThemeVariant { get; set; } = "Default";
+
+    /// <summary>Each window's last position and size, keyed by window type name.</summary>
+    public Dictionary<string, WindowBounds> WindowBounds { get; set; } = [];
+}
+
+public class SettingsService
+{
+    private readonly string _settingsPath;
+
+    public AppSettings Current { get; private set; } = new AppSettings();
+
+    /// <summary>Receives save failures; when unset they go only to Debug output.</summary>
+    public MessageSink? Output { get; set; }
+
+    /// <param name="settingsPath">Overrides the settings file location (used by tests).</param>
+    public SettingsService(string? settingsPath = null)
+    {
+        _settingsPath = settingsPath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "QMK", "Toolbox", "settings.json");
+        Load();
+    }
+
+    private void Load()
+    {
+        try
+        {
+            if (File.Exists(_settingsPath))
+            {
+                string json = File.ReadAllText(_settingsPath);
+                Current = JsonSerializer.Deserialize(json, AppSettingsJsonContext.Default.AppSettings) ?? new AppSettings();
+                return;
+            }
+        }
+        catch (Exception ex) { Debug.WriteLine($"Failed to load settings: {ex.Message}"); }
+        Current = new AppSettings();
+    }
+
+    public void Save()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
+            string json = JsonSerializer.Serialize(Current, AppSettingsJsonContext.Default.AppSettings);
+            File.WriteAllText(_settingsPath, json);
+        }
+        catch (Exception ex)
+        {
+            string message = $"Failed to save settings: {ex.Message}";
+            Debug.WriteLine(message);
+            Output?.Invoke(message, MessageType.Error);
+        }
+    }
+}

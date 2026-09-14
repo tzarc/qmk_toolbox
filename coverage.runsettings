@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings for the coverlet "XPlat Code Coverage" collector (dotnet test).
+     The exclusions limit the coverage number to code the test suite can reach:
+     Views and App/Program/DesktopWindowService are Avalonia glue that only runs in
+     a live app, and generated code (CompiledAvaloniaXaml, MVVM source generators)
+     is noise. Everything else in Desktop counts: platform adapters at 0% are
+     untested code, not candidates for exclusion. -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>[qmk_toolbox]QmkToolbox.Desktop.Views.*,[qmk_toolbox]CompiledAvaloniaXaml.*,[qmk_toolbox]QmkToolbox.Desktop.App,[qmk_toolbox]QmkToolbox.Desktop.Program,[qmk_toolbox]QmkToolbox.Desktop.Services.DesktopWindowService</Exclude>
+          <ExcludeByAttribute>GeneratedCodeAttribute</ExcludeByAttribute>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

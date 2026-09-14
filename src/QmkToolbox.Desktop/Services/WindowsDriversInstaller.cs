@@ -1,0 +1,42 @@
+using System.Diagnostics;
+using QmkToolbox.Core.Services;
+
+namespace QmkToolbox.Desktop.Services;
+
+/// <summary>
+/// Windows-only driver installer using qmk_driver_installer.exe (bundled resource).
+/// All methods are no-ops on non-Windows platforms.
+/// </summary>
+public static class WindowsDriversInstaller
+{
+    private const string DriversListFilename = "drivers.txt";
+    private const string InstallerFilename = "qmk_driver_installer.exe";
+
+    public static void Install(IFlashToolProvider toolProvider, Action<string> logError)
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        string installerPath = toolProvider.GetDataFilePath(InstallerFilename);
+        string driversPath = toolProvider.GetDataFilePath(DriversListFilename);
+
+        if (!File.Exists(installerPath) || !File.Exists(driversPath))
+        {
+            logError("Driver installer not found. Please clear and re-extract resources via Tools → Clear Resources.");
+            return;
+        }
+
+        try
+        {
+            var psi = new ProcessStartInfo(installerPath) { Verb = "runas", UseShellExecute = true };
+            psi.ArgumentList.Add("--all");
+            psi.ArgumentList.Add("--force");
+            psi.ArgumentList.Add(driversPath);
+            Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            logError($"Driver installation failed: {ex.Message}");
+        }
+    }
+}
